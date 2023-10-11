@@ -156,8 +156,8 @@ class AzureDeployer(Deployer):
         deployment_name = self.params["deployment_name"]
 
         shell_command(
-            f"terraform import -var-file={state_dir}/{deployment_name}/tfvars "
-            + f"-state={self.config['state_dir']}/{deployment_name}/tfstate "
+            f"terraform import -var-file={state_dir}/{deployment_name}/.tfvars "
+            + f"-state={self.config['state_dir']}/{deployment_name}/.tfstate "
             + "module.common.azurerm_resource_group.ovcloud_rg"
             + f" {resource_group} {' > /dev/null' if not debug else ''}",
             verbose=debug,
