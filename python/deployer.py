@@ -479,7 +479,7 @@ class Deployer:
 
     # generate ssh connection command for the user
     def ssh_connection_command(self, ip: str):
-        r = f"ssh -i state/{self.params['deployment_name']}.pem "
+        r = f"ssh -i state/{self.params['deployment_name']}/key.pem "
         r += f"-o StrictHostKeyChecking=no ubuntu@{ip}"
         if self.params["ssh_port"] != 22:
             r += f" -p {self.params['ssh_port']}"
