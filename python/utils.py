@@ -84,8 +84,13 @@ def shell_command(
 def deployments():
     """List existing deployments by name"""
     state_dir = config["state_dir"]
-    tfstate_files = glob(os.path.join(state_dir, "*.*"))
-    return sorted(list(set([os.path.basename(p).split(".")[0] for p in tfstate_files])))
+    deployments = sorted(
+        [
+            os.path.basename(os.path.dirname(d))
+            for d in glob(os.path.join(state_dir, "*/"))
+        ]
+    )
+    return deployments
 
 
 def read_meta(deployment_name: str, verbose: bool = False):

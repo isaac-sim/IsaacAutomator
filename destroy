@@ -16,7 +16,8 @@
 # limitations under the License.
 # endregion
 
-from glob import glob
+import os
+import shutil
 from pathlib import Path
 
 import click
@@ -149,15 +150,23 @@ def main(
             )
 
     # remove tfstate, tfvars, keys, etc
-    for f in glob(f"{config['state_dir']}/{deployment_name}.*") + glob(
-        f"{config['state_dir']}/.{deployment_name}.*"
-    ):
-        if not dryrun:
-            Path(f).unlink(missing_ok=True)
-            click.echo(colorize_info(f'* Removed "{f}"'))
-        else:
-            # only show what would be removed on real run
-            click.echo(colorize_info(f'* Would remove "{f}"'))
+
+    deployment_data_dir = f"{config['state_dir']}/{deployment_name}"
+    deployment_data_dir_relative = os.path.relpath(
+        deployment_data_dir, config["app_dir"]
+    )
+
+    if not dryrun:
+        # remove deployment data dir
+        shutil.rmtree(deployment_data_dir, ignore_errors=True)
+        click.echo(
+            colorize_info(f'* Removed "{deployment_data_dir_relative}" directory')
+        )
+    else:
+        # only show what would be removed on real run
+        click.echo(
+            colorize_info(f'* Would remove "{deployment_data_dir_relative}" directory')
+        )
 
     # ta-da
     if not dryrun:
