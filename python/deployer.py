@@ -396,8 +396,8 @@ class Deployer:
 
         shell_command(
             f"terraform output -state={self.config['state_dir']}/{deployment_name}/.tfstate -raw ssh_key"
-            + f" > {self.config['state_dir']}/{deployment_name}.pem && "
-            + f"chmod 0600 {self.config['state_dir']}/{deployment_name}.pem",
+            + f" > {self.config['state_dir']}/{deployment_name}/key.pem && "
+            + f"chmod 0600 {self.config['state_dir']}/{deployment_name}/key.pem",
             cwd=f"{self.config['app_dir']}/terraform/azure",
             verbose=debug,
         )
@@ -504,7 +504,7 @@ class Deployer:
 1. Click "Add" button.
 2. Enter Host: "__ip__".
 3. In "Configuration" > "Use key-based authentication with a key you provide",
-   select file "state/{deployment_name}.pem".
+   select file "state/{deployment_name}/key.pem".
 4. Click "Connect" button.
 5. Enter "ubuntu" as a username when prompted.
 """

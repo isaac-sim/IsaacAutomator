@@ -91,7 +91,7 @@ def main(
                 )
             continue
 
-        ssh_key_file = f"{config['state_dir']}/{deployment_name}.pem"
+        ssh_key_file = f"{config['state_dir']}/{deployment_name}/key.pem"
         uploads_dir = config["uploads_dir"]
         os.makedirs(uploads_dir, exist_ok=True)
 
