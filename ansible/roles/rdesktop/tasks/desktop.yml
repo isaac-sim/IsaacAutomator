@@ -1,0 +1,88 @@
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+---
+#
+# Good desktop experience
+#
+
+- name: Configure auto login [1]
+  lineinfile:
+    path: /etc/gdm3/custom.conf
+    state: present
+    line: "AutomaticLoginEnable=true"
+    insertafter: "\\[daemon\\]"
+  notify: reboot
+
+- name: Configure auto login [2]
+  lineinfile:
+    path: /etc/gdm3/custom.conf
+    state: present
+    line: "AutomaticLogin=ubuntu"
+    insertafter: "\\[daemon\\]"
+  notify: reboot
+
+# disable blank screen
+- name: Mask sleep targets
+  shell: systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
+  notify: reboot
+
+# disable screen lock
+- name: Disable screen lock
+  shell: "{{ item }}"
+  with_items:
+    - gsettings set org.gnome.desktop.session idle-delay 0
+    - gsettings set org.gnome.desktop.screensaver lock-enabled 'false'
+    - gsettings set org.gnome.desktop.lockdown disable-lock-screen 'true'
+    - gsettings set org.gnome.desktop.screensaver idle-activation-enabled 'false'
+    - gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-timeout 0
+  become_user: "{{ ansible_user }}"
+  notify: reboot
+
+# increase font size
+- name: Set font size to 125%
+  shell: gsettings set org.gnome.desktop.interface text-scaling-factor 1.25
+  become_user: "{{ ansible_user }}"
+
+# enable dark theme
+- name: Make it dark
+  shell: gsettings set org.gnome.desktop.interface gtk-theme 'Yaru-dark'
+  become_user: "{{ ansible_user }}"
+
+# fix terminal font
+- name: Fix terminal font
+  shell: "{{ item }}"
+  become_user: "{{ ansible_user }}"
+  with_items:
+    - gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$(gsettings get org.gnome.Terminal.ProfilesList default|tr -d \')/ use-system-font false
+    - gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$(gsettings get org.gnome.Terminal.ProfilesList default|tr -d \')/ font "Monospace 12"
+
+# make terminal semi-transparent
+- name: Make terminal semi-transparent
+  shell: "{{ item }}"
+  become_user: "{{ ansible_user }}"
+  with_items:
+    - gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$(gsettings get org.gnome.Terminal.ProfilesList default|tr -d \')/ background-transparency-percent 12
+    - gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$(gsettings get org.gnome.Terminal.ProfilesList default|tr -d \')/ use-transparent-background true
+
+# disable new ubuntu version prompt
+
+- name: Disable new ubuntu version prompt
+  lineinfile:
+    path: /etc/update-manager/release-upgrades
+    regexp: "Prompt=.*"
+    line: "Prompt=never"
+  notify: reboot

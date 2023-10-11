@@ -1,0 +1,152 @@
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+# install nice dcv
+# @see https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
+# @see https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
+
+# prerequisites
+- name: Install prerequisites for NICE DCV
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - rpm # needed for rpm_key ansible module
+    - mesa-utils
+
+# import GPG key
+- name: Import GPG key for NICE DCV
+  rpm_key:
+    key: https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
+    state: present
+
+# download nice dcv
+- name: Download NICE DCV
+  get_url:
+    url: https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu{{ ansible_distribution_version | replace('.', '') }}-{{ ansible_machine }}.tgz
+    dest: /tmp/nice-dcv.tgz
+    mode: 0644
+
+# download and unzip nice dcv
+- name: Unarchive NICE DCV
+  unarchive:
+    src: /tmp/nice-dcv.tgz
+    remote_src: yes
+    dest: /tmp
+    extra_opts: [--strip-components=1]
+
+# find .deb for nice dcv installer
+- name: Find .deb for NICE DCV Server installer
+  find:
+    paths: /tmp
+    patterns: "nice-dcv-server*.deb"
+  register: nice_dcv_deb
+
+# install nice dcv .deb file
+- name: Install NICE DCV Server
+  apt:
+    deb: "{{ nice_dcv_deb.files[0].path }}"
+    state: present
+
+# find .deb for nice xdcv
+- name: Find .deb for NICE XDCV
+  find:
+    paths: /tmp
+    patterns: "nice-xdcv*.deb"
+  register: nice_xdcv_deb
+
+# install nice xdcv
+- name: Install NICE XDCV
+  apt:
+    deb: "{{ nice_xdcv_deb.files[0].path }}"
+    state: present
+
+# print nice_dcv_unarchive
+- name: Print nice_dcv_unarchive
+  debug:
+    msg: "{{ nice_dcv_deb.files[0].path }}"
+
+# add the dcv user to the video group
+- name: Add "dcv" user to "video" group
+  user:
+    name: dcv
+    groups: video
+    append: yes
+
+# find nice-dcv-gl .deb file
+- name: Find .deb for NICE DCV GL
+  find:
+    paths: /tmp
+    patterns: "nice-dcv-gl*.deb"
+  register: nice_dcv_gl_deb
+
+# print nice_dcv_gl_deb
+- name: Print nice_dcv_gl_deb
+  debug:
+    msg: "{{ nice_dcv_gl_deb.files[0].path }}"
+
+# install nice-dcv-gl from .deb file
+- name: Install NICE DCV GL
+  apt:
+    deb: "{{ nice_dcv_gl_deb.files[0].path }}"
+    state: present
+
+# post-install steps
+# @see https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-checks.html
+
+# configure dcvgladmin
+- name: Post-install confgiuration of NICE DCV GL
+  shell: |
+    systemctl isolate multi-user.target
+    dcvgladmin disable
+    dcvgladmin enable
+    systemctl isolate graphical.target
+
+# configure dcvserver
+- name: Configure NICE DCV Server
+  ini_file:
+    section: "{{ item.section }}"
+    path: /etc/dcv/dcv.conf
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    no_extra_spaces: true
+  with_items:
+    - {
+        section: "security",
+        key: "authentication",
+        value: "{{ dcv_authentication_method }}",
+      }
+    - { section: "session-management", key: "create-session", value: "true" }
+    - {
+        section: "session-management/automatic-console-session",
+        key: "owner",
+        value: "{{ ansible_user }}",
+      }
+    - {
+        section: "display",
+        key: "default-layout",
+        value: "[{'w':<1920>, 'h':<1200>, 'x':<0>,'y':<0>}]",
+      }
+
+# start dcvserver, reboot
+- name: Start/Restart/Enable NICE DCV Server
+  systemd:
+    name: dcvserver
+    state: restarted
+    enabled: yes
+
+- name: Reboot
+  reboot: post_reboot_delay=5 connect_timeout=3 reboot_timeout=600

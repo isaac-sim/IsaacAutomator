@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Terminal=true
+Exec=/home/ubuntu/Desktop/isaacsim-shell.sh
+Name=Isaac Sim Shell
+Icon=/home/ubuntu/Pictures/isaacsim-icon-shell.png

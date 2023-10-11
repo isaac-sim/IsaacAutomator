@@ -1,0 +1,61 @@
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+---
+- name: Install x11vnc and helper util
+  apt: name={{ item }}
+    update_cache=yes
+    state=latest
+  with_items:
+    - x11vnc
+    - expect
+
+- name: Add x11vnc systemd config
+  template: src=x11vnc-ubuntu.service
+    dest=/etc/systemd/system
+    mode=0444
+    owner=root
+    group=root
+
+- name: Start x11vnc
+  systemd: name=x11vnc-ubuntu
+    daemon_reload=yes
+    enabled=yes
+    state=restarted
+
+- name: Clear VNC password
+  file:
+    path: /home/ubuntu/.vnc/passwd
+    state: absent
+
+- name: Set VNC password
+  expect:
+    command: /usr/bin/x11vnc -storepasswd
+    responses:
+      (?i).*password:.*: "{{ vnc_password }}\r"
+      (?i)write.*: "y\r"
+    creates: /home/ubuntu/.vnc/passwd
+  become_user: ubuntu
+  tags:
+    - skip_in_image
+
+- name: Cleanup VNC password
+  file:
+    path: /home/ubuntu/.vnc/passwd
+    state: absent
+  tags:
+    - never
+    - cleanup

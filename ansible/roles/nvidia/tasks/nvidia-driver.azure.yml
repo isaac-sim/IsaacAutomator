@@ -1,0 +1,101 @@
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+---
+# @see https://learn.microsoft.com/en-us/azure/virtual-machines/linux/n-series-driver-setup#install-grid-drivers-on-nv-or-nvv3-series-vms
+
+- name: Azure / Prerequisites (APT)
+  apt: name={{ item }}
+    state=latest
+    update_cache=yes
+    install_recommends=no
+  with_items:
+    - build-essential
+    - ubuntu-desktop
+    - linux-azure
+    # reqd by asible get_url
+    - python3-pip
+    # reqd by driver runfile
+    - pkg-config
+    - libglvnd-dev
+
+- name: Azure /Prerequisites (PIP)
+  pip:
+    # older version is needed by ansible get_url for some reason
+    name: requests==2.20.1
+    executable: pip3
+
+- name: Azure / Blacklist nouveau
+  kernel_blacklist: name={{ item }}
+    state=present
+  with_items:
+    - nouveau
+    - lbs-nouveau
+
+- name: Azure / Fix 3818429
+  kernel_blacklist: name=hyperv_drm state=present
+
+- name: Azure / Check if reboot required
+  stat:
+    path: /var/run/reboot-required
+  register: reboot_required_file
+
+- name: Azure / Reboot and wait
+  reboot:
+    post_reboot_delay: 5
+    connect_timeout: 3
+    reboot_timeout: 600
+  when: reboot_required_file.stat.exists == true
+
+# download driver, timeout 3 min, 5 retries
+# @see https://github.com/Azure/azhpc-extensions/blob/master/NvidiaGPU/resources.json#L275
+- name: Azure / Download GRID driver
+  get_url:
+    url: https://go.microsoft.com/fwlink/?linkid=874272
+    dest: /tmp/nvidia_grid_azure_driver.run
+    mode: "0755"
+    timeout: 180
+  retries: 5
+
+- name: Azure / Install GRID driver
+  shell: "/tmp/nvidia_grid_azure_driver.run --run-nvidia-xconfig  --disable-nouveau --no-questions --silent"
+
+- name: Azure / Enable persistent mode for the driver
+  shell: nvidia-smi -pm ENABLED
+
+- name: Azure / Copy grid.conf
+  copy: >
+    src=/etc/nvidia/gridd.conf.template
+    dest=/etc/nvidia/gridd.conf
+    remote_src=true
+    force=no
+
+- name: Azure / Update GRID config [1]
+  lineinfile:
+    path: /etc/nvidia/gridd.conf
+    line: "{{ item }}"
+    state: present
+  with_items:
+    - "IgnoreSP=FALSE"
+    - "EnableUI=FALSE"
+
+- name: Azure / Update GRID config [2]
+  lineinfile:
+    path: /etc/nvidia/gridd.conf
+    regexp: "^FeatureType=(.*)$"
+    line: '# FeatureType=\1'
+    state: present
+    backrefs: yes

@@ -1,0 +1,62 @@
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+# @see https://code.visualstudio.com/docs/setup/linux
+
+- name: Prerequisites for VS Code
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - wget
+    - gpg
+    - apt-transport-https
+
+- name: Install VSC sources
+  shell: |
+    wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
+    install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
+    sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
+  args:
+    creates: /etc/apt/sources.list.d/vscode.list
+
+- name: Install VS Code
+  apt:
+    name: code
+    update_cache: yes
+    state: latest
+
+- name: Add desktop icon
+  copy:
+    src: /usr/share/applications/code.desktop
+    remote_src: yes
+    dest: /home/{{ ansible_user }}/Desktop/code.desktop
+    mode: 0644
+
+- name: Allow execution of VSC desktop icon
+  shell: gio set /home/{{ ansible_user }}/Desktop/{{ item }} metadata::trusted true
+  become_user: "{{ ansible_user }}"
+  with_items:
+    - code.desktop
+
+- name: Set permissions for VSC desktop icon
+  file:
+    path: /home/{{ ansible_user }}/Desktop/{{ item }}
+    mode: 0755
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  with_items:
+    - code.desktop

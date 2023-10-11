@@ -1,0 +1,4 @@
+[custom_ssh]
+title=custom_ssh
+description=Custom SSH port ({{ssh_port}})
+ports=22,{{ssh_port}}/tcp

@@ -1,0 +1,57 @@
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+---
+# @see https://downloads.nomachine.com/download/?id=3 for new versions
+- name: Install NX server
+  apt:
+    deb: https://download.nomachine.com/download/8.5/Linux/nomachine_8.5.3_1_amd64.deb
+
+- name: Create NX config dir
+  file: >
+    path=/home/ubuntu/.nx/config
+    state=directory
+    owner=ubuntu
+    group=ubuntu
+
+- name: Link authorized keys to NX config
+  file: >
+    src=/home/ubuntu/.ssh/authorized_keys
+    dest=/home/ubuntu/.nx/config/authorized.crt
+    state=link
+    owner=ubuntu
+    group=ubuntu
+  notify: nx_restart
+
+# add env var DISPLAY to  /usr/lib/systemd/system/nxserver.service
+- name: Add DISPLAY env var to nxserver.service
+  lineinfile:
+    path: /usr/lib/systemd/system/nxserver.service
+    line: Environment="DISPLAY=:0"
+    insertafter: "\\[Service\\]"
+    state: present
+
+# restart nxserver.service on GDM init (fix for "no display detected" error)
+- name: Restart nxserver.service on GDM init
+  lineinfile:
+    path: /etc/gdm3/PreSession/Default
+    line: (/usr/bin/sleep 5 && /usr/bin/systemctl restart nxserver.service) &
+    insertafter: EOF
+    state: present
+
+- name: Do daemon-reload
+  systemd:
+    daemon_reload: yes

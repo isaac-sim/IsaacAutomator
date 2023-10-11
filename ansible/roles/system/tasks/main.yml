@@ -1,0 +1,85 @@
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+---
+- name: Check OS name and version
+  assert: that="ansible_distribution == 'Ubuntu'"
+
+# add extra ssh ports
+- name: Change SSH port to {{ ssh_port }}
+  include: custom_ssh.yml
+  when: ssh_port != 22
+
+- name: Upgrade the OS (apt-get dist-upgrade)
+  apt: upgrade=dist
+    update_cache=yes
+
+- name: Set OS user password
+  include: password.yml
+
+- name: Disable IPv6 for apt-get
+  copy:
+    dest: /etc/apt/apt.conf.d/99force-ipv4
+    src: etc.apt.apt.conf.d.99force-ipv4
+    mode: 0644
+
+- name: Disable unattended upgrades
+  copy:
+    src: etc.apt.apt.conf.d.20auto-upgrades
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    mode: 0644
+
+# add packages for convinience
+- name: Install common apt packages
+  apt: name=htop
+    state=latest
+
+- name: Add user ubuntu to sudo group
+  user: name=ubuntu
+    groups=sudo
+    append=yes
+    state=present
+
+- name: Check if reboot required
+  stat:
+    path: /var/run/reboot-required
+  register: reboot_required_file
+
+- name: Reboot and wait
+  reboot:
+    post_reboot_delay: 5
+    connect_timeout: 3
+    reboot_timeout: 600
+  when: reboot_required_file.stat.exists == true
+
+# - set hostname
+# - set prompt color and hostname
+- include: id.yml
+
+# swap
+
+- name: Check if swap is enabled
+  shell: "swapon -s | wc -l"
+  register: swap_enabled
+  tags:
+    - skip_in_image
+    - skip_in_ovami
+
+- import_tasks: swap.yml
+  when: swap_enabled.stdout | int == 0
+  tags:
+    - skip_in_image
+    - skip_in_ovami

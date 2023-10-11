@@ -1,0 +1,40 @@
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+---
+- name: Copy EDID file
+  template: src=vdisplay.edid
+    dest=/etc/X11/vdisplay.edid
+    mode=644
+  notify: reboot
+
+- name: Get PCI Bus ID of the first GPU
+  shell: nvidia-xconfig --query-gpu-info | grep 'PCI BusID' | head -n 1 | cut -c15-
+  register: GPU0_PCI_BUS_ID
+
+- name: Write X11 config
+  template: src=xorg.conf
+    dest=/etc/X11/xorg.conf
+    mode=644
+  notify: reboot
+
+- name: Create Xauthority file
+  file:
+    path: /home/{{ ansible_user }}/.Xauthority
+    state: touch
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0666

@@ -1,0 +1,60 @@
+#!/usr/bin/expect -f
+
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+set timeout -1
+debug 0
+
+# usage ngc_ckeck.expect
+set NGC_API_KEY [lindex $argv 0]
+set ORG [lindex $argv 1]
+set TEAM [lindex $argv 2]
+
+# clear saved credentials
+spawn /opt/ngc-cli/ngc config clear
+wait
+
+spawn /opt/ngc-cli/ngc config set
+ 
+expect "Enter API key"
+send -- "$NGC_API_KEY\r"
+ 
+expect {
+    # 100: invalid api key
+    "Invalid API key" { exit 100 } 
+    
+    "Enter CLI output" { send -- "ascii\r" }
+}
+
+expect "Enter org"
+send "$ORG\r"
+
+expect {
+    # 101: not part of "drive" org
+    "Invalid org" { exit 101 } 
+
+    "Enter team" { send "$TEAM\r"}
+}
+
+expect {
+    # 102: not part of the team
+    "Invalid team" { exit 102 } 
+ 
+    "Enter ace" { send "no-ace\r" }
+  }
+
+expect eof

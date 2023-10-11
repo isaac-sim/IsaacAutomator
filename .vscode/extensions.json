@@ -1,0 +1,12 @@
+{
+    "recommendations": [
+        "hashicorp.terraform",
+        "4ops.terraform",
+        "editorconfig.editorconfig",
+        "redhat.vscode-yaml",
+        "4ops.packer",
+        "yzhang.markdown-all-in-one",
+        "ms-python.black-formatter",
+        "maptz.regionfolder"
+    ]
+}

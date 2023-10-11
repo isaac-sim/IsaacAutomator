@@ -1,0 +1,168 @@
+#!/usr/bin/env python3
+
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+from glob import glob
+from pathlib import Path
+
+import click
+
+from python.config import c as config
+from python.debug import debug_break  # noqa
+from python.utils import (
+    azure_login,
+    colorize_info,
+    colorize_prompt,
+    colorize_result,
+    deployments,
+    gcp_login,
+    shell_command,
+)
+
+
+@click.command()
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    show_default=True,
+)
+@click.option(
+    "--dryrun/--no-dryrun",
+    default=False,
+    show_default=True,
+)
+@click.option(
+    "--deployment-name",
+    type=click.Choice(deployments()),
+    default=(deployments()[0] if len(deployments()) > 0 else ""),
+    show_default="<first existing, alphabetically>",
+    prompt=colorize_prompt("Deployment to destroy"),
+)
+@click.option(
+    "--yes/--ask",
+    default=False,
+    show_default=True,
+    help="Destroy without confirmation?",
+    prompt=colorize_prompt("Are you sure?"),
+)
+@click.option(
+    "--login/--no-login",
+    default=True,
+    show_default=True,
+    help="Login to Azure?",
+)
+def main(
+    yes: bool,
+    debug: bool,
+    login: bool,
+    dryrun: bool,
+    deployment_name: str,
+):
+    if not yes:
+        click.echo(colorize_info("Aborted!"))
+        return
+
+    if dryrun:
+        print(colorize_info("* Dry run - not destroying anything"))
+
+    tfstate_file = Path(f"{config['state_dir']}/{deployment_name}.tfstate").absolute()
+    tfvars_file = Path(f"{config['state_dir']}/{deployment_name}.tfvars").absolute()
+
+    # determine what cloud the deployment is for
+
+    cloud = "none"
+
+    if Path(tfstate_file).exists():
+        if "registry.terraform.io/hashicorp/aws" in Path(tfstate_file).read_text():
+            cloud = "AWS"
+        elif (
+            "registry.terraform.io/hashicorp/azurerm" in Path(tfstate_file).read_text()
+        ):
+            cloud = "Azure"
+        elif "registry.terraform.io/hashicorp/google" in Path(tfstate_file).read_text():
+            cloud = "GCP"
+
+    if cloud == "none":
+        print(colorize_info(f'* No cloud resources found for "{deployment_name}"'))
+
+    # login if needed
+    if login:
+        if "Azure" == cloud:
+            azure_login(verbose=debug)
+        elif "GCP" == cloud:
+            gcp_login(verbose=debug)
+
+    if cloud != "none":
+        # do `terraform init` in case we didn't map /app dir
+        # (the case when prebuilt image is used)
+        click.echo(colorize_info("* Initializing terraform modules..."))
+        shell_command(
+            f"terraform init -upgrade -no-color -input=false {' > /dev/null' if not debug else ''}",
+            verbose=debug,
+            cwd=f"/app/terraform/{cloud.lower()}",
+        )
+
+        if dryrun:
+            # only show what would be destroyed by terraform
+
+            click.echo(
+                colorize_info(
+                    f'* Showing changes to {cloud} resources used by "{deployment_name}"...'
+                )
+            )
+
+            shell_command(
+                command=f'terraform plan -destroy -var-file="{tfvars_file}" -state="{tfstate_file}"',
+                cwd=f"/app/terraform/{cloud.lower()}",
+                exit_on_error=False,
+                verbose=debug,
+            )
+
+        else:
+            # destroy cloud resources
+
+            click.echo(
+                colorize_info(
+                    f'* Destroying {cloud} resources used by "{deployment_name}"...'
+                )
+            )
+
+            shell_command(
+                command=f'terraform destroy -auto-approve -var-file="{tfvars_file}" -state="{tfstate_file}"',
+                cwd=f"/app/terraform/{cloud.lower()}",
+                exit_on_error=True,
+                verbose=debug,
+            )
+
+    # remove tfstate, tfvars, keys, etc
+    for f in glob(f"{config['state_dir']}/{deployment_name}.*") + glob(
+        f"{config['state_dir']}/.{deployment_name}.*"
+    ):
+        if not dryrun:
+            Path(f).unlink(missing_ok=True)
+            click.echo(colorize_info(f'* Removed "{f}"'))
+        else:
+            # only show what would be removed on real run
+            click.echo(colorize_info(f'* Would remove "{f}"'))
+
+    # ta-da
+    if not dryrun:
+        click.echo(colorize_result(f'* Deployment "{deployment_name}" destroyed'))
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,68 @@
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+---
+# check if we need to skip stuff
+- name: Check installed services
+  service_facts:
+
+- name: Prerequisites (1)
+  apt: |
+    name="{{ item }}"
+    state=latest
+    update_cache=yes
+    install_recommends=no
+  with_items:
+    - ubuntu-desktop
+
+# install only if ubuntu 20
+- name: Prerequisites (2)
+  apt: name=yaru-theme-gtk state=latest
+  when: ansible_distribution_release == "focal"
+
+- name: Configure desktop environment
+  import_tasks: desktop.yml
+
+- name: Virtual display
+  import_tasks: virtual-display.yml
+
+# updates bus id of the gpu in the xorg.conf file
+# needed for starting from the image without ansible
+- name: Bus ID updater
+  import_tasks: busid.yml
+
+# install misc utils
+- name: Misc utils
+  import_tasks: utils.yml
+
+# VNC
+- name: VNC server
+  import_tasks: vnc.yml
+  tags:
+    - skip_in_ovami
+
+# NoMachine
+
+- name: NoMachine server
+  import_tasks: nomachine.yml
+  when: "'nxserver.service' not in ansible_facts.services"
+  tags:
+    - skip_in_image
+    - skip_in_ovami
+
+# do reboots if needed
+- name: Reboot if needed
+  meta: flush_handlers

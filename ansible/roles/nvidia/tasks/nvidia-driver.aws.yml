@@ -1,0 +1,47 @@
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+---
+- name: AWS / Add CUDA keyring
+  apt:
+    deb: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.1-1_all.deb
+
+- name: AWS / Blacklist the nouveau driver module
+  kernel_blacklist: name=nouveau
+    state=present
+
+- name: AWS / Install packages
+  apt: name={{ item }}
+    state=latest
+    update_cache=yes
+  with_items:
+    - xserver-xorg
+    - "{{ nvidia_driver_package }}"
+
+- name: AWS / Enable persistent mode for the driver
+  shell: nvidia-smi -pm ENABLED
+
+- name: AWS / Check if reboot required
+  stat:
+    path: /var/run/reboot-required
+  register: reboot_required_file
+
+- name: AWS / Reboot and wait
+  reboot:
+    post_reboot_delay: 5
+    connect_timeout: 3
+    reboot_timeout: 600
+  when: reboot_required_file.stat.exists == true

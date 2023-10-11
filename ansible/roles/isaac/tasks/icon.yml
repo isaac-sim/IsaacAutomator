@@ -1,0 +1,65 @@
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+- name: Make sure dirs exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0755
+  with_items:
+    - /home/{{ ansible_user }}/Pictures
+    - /home/{{ ansible_user }}/Desktop
+
+- name: Upload icon
+  copy:
+    src: "{{ item }}"
+    dest: /home/{{ ansible_user }}/Pictures/isaacsim-{{ item }}
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0644
+  with_items:
+    - icon.png
+    - icon-shell.png
+
+- name: Create desktop icon
+  copy:
+    src: "{{ item }}"
+    dest: /home/{{ ansible_user }}/Desktop/{{ item }}
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0644
+  with_items:
+    - isaacsim.desktop
+    - isaacsim-shell.desktop
+
+- name: Allow execution of desktop icon
+  shell: gio set /home/{{ ansible_user }}/Desktop/{{ item }} metadata::trusted true
+  become_user: "{{ ansible_user }}"
+  with_items:
+    - isaacsim.desktop
+    - isaacsim-shell.desktop
+
+- name: Set permissions for desktop icon
+  file:
+    path: /home/{{ ansible_user }}/Desktop/{{ item }}
+    mode: 0755
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  with_items:
+    - isaacsim.desktop
+    - isaacsim-shell.desktop

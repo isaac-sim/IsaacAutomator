@@ -1,0 +1,73 @@
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+- name: Create cache directory
+  file:
+    path: "{{ isaac_cache_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0777
+
+- name: Launch scripts [1]
+  file:
+    path: /home/ubuntu/Desktop
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+
+- name: Launch scripts [2]
+  template: src={{ item }}
+    dest=/home/ubuntu/Desktop/{{ item }}
+    mode=755
+    owner=ubuntu
+    group=ubuntu
+  with_items:
+    - isaacsim.sh
+    - isaacsim-shell.sh
+
+- name: Log into nvcr.io
+  shell: until docker login -u "\$oauthtoken" --password "{{ ngc_api_key }}" nvcr.io; do sleep 10; done
+  ignore_errors: true
+  become_user: "{{ item }}"
+  with_items:
+    - root
+    - ubuntu
+  timeout: 60 # for each item
+  when: ngc_api_key != "none"
+  tags:
+    - skip_in_image
+
+- name: Pull Isaac Sim image
+  docker_image:
+    name: "{{ isaac_image }}"
+    repository: nvcr.io
+    source: pull
+  ignore_errors: true
+  when: ngc_api_key != "none"
+  tags:
+    - skip_in_image
+
+- name: Start Isaac Sim
+  shell: |
+    export DISPLAY=":0"
+    gnome-terminal -- bash -c "./isaacsim.sh; exec bash"
+  args:
+    chdir: /home/{{ ansible_user }}/Desktop
+  become_user: "{{ ansible_user }}"
+  when: ngc_api_key != "none"
+  tags:
+    - skip_in_image

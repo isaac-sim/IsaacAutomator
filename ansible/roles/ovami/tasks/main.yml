@@ -1,0 +1,44 @@
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+# this role is meant to be executed while creating
+# the OV AMI, so no skip tags are present
+
+# for NV-use only, don't try to make too much sense of it
+
+- name: Prerequisites
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - libvulkan-dev
+    - firefox
+    - xdg-utils
+
+- name: NICE DCV
+  import_tasks: nice_dcv.yml
+
+- name: OV Launcher
+  import_tasks: ov_launcher.yml
+
+- name: Install VS Code
+  import_tasks: vscode.yml
+
+- name: Set wallpaper
+  import_tasks: wallpaper.yml
+
+- name: Configure cloud-init
+  import_tasks: cloud_init.yml

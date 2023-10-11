@@ -1,0 +1,19 @@
+- name: Disable swap and remove /swapfile
+  shell: "[[ -f /swapfile ]] && (swapoff -a && rm -f /swapfile) || echo 'no swap file found'"
+
+- name: Create /swapfile
+  shell: "fallocate -l {{ swap_size }} /swapfile"
+
+- name: Set permissions on /swapfile
+  shell: "chmod 600 /swapfile"
+
+- name: Make swap in /swapfile
+  shell: "mkswap /swapfile"
+
+- name: Add /swapfile to fstab
+  lineinfile:
+    path: /etc/fstab
+    line: "/swapfile none swap sw 0 0"
+
+- name: Enable swap
+  shell: "swapon -a"

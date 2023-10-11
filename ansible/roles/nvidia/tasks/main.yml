@@ -1,0 +1,54 @@
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+---
+# driver
+
+- name: Detect if the driver is already installed
+  shell: lsmod | grep nvidia_drm | wc -l
+  register: driver_installed
+
+- import_tasks: nvidia-driver.azure.yml
+  when: driver_installed.stdout == "0" and cloud == "azure"
+
+- import_tasks: nvidia-driver.aws.yml
+  when: driver_installed.stdout == "0" and cloud == "aws"
+
+- import_tasks: nvidia-driver.gcp.yml
+  when: driver_installed.stdout == "0" and cloud == "gcp"
+
+# Disable ECC
+# Needs to be done after restoring from image or from scratch
+- name: Detect ECC status
+  shell: nvidia-smi --query-gpu="ecc.mode.current" --format="csv,noheader" -i 0
+  register: ecc_status
+- debug:
+    msg: "ECC status: {{ ecc_status.stdout }}"
+#
+- name: Disable ECC
+  shell: nvidia-smi --ecc-config=0
+  when: ecc_status.stdout == 'Enabled'
+#
+- name: Reboot and wait
+  reboot: post_reboot_delay=5 connect_timeout=3 reboot_timeout=600
+  when: ecc_status.stdout == 'Enabled'
+
+# nvidia-docker2
+
+- package_facts: manager=apt
+
+- import_tasks: nvidia-docker.yml
+  when: '"nvidia-docker2" not in ansible_facts.packages'

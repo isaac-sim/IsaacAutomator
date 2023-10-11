@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+import os
+
+import click
+
+from python.config import c as config
+from python.debug import debug_break  # noqa
+from python.utils import (
+    colorize_prompt,
+    colorize_result,
+    deployments,
+    read_meta,
+    read_tf_output,
+    shell_command,
+)
+
+APP_NAMES = [
+    "isaac",
+    "ovami",
+]
+
+
+@click.command()
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    show_default=True,
+)
+@click.option(
+    "--deployment-name",
+    type=click.Choice(deployments()),
+    default=(deployments()[0] if len(deployments()) > 0 else ""),
+    prompt=colorize_prompt("Deployment name to download results from"),
+)
+@click.option(
+    "--remote-dir",
+    default=config["default_remote_results_dir"],
+    prompt=False,
+    show_default=True,
+    help="Remote directory to download results from",
+)
+@click.option(
+    "--delete/--no-delete",
+    default=True,
+    show_default=True,
+    help="Alow deleting when syncing results?",
+)
+@click.option(
+    "--app",
+    default="all",
+    type=click.Choice(["all"] + APP_NAMES),
+    help="Application to download results from",
+)
+def main(
+    app: str,
+    debug: bool,
+    delete: bool,
+    remote_dir: str,
+    deployment_name: str,
+):
+    # list of apps to download from
+    apps = APP_NAMES if app == "all" else [app]
+
+    # read meta
+    meta = read_meta(deployment_name, debug)
+
+    for app_name in apps:
+        if meta["params"][app_name]:
+            ip = read_tf_output(deployment_name, f"{app_name}_ip", verbose=debug)
+            ssh_key_file = f"{config['state_dir']}/{deployment_name}.pem"
+            output_dir = f"{config['results_dir']}/{deployment_name}/{app_name}"
+            os.makedirs(output_dir, exist_ok=True)
+
+            # strip trailing slashes
+            remote_dir = remote_dir.rstrip("/")
+            output_dir = output_dir.rstrip("/")
+
+            # make sure remote directory exists
+            shell_command(
+                f"ssh -i {ssh_key_file} -o StrictHostKeyChecking=no ubuntu@{ip}"
+                + f" \"[ ! -d '{remote_dir}' ] && sudo mkdir -p '{remote_dir}'\"",
+                verbose=debug,
+                exit_on_error=False,
+                capture_output=False,
+            )
+
+            rsync_command = (
+                "rsync -avz --progress --rsync-path 'sudo rsync'"
+                + (" --delete" if delete else "")
+                + f" -e 'ssh -i {ssh_key_file} -o StrictHostKeyChecking=no'"
+                + f' ubuntu@{ip}:"{remote_dir}/" "{output_dir}"'
+            )
+
+            shell_command(
+                rsync_command,
+                verbose=debug,
+                exit_on_error=True,
+                capture_output=False,
+            )
+
+            # get size of output_dir
+            output_dir_size = shell_command(
+                f"du -hs '{output_dir}'",
+                verbose=debug,
+                exit_on_error=True,
+                capture_output=True,
+            ).stdout.decode()
+            output_dir_size = output_dir_size.split("\t")[0]
+
+            # relative of two directories
+            relative_output_dir = os.path.relpath(output_dir, config["app_dir"])
+
+            click.echo(
+                colorize_result(
+                    f'* Results downloaded to "{relative_output_dir}" ({output_dir_size})'
+                )
+            )
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,74 @@
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+# @see https://cloud.google.com/compute/docs/gpus/install-grid-drivers
+
+- name: GCP / Prerequisites (APT)
+  apt: name={{ item }}
+    state=latest
+    update_cache=yes
+    install_recommends=no
+  with_items:
+    - build-essential
+    - python3-pip # required by asible get_url
+
+- name: GCP / Prerequisites (PIP)
+  pip:
+    # older version is needed by ansible get_url for some reason
+    name: requests==2.20.1
+    executable: pip3
+
+# download driver
+- name: GCP / Download GRID driver
+  get_url:
+    url: https://storage.googleapis.com/nvidia-drivers-us-public/GRID/vGPU15.2/NVIDIA-Linux-x86_64-525.105.17-grid.run
+    dest: /tmp/nvidia_driver.run
+    mode: 0755
+
+- name: GCP / Install GRID driver
+  shell: "/tmp/nvidia_driver.run \
+    --x-module-path=/usr/lib/xorg/modules/drivers \
+    --run-nvidia-xconfig  \
+    --disable-nouveau \
+    --no-questions \
+    --silent"
+
+- name: GCP / Enable persistent mode for the driver
+  shell: nvidia-smi -pm ENABLED
+
+- name: GCP / Copy gridd.conf
+  copy: >
+    src=/etc/nvidia/gridd.conf.template
+    dest=/etc/nvidia/gridd.conf
+    remote_src=true
+    force=no
+
+- name: GCP / Update GRID config [1]
+  lineinfile:
+    path: /etc/nvidia/gridd.conf
+    line: "{{ item }}"
+    state: present
+  with_items:
+    - "IgnoreSP=FALSE"
+    - "EnableUI=TRUE"
+
+- name: GCP / Update GRID config [2]
+  lineinfile:
+    path: /etc/nvidia/gridd.conf
+    regexp: "^FeatureType=(.*)$"
+    line: 'FeatureType=\2'
+    state: present
+    backrefs: yes

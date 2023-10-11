@@ -1,0 +1,28 @@
+# Avoid Terraform-generated files
+**/.terraform*
+
+# Avoid GIT history
+.git
+
+# Development data
+__*
+
+# Avoid development files
+.dockerignore
+.gitignore
+.gitlab-ci.yml
+Dockerfile
+
+# Generated data
+/state
+*.hosts
+*.swp
+.mypy_cache/
+.pytest_cache/
+
+# Avoid VSCode files
+.devcontainer/
+.vscode/
+
+results/*
+uploads/*

@@ -1,0 +1,218 @@
+#!/usr/bin/env python3
+
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+import click
+
+from python.config import c as config
+from python.debug import debug_break  # noqa
+from python.deploy_command import DeployCommand
+from python.deployer import Deployer
+from python.utils import (
+    colorize_error,
+    colorize_info,
+    colorize_prompt,
+    gcp_login,
+    shell_command,
+)
+
+
+class DeployGCPCommand(DeployCommand):
+    """
+    Defines options specific for "deploy-gcp" command.
+    """
+
+    # azure instace types capable of running isaac
+    GCP_OVKIT_INSTANCE_TYPES = (
+        [f"g2-standard-{i}" for i in [4, 8, 12, 16, 32]]
+        + [f"n1-standard-{i}" for i in [4, 8, 16, 32, 64, 96]]
+        + [f"n1-highmem-{i}" for i in [4, 8, 16, 32, 64, 96]]
+        + [f"n1-highcpu-{i}" for i in [16, 32, 64, 96]]
+    )
+
+    @staticmethod
+    def project_callback(ctx, param, value):
+        if value == "":
+            raise click.BadParameter(colorize_error("Project ID cannot be empty"))
+        return value
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # display banner saying that this is experimental feature
+        click.echo(
+            click.style(
+                "******************************************************\n"
+                + "* GCP SUPPORT IS EXPERIMENTAL. USE AT YOUR OWN RISK! *\n"
+                + "******************************************************\n",
+                fg="bright_red",
+                italic=True,
+            )
+        )
+
+        # --zone
+
+        help_message = (
+            "Zone (see https://cloud.google.com/compute/docs/gpus/gpu-regions-zones "
+            + "for NVIDIA RTX virtual workstations availability)"
+        )
+
+        self.params.insert(
+            # insert before --isaac option
+            self.param_index("isaac"),
+            click.core.Option(
+                ("--zone",),
+                prompt=colorize_prompt(f"* {help_message}"),
+                callback=lambda ctx, param, value: value.lower(),
+                default="us-central1-a",
+                show_default=True,
+                help=help_message,
+            ),
+        )
+
+        # --project-id
+
+        help_message = (
+            "Project ID (see https://console.cloud.google.com/cloud-resource-manager)"
+        )
+
+        self.params.insert(
+            # insert after --zone option
+            self.param_index("zone") + 1,
+            click.core.Option(
+                ("--project",),
+                prompt=colorize_prompt(f"* {help_message}"),
+                callback=self.project_callback,
+                default=shell_command(
+                    "gcloud config list --format 'value(core.project)'",
+                    verbose=False,
+                    exit_on_error=False,
+                    capture_output=True,
+                )
+                .stdout.decode("utf-8")
+                .strip(),
+                help=help_message,
+            ),
+        )
+
+        # --isaac-instance-type
+
+        self.params.insert(
+            # insert after --isaac option
+            self.param_index("isaac") + 1,
+            click.core.Option(
+                ("--isaac-instance-type",),
+                prompt=colorize_prompt(
+                    "* Isaac Sim Instance Type "
+                    + "(see https://cloud.google.com/compute/docs/general-purpose-machines for details)"
+                ),
+                type=click.Choice(self.GCP_OVKIT_INSTANCE_TYPES),
+                show_default=True,
+                default=config["gcp_default_isaac_instance_type"],
+                help="Isaac Sim instance type.",
+            ),
+        )
+
+        # --isaac-gpu-count
+
+        self.params.insert(
+            # insert after --isaac-instance-type option
+            self.param_index("isaac_instance_type") + 1,
+            click.core.Option(
+                ("--isaac-gpu-count",),
+                prompt=colorize_prompt(
+                    "* Isaac Sim: Number of GPUs. N1 instances use NVIDIA T4; G2 use NVIDIA L4 GPUs."
+                ),
+                show_default=True,
+                type=click.Choice(["1", "2", "4"]),
+                default=str(config["gcp_default_isaac_gpu_count"]),
+                help="Number of GPUs to attach to Isaac Sim instance.",
+            ),
+        )
+
+
+class GCPDeployer(Deployer):
+    """
+    Deploys stuff to Azure
+    """
+
+    def __init__(self, params, config):
+        super().__init__(params, config)
+
+    def main(self):
+        # display warning about unsupported options
+        if self.params["from_image"]:
+            raise click.BadParameter(
+                colorize_error("--from-image option is not supported for GCP yet")
+            )
+
+        # ask what to do if deployment already exists
+        self.ask_existing_behavior()
+
+        # check if ngc api key is valid and has access to Isaac Sim
+        if self.params["isaac"]:
+            self.validate_ngc_api_key(self.params["isaac_image"])
+
+        if self.existing_behavior != "run_ansible":
+            # create tfvars file, deal with existing deployment
+            self.create_tfvars(
+                {
+                    "zone": self.params["zone"],
+                    "project": self.params["project"],
+                    "isaac_gpu_count": int(self.params["isaac_gpu_count"]),
+                    "isaac_gpu_type": {
+                        "g2": "nvidia-l4",
+                        "n1": "nvidia-tesla-t4",
+                    }[self.params["isaac_instance_type"][:2]],
+                }
+            )
+
+            # login into gcp
+            gcp_login(verbose=self.params["debug"])
+
+            # run terraform
+            click.echo(colorize_info("* Running Terraform..."))
+            self.initialize_terraform(cwd="/app/terraform/gcp")
+            self.run_terraform(cwd="/app/terraform/gcp")
+
+        # create ansible inventory file
+        self.create_ansible_inventory()
+
+        # export ssh key from terraform
+        self.export_ssh_key()
+
+        # save instructions
+        self.output_deployment_info(print_text=False)
+
+        # run ansible
+        self.run_all_ansible()
+
+        # upload user data
+        if self.params["upload"]:
+            self.upload_user_data()
+
+        # connection info for the user
+        self.output_deployment_info()
+
+
+@click.command(cls=DeployGCPCommand)
+def main(**params):
+    GCPDeployer(params, config).main()
+
+
+if __name__ == "__main__":
+    main()  # noqa

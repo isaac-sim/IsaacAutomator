@@ -1,0 +1,21 @@
+# Avoid Terraform-generated files
+**/.terraform*
+**/*.tfstate*
+
+# Avoid GIT history
+.git
+
+# Development data
+__*
+
+# Generated data
+/state
+*.hosts
+*.swp
+
+__pycache__
+**/*_cache
+
+results/*
+uploads/*
+.DS_Store
