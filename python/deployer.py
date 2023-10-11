@@ -61,7 +61,9 @@ class Deployer:
         Save command parameters in json file, just in case
         """
 
-        meta_file = f"{self.config['state_dir']}/{self.params['deployment_name']}.json"
+        meta_file = (
+            f"{self.config['state_dir']}/{self.params['deployment_name']}/meta.json"
+        )
 
         data = {
             "command": self.recreate_command_line(separator=" "),
@@ -70,6 +72,7 @@ class Deployer:
             "config": self.config,
         }
 
+        Path(meta_file).parent.mkdir(parents=True, exist_ok=True)
         Path(meta_file).write_text(json.dumps(data, indent=4))
 
         if self.params["debug"]:

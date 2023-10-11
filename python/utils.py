@@ -93,7 +93,7 @@ def read_meta(deployment_name: str, verbose: bool = False):
     Read metadata from json file
     """
 
-    meta_file = f"{config['state_dir']}/{deployment_name}.json"
+    meta_file = f"{config['state_dir']}/{deployment_name}/meta.json"
 
     if os.path.isfile(meta_file):
         data = json.loads(Path(meta_file).read_text())
