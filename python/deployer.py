@@ -61,7 +61,9 @@ class Deployer:
         Save command parameters in json file, just in case
         """
 
-        meta_file = f"{self.config['state_dir']}/{self.params['deployment_name']}.json"
+        meta_file = (
+            f"{self.config['state_dir']}/{self.params['deployment_name']}/meta.json"
+        )
 
         data = {
             "command": self.recreate_command_line(separator=" "),
@@ -70,6 +72,7 @@ class Deployer:
             "config": self.config,
         }
 
+        Path(meta_file).parent.mkdir(parents=True, exist_ok=True)
         Path(meta_file).write_text(json.dumps(data, indent=4))
 
         if self.params["debug"]:
@@ -117,7 +120,7 @@ class Deployer:
         self.existing_behavior = existing
 
         if existing == "ask" and os.path.isfile(
-            f"{self.config['state_dir']}/{deployment_name}.tfvars"
+            f"{self.config['state_dir']}/{deployment_name}/.tfvars"
         ):
             self.existing_behavior = click.prompt(
                 text=colorize_prompt(
@@ -243,8 +246,8 @@ class Deployer:
 
         # deal with existing deployment:
 
-        tfvars_file = f"{self.config['state_dir']}/{deployment_name}.tfvars"
-        tfstate_file = f"{self.config['state_dir']}/{deployment_name}.tfstate"
+        tfvars_file = f"{self.config['state_dir']}/{deployment_name}/.tfvars"
+        tfstate_file = f"{self.config['state_dir']}/{deployment_name}/.tfstate"
 
         # tfvars
         if os.path.exists(tfvars_file):
@@ -263,7 +266,7 @@ class Deployer:
                 if debug:
                     click.echo(colorize_info(f'* Deleted "{tfstate_file}"...'))
 
-        # create .tfvars file
+        # create tfvars file
         if (
             self.existing_behavior == "modify"
             or self.existing_behavior == "overwrite"
@@ -273,13 +276,16 @@ class Deployer:
 
     def _write_tfvars_file(self, path: str, tfvars: dict):
         """
-        Write .tfvars file
+        Write tfvars file
         """
 
         debug = self.params["debug"]
 
         if debug:
             click.echo(colorize_info(f'* Created tfvars file "{path}"'))
+
+        # create <dn>/ directory if it doesn't exist
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
 
         with open(path, "w") as f:
             for key, value in tfvars.items():
@@ -338,8 +344,9 @@ class Deployer:
 
         # write to file
         if write:
-            inventory_file = f"{self.config['state_dir']}/{deployment_name}.inventory"
-            Path(inventory_file).write_text(res)
+            inventory_file = f"{self.config['state_dir']}/{deployment_name}/.inventory"
+            Path(inventory_file).parent.mkdir(parents=True, exist_ok=True)  # create dir
+            Path(inventory_file).write_text(res)  # write file
             if debug:
                 click.echo(
                     colorize_info(
@@ -373,8 +380,8 @@ class Deployer:
 
         shell_command(
             "terraform apply -auto-approve "
-            + f"-state={self.config['state_dir']}/{deployment_name}.tfstate "
-            + f"-var-file={self.config['state_dir']}/{deployment_name}.tfvars",
+            + f"-state={self.config['state_dir']}/{deployment_name}/.tfstate "
+            + f"-var-file={self.config['state_dir']}/{deployment_name}/.tfvars",
             cwd=cwd,
             verbose=debug,
         )
@@ -388,9 +395,9 @@ class Deployer:
         deployment_name = self.params["deployment_name"]
 
         shell_command(
-            f"terraform output -state={self.config['state_dir']}/{deployment_name}.tfstate -raw ssh_key"
-            + f" > {self.config['state_dir']}/{deployment_name}.pem && "
-            + f"chmod 0600 {self.config['state_dir']}/{deployment_name}.pem",
+            f"terraform output -state={self.config['state_dir']}/{deployment_name}/.tfstate -raw ssh_key"
+            + f" > {self.config['state_dir']}/{deployment_name}/key.pem && "
+            + f"chmod 0600 {self.config['state_dir']}/{deployment_name}/key.pem",
             cwd=f"{self.config['app_dir']}/terraform/azure",
             verbose=debug,
         )
@@ -404,7 +411,7 @@ class Deployer:
         deployment_name = self.params["deployment_name"]
 
         shell_command(
-            f"ansible-playbook -i {self.config['state_dir']}/{deployment_name}.inventory "
+            f"ansible-playbook -i {self.config['state_dir']}/{deployment_name}/.inventory "
             + f"{playbook_name}.yml {'-vv' if self.params['debug'] else ''}",
             cwd=cwd,
             verbose=debug,
@@ -437,7 +444,7 @@ class Deployer:
             deployment_name = self.params["deployment_name"]
 
             r = shell_command(
-                f"terraform output -state='{self.config['state_dir']}/{deployment_name}.tfstate' -raw '{key}'",
+                f"terraform output -state='{self.config['state_dir']}/{deployment_name}/.tfstate' -raw '{key}'",
                 capture_output=True,
                 exit_on_error=False,
                 verbose=debug,
@@ -472,7 +479,7 @@ class Deployer:
 
     # generate ssh connection command for the user
     def ssh_connection_command(self, ip: str):
-        r = f"ssh -i state/{self.params['deployment_name']}.pem "
+        r = f"ssh -i state/{self.params['deployment_name']}/key.pem "
         r += f"-o StrictHostKeyChecking=no ubuntu@{ip}"
         if self.params["ssh_port"] != 22:
             r += f" -p {self.params['ssh_port']}"
@@ -481,7 +488,7 @@ class Deployer:
     def output_deployment_info(self, extra_text: str = "", print_text=True):
         """
         Print connection info for the user
-        Save info to file (_state_dir_/_deployment_name_.txt)
+        Save info to file (_state_dir_/_deployment_name_/info.txt)
         """
 
         isaac = "isaac" in self.params and self.params["isaac"]
@@ -497,7 +504,7 @@ class Deployer:
 1. Click "Add" button.
 2. Enter Host: "__ip__".
 3. In "Configuration" > "Use key-based authentication with a key you provide",
-   select file "state/{deployment_name}.pem".
+   select file "state/{deployment_name}/key.pem".
 4. Click "Connect" button.
 5. Enter "ubuntu" as a username when prompted.
 """
@@ -510,7 +517,7 @@ class Deployer:
 
         # print connection info
 
-        instructions_file = f"{self.config['state_dir']}/{deployment_name}.txt"
+        instructions_file = f"{self.config['state_dir']}/{deployment_name}/info.txt"
         instructions = "\n\n" + "- " * 40
 
         if isaac:
@@ -564,6 +571,10 @@ class Deployer:
         instructions_txt = (
             "* Command:\n\n" + self.recreate_command_line() + instructions
         )  # add command line
+
+        # create <dn>/ directory if it doesn't exist
+        Path(instructions_file).parent.mkdir(parents=True, exist_ok=True)
+        # write file
         Path(instructions_file).write_text(instructions_txt)
 
         return instructions

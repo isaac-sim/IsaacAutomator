@@ -91,7 +91,7 @@ Tip: Run `./deploy-azure --help` to see more options.
 
 ### Connecting to Deployed Instances
 
-Look for Nucleus URL, SSH and VNC connection instructions at the end of the command output. Additionally, this info is saved in `state/<deployment-name>.txt` file.
+Look for Nucleus URL, SSH and VNC connection instructions at the end of the command output. Additionally, this info is saved in `state/<deployment-name>/info.txt` file.
 
 ### Running Isaac Sim
 

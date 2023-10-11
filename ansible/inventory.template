@@ -10,7 +10,7 @@ omniverse_user="{omniverse_user}"
 deployment_name="{deployment_name}"
 omniverse_password="{omniverse_password}"
 system_user_password="{system_user_password}"
-ansible_ssh_private_key_file="{config[state_dir]}/{deployment_name}.pem"
+ansible_ssh_private_key_file="{config[state_dir]}/{deployment_name}/key.pem"
 
 [targets:children]
 isaac
