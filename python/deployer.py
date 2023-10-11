@@ -488,7 +488,7 @@ class Deployer:
     def output_deployment_info(self, extra_text: str = "", print_text=True):
         """
         Print connection info for the user
-        Save info to file (_state_dir_/_deployment_name_.txt)
+        Save info to file (_state_dir_/_deployment_name_/info.txt)
         """
 
         isaac = "isaac" in self.params and self.params["isaac"]
@@ -517,7 +517,7 @@ class Deployer:
 
         # print connection info
 
-        instructions_file = f"{self.config['state_dir']}/{deployment_name}.txt"
+        instructions_file = f"{self.config['state_dir']}/{deployment_name}/info.txt"
         instructions = "\n\n" + "- " * 40
 
         if isaac:
@@ -571,6 +571,10 @@ class Deployer:
         instructions_txt = (
             "* Command:\n\n" + self.recreate_command_line() + instructions
         )  # add command line
+
+        # create <dn>/ directory if it doesn't exist
+        Path(instructions_file).parent.mkdir(parents=True, exist_ok=True)
+        # write file
         Path(instructions_file).write_text(instructions_txt)
 
         return instructions
