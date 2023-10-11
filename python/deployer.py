@@ -341,8 +341,9 @@ class Deployer:
 
         # write to file
         if write:
-            inventory_file = f"{self.config['state_dir']}/{deployment_name}.inventory"
-            Path(inventory_file).write_text(res)
+            inventory_file = f"{self.config['state_dir']}/{deployment_name}/inventory"
+            Path(inventory_file).parent.mkdir(parents=True, exist_ok=True)  # create dir
+            Path(inventory_file).write_text(res)  # write file
             if debug:
                 click.echo(
                     colorize_info(
@@ -407,7 +408,7 @@ class Deployer:
         deployment_name = self.params["deployment_name"]
 
         shell_command(
-            f"ansible-playbook -i {self.config['state_dir']}/{deployment_name}.inventory "
+            f"ansible-playbook -i {self.config['state_dir']}/{deployment_name}/inventory "
             + f"{playbook_name}.yml {'-vv' if self.params['debug'] else ''}",
             cwd=cwd,
             verbose=debug,
