@@ -79,8 +79,8 @@ def main(
     if dryrun:
         print(colorize_info("* Dry run - not destroying anything"))
 
-    tfstate_file = Path(f"{config['state_dir']}/{deployment_name}.tfstate").absolute()
-    tfvars_file = Path(f"{config['state_dir']}/{deployment_name}.tfvars").absolute()
+    tfstate_file = Path(f"{config['state_dir']}/{deployment_name}/tfstate").absolute()
+    tfvars_file = Path(f"{config['state_dir']}/{deployment_name}/tfvars").absolute()
 
     # determine what cloud the deployment is for
 

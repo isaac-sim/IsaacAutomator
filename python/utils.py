@@ -111,7 +111,7 @@ def read_tf_output(deployment_name, output, verbose=False):
 
     return (
         shell_command(
-            f"terraform output -state={config['state_dir']}/{deployment_name}.tfstate -raw {output}",
+            f"terraform output -state={config['state_dir']}/{deployment_name}/tfstate -raw {output}",
             capture_output=True,
             exit_on_error=False,
             verbose=verbose,

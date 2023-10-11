@@ -120,7 +120,7 @@ class Deployer:
         self.existing_behavior = existing
 
         if existing == "ask" and os.path.isfile(
-            f"{self.config['state_dir']}/{deployment_name}.tfvars"
+            f"{self.config['state_dir']}/{deployment_name}/tfvars"
         ):
             self.existing_behavior = click.prompt(
                 text=colorize_prompt(
@@ -246,8 +246,8 @@ class Deployer:
 
         # deal with existing deployment:
 
-        tfvars_file = f"{self.config['state_dir']}/{deployment_name}.tfvars"
-        tfstate_file = f"{self.config['state_dir']}/{deployment_name}.tfstate"
+        tfvars_file = f"{self.config['state_dir']}/{deployment_name}/tfvars"
+        tfstate_file = f"{self.config['state_dir']}/{deployment_name}/tfstate"
 
         # tfvars
         if os.path.exists(tfvars_file):
@@ -266,7 +266,7 @@ class Deployer:
                 if debug:
                     click.echo(colorize_info(f'* Deleted "{tfstate_file}"...'))
 
-        # create .tfvars file
+        # create tfvars file
         if (
             self.existing_behavior == "modify"
             or self.existing_behavior == "overwrite"
@@ -276,13 +276,16 @@ class Deployer:
 
     def _write_tfvars_file(self, path: str, tfvars: dict):
         """
-        Write .tfvars file
+        Write tfvars file
         """
 
         debug = self.params["debug"]
 
         if debug:
             click.echo(colorize_info(f'* Created tfvars file "{path}"'))
+
+        # create <dn>/ directory if it doesn't exist
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
 
         with open(path, "w") as f:
             for key, value in tfvars.items():
@@ -377,8 +380,8 @@ class Deployer:
 
         shell_command(
             "terraform apply -auto-approve "
-            + f"-state={self.config['state_dir']}/{deployment_name}.tfstate "
-            + f"-var-file={self.config['state_dir']}/{deployment_name}.tfvars",
+            + f"-state={self.config['state_dir']}/{deployment_name}/tfstate "
+            + f"-var-file={self.config['state_dir']}/{deployment_name}/tfvars",
             cwd=cwd,
             verbose=debug,
         )
@@ -392,7 +395,7 @@ class Deployer:
         deployment_name = self.params["deployment_name"]
 
         shell_command(
-            f"terraform output -state={self.config['state_dir']}/{deployment_name}.tfstate -raw ssh_key"
+            f"terraform output -state={self.config['state_dir']}/{deployment_name}/tfstate -raw ssh_key"
             + f" > {self.config['state_dir']}/{deployment_name}.pem && "
             + f"chmod 0600 {self.config['state_dir']}/{deployment_name}.pem",
             cwd=f"{self.config['app_dir']}/terraform/azure",
@@ -441,7 +444,7 @@ class Deployer:
             deployment_name = self.params["deployment_name"]
 
             r = shell_command(
-                f"terraform output -state='{self.config['state_dir']}/{deployment_name}.tfstate' -raw '{key}'",
+                f"terraform output -state='{self.config['state_dir']}/{deployment_name}/tfstate' -raw '{key}'",
                 capture_output=True,
                 exit_on_error=False,
                 verbose=debug,
