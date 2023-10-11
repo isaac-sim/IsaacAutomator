@@ -3,16 +3,34 @@
 
 # @see https://github.com/nodesource/distributions
 
+# Install Node.js prereqs
+- name: Install Node.js prereqs
+  apt:
+    name:
+      - curl
+      - ca-certificates
+      - gnupg
+    state: present
+
+# Check if /etc/apt/keyrings/nodesource.gpg exists
+- name: Check if NodeSource GPG key exists
+  stat:
+    path: /etc/apt/keyrings/nodesource.gpg
+  register: nodesource_gpg_file
+
 # Download and import the Nodesource GPG key
 - name: Download and import the Nodesource GPG key
-  apt_key:
-    url: https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
-    state: present
+  shell:
+    cmd: |
+      mkdir -p /etc/apt/keyrings
+      curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+  when: nodesource_gpg_file.stat.exists == False
 
 # Add the Nodesource repository
 - name: Add the Nodesource repository
   shell:
-    cmd: NODE_MAJOR=20 echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+    cmd: echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+  when: nodesource_gpg_file.stat.exists == False
 
 # Install nodejs package
 - name: install nodejs package
@@ -20,3 +38,11 @@
     name: nodejs
     state: present
     update_cache: yes
+  when: nodesource_gpg_file.stat.exists == False
+
+# Install NoVNC via npm
+- name: Install NoVNC via npm
+  npm:
+    name: novnc/novnc
+    global: yes
+    state: present
