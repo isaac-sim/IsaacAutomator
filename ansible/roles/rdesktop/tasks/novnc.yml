@@ -1,0 +1,22 @@
+# Install NoVNC
+# @see https://novnc.com/info.html
+
+# @see https://github.com/nodesource/distributions
+
+# Download and import the Nodesource GPG key
+- name: Download and import the Nodesource GPG key
+  apt_key:
+    url: https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
+    state: present
+
+# Add the Nodesource repository
+- name: Add the Nodesource repository
+  shell:
+    cmd: NODE_MAJOR=20 echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+
+# Install nodejs package
+- name: install nodejs package
+  apt:
+    name: nodejs
+    state: present
+    update_cache: yes
