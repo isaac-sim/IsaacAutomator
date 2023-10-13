@@ -1,0 +1,22 @@
+# goes to /etc/systemd/system/novnc.service
+
+[Unit]
+Description=noVNC Service
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=ubuntu
+Group=ubuntu
+Environment=
+ExecStartPre=
+ExecStart=/snap/bin/novnc --listen 6080 --idle-timeout 0
+ExecStartPost=
+ExecStop=
+ExecReload=
+
+[Install]
+WantedBy=multi-user.target

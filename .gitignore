@@ -1,6 +1,5 @@
 # Avoid Terraform-generated files
 **/.terraform*
-**/*.tfstate*
 
 # Avoid GIT history
 .git

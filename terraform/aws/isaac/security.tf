@@ -37,6 +37,14 @@ resource "aws_security_group" "sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # novnc
+  ingress {
+    from_port   = 6080
+    to_port     = 6080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   # allow outbound traffic
 
   egress {

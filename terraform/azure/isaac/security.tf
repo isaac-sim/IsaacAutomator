@@ -38,6 +38,18 @@ resource "azurerm_network_security_group" "sg" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
+
+  security_rule {
+    name                       = "noVNC"
+    priority                   = 106
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "TCP"
+    source_port_range          = "*"
+    destination_port_ranges    = ["6080"]
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
 }
 
 # security rule for custom ssh port

@@ -515,20 +515,26 @@ class Deployer:
 - Port: 5900
 - Password: {vnc_password}"""
 
+        nonvc_instruction = f"""* To connect to __app__ via noVNC:
+
+1. Open http://__ip__:6080/vnc.html?host=__ip__&port=6080 in your browser.
+2. Click "Connect" and use password \"{vnc_password}\""""
+
         # print connection info
 
         instructions_file = f"{self.config['state_dir']}/{deployment_name}/info.txt"
-        instructions = "\n\n" + "- " * 40
+        instructions = ""
 
         if isaac:
-            instructions += f"""\n
-* Isaac Sim is deployed at {self.tf_output('isaac_ip')}
+            instructions += f"""{'*' * (29+len(self.tf_output('isaac_ip')))}
+* Isaac Sim is deployed at {self.tf_output('isaac_ip')} *
+{'*' * (29+len(self.tf_output('isaac_ip')))}
 
 * To connect to Isaac Sim via SSH:
 
 {self.ssh_connection_command(self.tf_output('isaac_ip'))}
 
-{vnc_instruction}
+{nonvc_instruction}
 
 {nomachine_instruction}""".replace(
                 "__app__", "Isaac Sim"
@@ -565,16 +571,11 @@ class Deployer:
 
         # print instructions for the user
         if print_text:
-            click.echo(colorize_result(instructions))
-
-        # write instructions to file
-        instructions_txt = (
-            "* Command:\n\n" + self.recreate_command_line() + instructions
-        )  # add command line
+            click.echo(colorize_result("\n" + instructions))
 
         # create <dn>/ directory if it doesn't exist
         Path(instructions_file).parent.mkdir(parents=True, exist_ok=True)
         # write file
-        Path(instructions_file).write_text(instructions_txt)
+        Path(instructions_file).write_text(instructions)
 
         return instructions

@@ -1,0 +1,22 @@
+****************************************
+* Isaac Sim is deployed at 11.22.33.44 *
+****************************************
+
+* To connect to Isaac Sim via SSH:
+
+ssh -i state/test-1/key.pem -o StrictHostKeyChecking=no ubuntu@11.22.33.44
+
+* To connect to Isaac Sim via noVNC:
+
+1. Open http://11.22.33.44:6080/vnc.html?host=11.22.33.44&port=6080 in your browser.
+2. Click "Connect" and use password "__vnc_password__"
+
+* To connect to Isaac Sim via NoMachine:
+
+0. Download NoMachine client at https://downloads.nomachine.com/, install and launch it.
+1. Click "Add" button.
+2. Enter Host: "11.22.33.44".
+3. In "Configuration" > "Use key-based authentication with a key you provide",
+   select file "state/test-1/key.pem".
+4. Click "Connect" button.
+5. Enter "ubuntu" as a username when prompted.

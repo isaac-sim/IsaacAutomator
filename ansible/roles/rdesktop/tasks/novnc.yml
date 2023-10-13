@@ -1,0 +1,20 @@
+# Install noVNC
+
+# Install noVNC via snap package
+- name: Install noVNC
+  snap:
+    name: novnc
+    state: present
+
+- name: Add noVNC systemd config
+  template: src=novnc.service
+    dest=/etc/systemd/system
+    mode=0444
+    owner=root
+    group=root
+
+- name: Start noVNC
+  systemd: name=novnc
+    daemon_reload=yes
+    enabled=yes
+    state=restarted
