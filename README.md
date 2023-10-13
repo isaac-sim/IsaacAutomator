@@ -6,7 +6,7 @@
     - [AWS](#aws)
     - [GCP](#gcp)
     - [Azure](#azure)
-      - [If you have one subscription](#if-you-have-one-subscription)
+      - [If You Have Single Subscription](#if-you-have-single-subscription)
       - [If You Have Multiple Subscriptions](#if-you-have-multiple-subscriptions)
   - [Connecting to Deployed Instances](#connecting-to-deployed-instances)
   - [Running Isaac Sim](#running-isaac-sim)
@@ -64,7 +64,7 @@ Tip: Run `./deploy-gcp --help` to see more options.
 
 #### Azure
 
-##### If you have one subscription
+##### If You Have Single Subscription
 
 ```sh
 # enter the container
