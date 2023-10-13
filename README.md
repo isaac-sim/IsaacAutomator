@@ -150,11 +150,11 @@ You will be prompted to enter the deployment name to destroy.
 
 #### Issue
 
-Currently prebuilt NGC image is not compatible with Apple Silicon (M1/M2/etc).
+Some packages in the application docker container are not compatible with ARM architecture of Apple Silicon (M1/M2/etc).
 
 #### Workaround
 
-Build the container locally (using docker desktop or standalone docker installation) with the `--platform linux/x86_64` flag like so:
+Build the ap container using Docker Desktop or standalone Docker installation with the `--platform linux/x86_64` flag like so:
 
 ```sh
 docker build -t auto-isaac --platform linux/x86_64 .
