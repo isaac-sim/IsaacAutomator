@@ -63,6 +63,12 @@
     - skip_in_image
     - skip_in_ovami
 
+# NoVNC
+- name: NoVNC server
+  import_tasks: novnc.yml
+  tags:
+    - skip_in_ovami
+
 # do reboots if needed
 - name: Reboot if needed
   meta: flush_handlers

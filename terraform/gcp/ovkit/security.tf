@@ -60,6 +60,19 @@ resource "google_compute_firewall" "vnc" {
   source_ranges = ["0.0.0.0/0"]
 }
 
+# novnc
+resource "google_compute_firewall" "vnc" {
+  name    = "${var.prefix}-fwrules-novnc"
+  network = google_compute_network.default.self_link
+
+  allow {
+    protocol = "tcp"
+    ports    = ["6080"]
+  }
+
+  source_ranges = ["0.0.0.0/0"]
+}
+
 # custom ssh port
 resource "google_compute_firewall" "ssh_custom" {
   name    = "${var.prefix}-fwrules-ssh-custom"

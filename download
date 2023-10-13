@@ -84,7 +84,7 @@ def main(
     for app_name in apps:
         if meta["params"][app_name]:
             ip = read_tf_output(deployment_name, f"{app_name}_ip", verbose=debug)
-            ssh_key_file = f"{config['state_dir']}/{deployment_name}.pem"
+            ssh_key_file = f"{config['state_dir']}/{deployment_name}/key.pem"
             output_dir = f"{config['results_dir']}/{deployment_name}/{app_name}"
             os.makedirs(output_dir, exist_ok=True)
 

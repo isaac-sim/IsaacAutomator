@@ -1,0 +1,10 @@
+region                = "us-east-1"
+ovami_enabled         = "false"
+aws_access_key_id     = "%aws-access-key-id%"
+aws_secret_access_key = "%aws_secret_access_key%"
+isaac_enabled         = "true"
+isaac_instance_type   = "g5.2xlarge"
+prefix                = "auto-isaac"
+ssh_port              = 22
+from_image            = "false"
+deployment_name       = "test-1"

@@ -84,8 +84,13 @@ def shell_command(
 def deployments():
     """List existing deployments by name"""
     state_dir = config["state_dir"]
-    tfstate_files = glob(os.path.join(state_dir, "*.*"))
-    return sorted(list(set([os.path.basename(p).split(".")[0] for p in tfstate_files])))
+    deployments = sorted(
+        [
+            os.path.basename(os.path.dirname(d))
+            for d in glob(os.path.join(state_dir, "*/"))
+        ]
+    )
+    return deployments
 
 
 def read_meta(deployment_name: str, verbose: bool = False):
@@ -93,7 +98,7 @@ def read_meta(deployment_name: str, verbose: bool = False):
     Read metadata from json file
     """
 
-    meta_file = f"{config['state_dir']}/{deployment_name}.json"
+    meta_file = f"{config['state_dir']}/{deployment_name}/meta.json"
 
     if os.path.isfile(meta_file):
         data = json.loads(Path(meta_file).read_text())
@@ -111,7 +116,7 @@ def read_tf_output(deployment_name, output, verbose=False):
 
     return (
         shell_command(
-            f"terraform output -state={config['state_dir']}/{deployment_name}.tfstate -raw {output}",
+            f"terraform output -state={config['state_dir']}/{deployment_name}/.tfstate -raw {output}",
             capture_output=True,
             exit_on_error=False,
             verbose=verbose,

@@ -1,0 +1,24 @@
+# template for ansible inventory file
+
+[targets:vars]
+cloud="aws"
+ssh_port=22
+ansible_user="ubuntu"
+ngc_api_key="%ngc_api_key%"
+vnc_password="x8hleVTt0U"
+omniverse_user="omniverse"
+deployment_name="test-1"
+omniverse_password="vuYI7ciOGD"
+system_user_password="9htWichy54"
+ansible_ssh_private_key_file="/app/state/test-1/key.pem"
+
+[targets:children]
+isaac
+ovami
+
+[isaac]
+11.22.33.44
+
+[ovami]
+NA
+

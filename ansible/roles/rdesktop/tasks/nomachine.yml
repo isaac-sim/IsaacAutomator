@@ -15,10 +15,10 @@
 # endregion
 
 ---
-# @see https://downloads.nomachine.com/download/?id=3 for new versions
+# @see https://downloads.nomachine.com/download/?id=2 for new versions
 - name: Install NX server
   apt:
-    deb: https://download.nomachine.com/download/8.5/Linux/nomachine_8.5.3_1_amd64.deb
+    deb: https://download.nomachine.com/download/8.9/Linux/nomachine_8.9.1_1_amd64.deb
 
 - name: Create NX config dir
   file: >
