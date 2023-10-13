@@ -67,7 +67,6 @@
 - name: NoVNC server
   import_tasks: novnc.yml
   tags:
-    - _tst_
     - skip_in_ovami
 
 # do reboots if needed
