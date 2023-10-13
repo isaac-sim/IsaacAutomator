@@ -1,6 +1,5 @@
 
-# Auto-Isaac
-
+# Isaac Automation
 - [Usage](#usage)
   - [Pre-requisites](#pre-requisites)
   - [Deploying](#deploying)
