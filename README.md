@@ -91,7 +91,13 @@ Tip: Run `./deploy-azure --help` to see more options.
 
 ### Connecting to Deployed Instances
 
-Look for Nucleus URL, SSH and VNC connection instructions at the end of the command output. Additionally, this info is saved in `state/<deployment-name>/info.txt` file.
+Deployed Isaac Sim instances can be accessed via:
+
+- SSH
+- noVNC (browser-based VNC client)
+- NoMachine (remote desktop client)
+
+Look for the connection instructions at the end of the deploymnt command output. Additionally, this info is saved in `state/<deployment-name>/info.txt` file.
 
 ### Running Isaac Sim
 
