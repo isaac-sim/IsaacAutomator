@@ -571,7 +571,7 @@ class Deployer:
 
         # print instructions for the user
         if print_text:
-            click.echo(colorize_result("\n\n" + instructions))
+            click.echo(colorize_result("\n" + instructions))
 
         # create <dn>/ directory if it doesn't exist
         Path(instructions_file).parent.mkdir(parents=True, exist_ok=True)
