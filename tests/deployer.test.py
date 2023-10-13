@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import filecmp
 import unittest
 
 from python.config import c
