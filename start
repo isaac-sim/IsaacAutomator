@@ -105,7 +105,7 @@ def main(
         click.echo(colorize_result(f"* {format_app_name(app_name)} VM started."))
 
         text = (
-            "\nPlease allow some time for it to boot before connecting:\n\n"
+            "- Please allow some time for it to boot before connecting:\n\n"
             + Path(f"{config['state_dir']}/{deployment_name}/info.txt").read_text()
         )
         click.echo(colorize_result(text))
