@@ -111,7 +111,7 @@ def main(
         click.echo(
             colorize_result(
                 f"* {format_app_name(app_name)} VM stopped."
-                + "\n- You may still be billed some amount for persistent storage."
+                + "\n- You may still be billed some amount for persistent storage and network resources."
                 + extra_info
             )
         )
