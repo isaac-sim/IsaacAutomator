@@ -13,7 +13,7 @@ output "isaac_ip" {
 }
 
 output "isaac_vm_id" {
-  value = var.isaac_enabled ? module.isaac[0].vm_id : "NA"
+  value = try(var.isaac_enabled ? module.isaac[0].vm_id : "NA", "NA")
 }
 
 output "ovami_ip" {

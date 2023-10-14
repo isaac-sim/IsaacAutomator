@@ -4,5 +4,5 @@ output "public_ip" {
 }
 
 output "isaac_vm_id" {
-  value = aws_instance.isaac.id
+  value = aws_instance.instance.id
 }
