@@ -84,16 +84,24 @@ def main(
             continue
 
         # stop VM
-        shell_command(
-            f"az vm deallocate --ids {vm_id}",
-            verbose=debug,
-            exit_on_error=True,
-            capture_output=False,
-        )
 
         extra_info = ""
-        if cloud == "azure":
+
+        if "azure" == cloud:
+            shell_command(
+                f"az vm deallocate --ids {vm_id}",
+                verbose=debug,
+                exit_on_error=True,
+                capture_output=False,
+            )
             extra_info = "\n- On Azure stopped VMs still count towards your quota."
+        else:
+            click.echo(
+                colorize_error(
+                    f"* Stop/start is not yet supported for {cloud.upper()}."
+                )
+            )
+            exit(1)
 
         click.echo(
             colorize_result(
