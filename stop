@@ -21,7 +21,6 @@ import click
 
 from python.utils import (
     colorize_info,
-    colorize_prompt,
     colorize_result,
     colorize_error,
     deployments,
