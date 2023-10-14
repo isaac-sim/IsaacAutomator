@@ -50,6 +50,7 @@ APP_NAMES = [
     default=(deployments()[0] if len(deployments()) > 0 else ""),
     prompt=colorize_prompt("Deployment name to upload to."),
 )
+@click.argument("deployment_name", required=False)
 @click.option(
     "--remote-dir",
     default=config["default_remote_uploads_dir"],
@@ -69,6 +70,7 @@ APP_NAMES = [
     type=click.Choice(["all"] + APP_NAMES),
     help="Application to upload to.",
 )
+@click.argument("app", required=False)
 def main(
     app: str,
     debug: bool,
