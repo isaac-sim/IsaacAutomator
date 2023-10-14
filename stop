@@ -106,12 +106,12 @@ def main(
 
         extra_info = ""
         if cloud == "azure":
-            extra_info = "\n* On Azure stopped VMs still count towards your quota."
+            extra_info = "\n- On Azure stopped VMs still count towards your quota."
 
         click.echo(
             colorize_result(
                 f"* {format_app_name(app_name)} VM stopped."
-                + "\n * You may still be billed some amount for persistent storage."
+                + "\n- You may still be billed some amount for persistent storage."
                 + extra_info
             )
         )
