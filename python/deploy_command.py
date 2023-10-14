@@ -156,7 +156,7 @@ class DeployCommand(click.core.Command):
         self.params.insert(
             len(self.params),
             click.core.Option(
-                ("--deployment-name",),
+                ("--deployment-name", "--dn"),
                 prompt=colorize_prompt(
                     '* Deployment Name (lower case letters, numbers and "-")'
                 ),
