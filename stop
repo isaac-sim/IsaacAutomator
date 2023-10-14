@@ -16,11 +16,9 @@
 # limitations under the License.
 # endregion
 
-import os
 
 import click
 
-from python.config import c as config
 from python.utils import (
     colorize_info,
     colorize_prompt,
