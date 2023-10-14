@@ -176,7 +176,6 @@ class AzureDeployer(Deployer):
             # create tfvars file, deal with existing deployment
             self.create_tfvars(
                 {
-                    "nucleus_instance_type": config["azure_nucleus_instance_type"],
                     "region": self.params["region"],
                     "resource_group_name": self.params["resource_group"].split("/")[-1]
                     if len(self.params["resource_group"]) > 0
