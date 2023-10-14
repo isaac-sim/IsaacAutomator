@@ -41,15 +41,10 @@ APP_NAMES = [
     default=False,
     show_default=True,
 )
-@click.option(
-    "--deployment-name",
-    type=click.Choice(deployments()),
-    default=(deployments()[0] if len(deployments()) > 0 else ""),
-    prompt=colorize_prompt("Deployment name."),
-)
 @click.argument(
     "deployment_name",
-    required=False,
+    required=True,
+    type=click.Choice(deployments()),
 )
 @click.option(
     "--app",
@@ -70,12 +65,6 @@ def main(
 
     # cleck what cloud is deployment for
     cloud = read_tf_output(deployment_name, "cloud", verbose=debug)
-
-    if cloud not in ["azure"]:
-        click.echo(
-            colorize_error(f"* Stop/start is not yet supported for {cloud.upper()}.")
-        )
-        exit(1)
 
     # go through apps
 

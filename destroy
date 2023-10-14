@@ -46,14 +46,11 @@ from python.utils import (
     default=False,
     show_default=True,
 )
-@click.option(
-    "--deployment-name",
+@click.argument(
+    "deployment_name",
+    required=True,
     type=click.Choice(deployments()),
-    default=(deployments()[0] if len(deployments()) > 0 else ""),
-    show_default="<first existing, alphabetically>",
-    prompt=colorize_prompt("Deployment to destroy"),
 )
-@click.argument("deployment_name", required=False)
 @click.option(
     "--yes/--ask",
     default=False,
