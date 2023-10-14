@@ -8,9 +8,9 @@
   },
   "debug_start": {
     "scope": "python",
-    "prefix": "debug_break",
+    "prefix": "debug_start",
     "body": [
-      "from python.debug import debug_break; debug_start()  # fmt: skip\n"
+      "from python.debug import debug_start; debug_start()  # fmt: skip\n"
     ],
   }
 }
