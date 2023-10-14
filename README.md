@@ -117,7 +117,7 @@ You can view available arguments with `--help` switch for the start scripts, in 
 You can upload user data from `uploads/` folder (in the project root) to the deployment by running the following command:
 
 ```sh
-docker run -it --rm -v `pwd`:/app auto-isaac ./upload
+docker run -it --rm -v `pwd`:/app auto-isaac ./upload <deployment-name>
 ```
 
 Data will be uploaded to `/home/ubuntu/uploads` directory by default to all deployed instances. You can change this by passing `--remote-dir` argument to the command. Run `./upload --help` to see more options.
@@ -127,7 +127,7 @@ Data will be uploaded to `/home/ubuntu/uploads` directory by default to all depl
 You can download user data to `results/` folder (in the project root) from deployed instances by running the following command:
 
 ```sh
-docker run -it --rm -v `pwd`:/app auto-isaac ./download
+docker run -it --rm -v `pwd`:/app auto-isaac ./download <deployment-name>
 ```
 
 Data will be downloaded from `/home/ubuntu/results` directory by default. You can change this by passing `--remote-dir` argument to the command. Run `./download --help` to see more options.
@@ -137,7 +137,7 @@ Data will be downloaded from `/home/ubuntu/results` directory by default. You ca
 To destroy a deployment, run the following command:
 
 ```sh
-docker run -it --rm -v `pwd`:/app auto-isaac ./destroy
+docker run -it --rm -v `pwd`:/app auto-isaac ./destroy <deployment-name>
 ```
 
 You will be prompted to enter the deployment name to destroy.
