@@ -153,8 +153,7 @@ class Deployer:
             click.echo(colorize_info("* Deleting existing deployment..."))
 
             shell_command(
-                command=f'{self.config["app_dir"]}/destroy --yes'
-                + f' --deployment-name="{deployment_name}"'
+                command=f'{self.config["app_dir"]}/destroy "{deployment_name}" --yes'
                 + f' {"--debug" if debug else ""}',
                 verbose=debug,
             )
@@ -469,7 +468,7 @@ class Deployer:
 
     def upload_user_data(self):
         shell_command(
-            f'./upload --deployment-name "{self.params["deployment_name"]}" '
+            f'./upload "{self.params["deployment_name"]}" '
             + f'{"--debug" if self.params["debug"] else ""}',
             cwd=self.config["app_dir"],
             verbose=self.params["debug"],
