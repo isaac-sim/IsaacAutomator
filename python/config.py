@@ -21,6 +21,7 @@ c["app_dir"] = "/app"
 c["state_dir"] = "/app/state"
 c["results_dir"] = "/app/results"
 c["uploads_dir"] = "/app/uploads"
+c["ansible_dir"] = "/app/ansible"
 
 # defaults
 
