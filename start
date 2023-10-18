@@ -28,6 +28,7 @@ from python.utils import (
     colorize_result,
     deployments,
     format_app_name,
+    format_cloud_name,
     read_tf_output,
     shell_command,
 )
@@ -74,8 +75,13 @@ def main(
 
     for app_name in apps:
         vm_id = read_tf_output(deployment_name, f"{app_name}_vm_id", verbose=debug)
+        vm_ip = read_tf_output(deployment_name, f"{app_name}_ip", verbose=debug)
 
-        click.echo(colorize_info(f"* Starting {format_app_name(app_name)} VM..."))
+        click.echo(
+            colorize_info(
+                f"* Starting {format_app_name(app_name)} VM @ {format_cloud_name(cloud)} ({vm_ip})..."
+            )
+        )
 
         if vm_id in ["NA", ""]:
             # show "not found" message if:
@@ -97,12 +103,25 @@ def main(
         else:
             click.echo(
                 colorize_error(
-                    f"* Stop/start is not yet supported for {cloud.upper()}."
+                    f"* Stop/start is not yet supported for {format_cloud_name(cloud)}."
                 )
             )
             exit(1)
 
         click.echo(colorize_result(f"* {format_app_name(app_name)} VM started."))
+
+        # run "on_stop_start" tags in ansible
+        click.echo(
+            colorize_info(f"* Configuring {format_app_name(app_name)} instance...")
+        )
+        shell_command(
+            f"ansible-playbook -i {config['state_dir']}/{deployment_name}/.inventory"
+            + f" {app_name}.yml"
+            + " -t on_stop_start"
+            + f" {'-vv' if debug else ''}",
+            cwd=config["ansible_dir"],
+            verbose=debug,
+        )
 
         text = (
             "- Please allow some time for it to boot before connecting:\n\n"
