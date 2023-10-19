@@ -94,7 +94,7 @@ RUN mkdir /root/.config && ln -s /app/state/.gcp /root/.config/gcloud
 COPY . /app
 
 # copy .bashrc (startup commands)
-RUN cat /app/utils/.bashrc >>  /root/.bashrc
+RUN cat /app/res/.bashrc >>  /root/.bashrc
 
 WORKDIR /app
 
