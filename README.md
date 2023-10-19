@@ -29,7 +29,7 @@ This tool automates [Isaac Sim](https://developer.nvidia.com/isaac-sim) deployme
 2. Build the application container:
 
 ```sh
-docker build -t auto-isaac .
+docker build -t isa .
 ```
 
 3. Prepare or obtain an **NGC API Key** at <https://ngc.nvidia.com/setup/api-key>.
@@ -44,7 +44,7 @@ Now you are ready to start a new deployment. To do so, run the following command
 
 ```sh
 # enter the container
-docker run -it --rm -v `pwd`:/app auto-isaac bash
+docker run -it --rm -v `pwd`:/app isa bash
 # inside container
 ./deploy-aws
 ```
@@ -55,7 +55,7 @@ Tip: Run `./deploy-aws --help` to see more options.
 
 ```sh
 # enter the container
-docker run -it --rm -v `pwd`:/app auto-isaac bash
+docker run -it --rm -v `pwd`:/app isa bash
 # inside container
 ./deploy-gcp
 ```
@@ -68,7 +68,7 @@ Tip: Run `./deploy-gcp --help` to see more options.
 
 ```sh
 # enter the container
-docker run -it --rm -v `pwd`:/app auto-isaac bash
+docker run -it --rm -v `pwd`:/app isa bash
 # inside container
 ./deploy-azure
 ```
@@ -77,7 +77,7 @@ docker run -it --rm -v `pwd`:/app auto-isaac bash
 
 ```sh
 # enter the container
-docker run -it --rm -v `pwd`:/app auto-isaac bash
+docker run -it --rm -v `pwd`:/app isa bash
 
 # inside container:
 az login # login
@@ -117,7 +117,7 @@ You can view available arguments with `--help` switch for the start scripts, in 
 You can upload user data from `uploads/` folder (in the project root) to the deployment by running the following command:
 
 ```sh
-docker run -it --rm -v `pwd`:/app auto-isaac ./upload <deployment-name>
+docker run -it --rm -v `pwd`:/app isa ./upload <deployment-name>
 ```
 
 Data will be uploaded to `/home/ubuntu/uploads` directory by default to all deployed instances. You can change this by passing `--remote-dir` argument to the command. Run `./upload --help` to see more options.
@@ -127,7 +127,7 @@ Data will be uploaded to `/home/ubuntu/uploads` directory by default to all depl
 You can download user data to `results/` folder (in the project root) from deployed instances by running the following command:
 
 ```sh
-docker run -it --rm -v `pwd`:/app auto-isaac ./download <deployment-name>
+docker run -it --rm -v `pwd`:/app isa ./download <deployment-name>
 ```
 
 Data will be downloaded from `/home/ubuntu/results` directory by default. You can change this by passing `--remote-dir` argument to the command. Run `./download --help` to see more options.
@@ -137,7 +137,7 @@ Data will be downloaded from `/home/ubuntu/results` directory by default. You ca
 To destroy a deployment, run the following command:
 
 ```sh
-docker run -it --rm -v `pwd`:/app auto-isaac ./destroy <deployment-name>
+docker run -it --rm -v `pwd`:/app isa ./destroy <deployment-name>
 ```
 
 You will be prompted to enter the deployment name to destroy.
@@ -157,5 +157,5 @@ Some packages in the application docker container are not compatible with ARM ar
 Build the ap container using Docker Desktop or standalone Docker installation with the `--platform linux/x86_64` flag like so:
 
 ```sh
-docker build -t auto-isaac --platform linux/x86_64 .
+docker build -t isa --platform linux/x86_64 .
 ```

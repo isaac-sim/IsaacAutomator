@@ -1,7 +1,7 @@
 # prefix for created resources and tags
 # full name looks like <prefix>.<deployment_name>.<app_name>.<resource_type>
 variable "prefix" {
-  default = "auto-isaac"
+  default = "isa"
   type    = string
 }
 

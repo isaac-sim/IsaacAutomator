@@ -80,7 +80,7 @@ data "amazon-ami" "ovami" {
 }
 
 locals {
-  expanded_image_name = replace(replace(var.image_name, "$VERSION", var.version), "$PREFIX", "ovcloud.packer")
+  expanded_image_name = replace(replace(var.image_name, "$VERSION", var.version), "$PREFIX", "isa.packer")
 }
 
 source "amazon-ebs" "ovami" {
