@@ -104,7 +104,7 @@ Developer workflow for code contributions is as follows:
 1. Git clone the forked repository and push changes to the personal fork.
   
     ```bash
-    git clone https://github.com/YOUR_USERNAME/YOUR_FORK.git  Isaac-Automation
+    git clone https://github.com/YOUR_USERNAME/YOUR_FORK.git Isaac-Automation
     # Checkout the targeted branch and commit changes
     # Push the commits to a branch on the fork (remote).
     git push -u origin <local-branch>:<remote-branch>
