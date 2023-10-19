@@ -10,8 +10,9 @@
       - [If You Have Multiple Subscriptions](#if-you-have-multiple-subscriptions)
   - [Connecting to Deployed Instances](#connecting-to-deployed-instances)
   - [Running Isaac Sim](#running-isaac-sim)
-  - [Uploading User Files](#uploading-user-files)
-  - [Downloading Results](#downloading-results)
+  - [Pausing and Resuming](#pausing-and-resuming)
+  - [Uploading Data](#uploading-data)
+  - [Downloading Data](#downloading-data)
   - [Destroying](#destroying)
 - [Known Issues](#known-issues)
   - [Apple Silicon Support](#apple-silicon-support)
@@ -98,9 +99,11 @@ Deployed Isaac Sim instances can be accessed via:
 
 Look for the connection instructions at the end of the deploymnt command output. Additionally, this info is saved in `state/<deployment-name>/info.txt` file.
 
+You can view available arguments with `--help` switch for the start scripts, in most cases you wouldn't need to change the defaults.
+
 ### Running Isaac Sim
 
-Isaac Sim will be automatically started if you choose to deploy it. To start it manually, click "Isaac Sim" icon on desktop or run the following command in a terminal:
+Isaac Sim will be automatically started when cloud VM is deployed. To run it manually, connect using noVNC or NoMachine, click "Isaac Sim" icon on the desktop or run the following command in the terminal on the deployed instance:
 
 ```sh
 cd ~/Desktop
@@ -110,9 +113,18 @@ cd ~/Desktop
 ./isaacsim-shell.sh
 ```
 
-You can view available arguments with `--help` switch for the start scripts, in most cases you wouldn't need to change the defaults.
+### Pausing and Resuming
 
-### Uploading User Files
+You can stop and re-start instances to save on cloud costs. To do so, run the following commands:
+
+```sh
+docker run -it --rm -v `pwd`:/app isa ./stop <deployment-name>
+docker run -it --rm -v `pwd`:/app isa ./start <deployment-name>
+```
+
+Currently, stop-start is only supported for Azure deployments, other clouds will be added soon.
+
+### Uploading Data
 
 You can upload user data from `uploads/` folder (in the project root) to the deployment by running the following command:
 
@@ -122,7 +134,7 @@ docker run -it --rm -v `pwd`:/app isa ./upload <deployment-name>
 
 Data will be uploaded to `/home/ubuntu/uploads` directory by default to all deployed instances. You can change this by passing `--remote-dir` argument to the command. Run `./upload --help` to see more options.
 
-### Downloading Results
+### Downloading Data
 
 You can download user data to `results/` folder (in the project root) from deployed instances by running the following command:
 
