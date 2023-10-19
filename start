@@ -123,10 +123,7 @@ def main(
             verbose=debug,
         )
 
-        text = (
-            "- Please allow some time for it to boot before connecting:\n\n"
-            + Path(f"{config['state_dir']}/{deployment_name}/info.txt").read_text()
-        )
+        text = Path(f"{config['state_dir']}/{deployment_name}/info.txt").read_text()
         click.echo(colorize_result(text))
 
 
