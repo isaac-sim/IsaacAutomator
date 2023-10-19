@@ -93,11 +93,12 @@ RUN mkdir /root/.config && ln -s /app/state/.gcp /root/.config/gcloud
 # copy app code into container
 COPY . /app
 
-# copy .bashrc (startup commands)
-RUN cat /app/utils/.bashrc >>  /root/.bashrc
+ENV VERSION="v1.1.0-rc1"
+
+# customoize bash prompt
+RUN echo "export PS1='\[\033[01;36m\][Isaac Sim Automator ${VERSION}]\[\033[00m\]:\w\$ '" >>  /root/.bashrc
 
 WORKDIR /app
 
 ENTRYPOINT [ "/bin/sh", "-c" ]
 
-ENV VERSION="v1.1.0-rc1"

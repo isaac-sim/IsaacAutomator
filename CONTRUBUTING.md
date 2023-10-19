@@ -1,6 +1,10 @@
 
 # Isaac Automation OSS Contribution Rules
 
+- [Development Tips](#development-tips)
+  - [Building Docker Contaner for Development](#building-docker-contaner-for-development)
+  - [Updating Pre-Built VM Images](#updating-pre-built-vm-images)
+    - [Azure](#azure)
 - [Issue Tracking](#issue-tracking)
 - [Coding Guidelines](#coding-guidelines)
   - [Formatting and Linting](#formatting-and-linting)
@@ -8,6 +12,41 @@
 - [Pull Requests](#pull-requests)
 - [Signing Your Work](#signing-your-work)
 
+## Development Tips
+
+### Building Docker Contaner for Development
+
+```sh
+docker build -t auto-isaac \
+  --build-arg WITH_PACKER=true \
+  --build-arg WITH_GIT=true \
+  --platform linux/x86_64 \ # on Apple Silicon Macs when using Docker Desktop
+  .
+```
+
+### Updating Pre-Built VM Images
+
+Pre-built VM images are created using [Packer](https://www.packer.io/) and can be used to accelerate deployment of the app instances by skipping the time-consuming installation and configuration steps. To use pre-built images, add `--from-image` flag to the `deploy-*` commands.
+
+```sh
+
+#### AWS
+
+Refer to [../packer/aws/README.md](packer/aws/README.md) for pre-requisites. Then:
+
+```sh
+packer build -force /app/packer/aws/isaac
+...
+```
+
+#### Azure
+
+Refer to [../packer/azure/README.md](packer/azure/README.md) for pre-requisites. Then:
+
+```sh
+packer build -force /app/packer/azure/isaac
+...
+```
 
 ## Issue Tracking
 
@@ -65,7 +104,7 @@ Developer workflow for code contributions is as follows:
 1. Git clone the forked repository and push changes to the personal fork.
   
     ```bash
-    git clone https://github.com/YOUR_USERNAME/YOUR_FORK.git  Isaac-Automation
+    git clone https://github.com/YOUR_USERNAME/YOUR_FORK.git Isaac-Automation
     # Checkout the targeted branch and commit changes
     # Push the commits to a branch on the fork (remote).
     git push -u origin <local-branch>:<remote-branch>
