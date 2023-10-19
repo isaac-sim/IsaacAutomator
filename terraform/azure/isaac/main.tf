@@ -3,7 +3,7 @@ resource "azurerm_public_ip" "public_ip" {
   name                = "${var.prefix}.public_ip"
   location            = var.rg.location
   resource_group_name = var.rg.name
-  allocation_method   = "Dynamic"
+  allocation_method   = "Static"
 }
 
 resource "azurerm_network_interface" "nic" {
@@ -77,7 +77,8 @@ resource "azurerm_linux_virtual_machine" "vm_from_image" {
   }
 
   # TODO: use public image
-  source_image_id = "/subscriptions/4ca485f9-4cdf-4749-9d14-320dd780fc1c/resourceGroups/OVCLOUD.PACKER/providers/Microsoft.Compute/images/ovcloud.isaac_image"
+  # TODO: update image name
+  source_image_id = "/subscriptions/4ca485f9-4cdf-4749-9d14-320dd780fc1c/resourceGroups/isa.PACKER/providers/Microsoft.Compute/images/isa.isaac_image"
 
   computer_name                   = "isaac"
   admin_username                  = "ubuntu"

@@ -21,6 +21,7 @@ c["app_dir"] = "/app"
 c["state_dir"] = "/app/state"
 c["results_dir"] = "/app/results"
 c["uploads_dir"] = "/app/uploads"
+c["ansible_dir"] = "/app/ansible"
 
 # defaults
 
@@ -51,4 +52,4 @@ c["gcp_default_isaac_instance_type"] = "g2-standard-8"
 c["gcp_default_isaac_gpu_count"] = 1
 
 # --prefix for the created cloud resources
-c["default_prefix"] = "auto-isaac"
+c["default_prefix"] = "isa"

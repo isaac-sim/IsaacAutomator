@@ -61,7 +61,7 @@ resource "google_compute_firewall" "vnc" {
 }
 
 # novnc
-resource "google_compute_firewall" "vnc" {
+resource "google_compute_firewall" "novnc" {
   name    = "${var.prefix}-fwrules-novnc"
   network = google_compute_network.default.self_link
 

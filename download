@@ -43,13 +43,11 @@ APP_NAMES = [
     default=False,
     show_default=True,
 )
-@click.option(
-    "--deployment-name",
+@click.argument(
+    "deployment_name",
+    required=True,
     type=click.Choice(deployments()),
-    default=(deployments()[0] if len(deployments()) > 0 else ""),
-    prompt=colorize_prompt("Deployment name to download results from"),
 )
-@click.argument("deployment_name", required=False)
 @click.option(
     "--remote-dir",
     default=config["default_remote_results_dir"],

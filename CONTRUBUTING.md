@@ -17,7 +17,7 @@
 ### Building Docker Contaner for Development
 
 ```sh
-docker build -t auto-isaac \
+docker build -t isa \
   --build-arg WITH_PACKER=true \
   --build-arg WITH_GIT=true \
   --platform linux/x86_64 \ # on Apple Silicon Macs when using Docker Desktop

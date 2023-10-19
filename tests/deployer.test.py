@@ -16,7 +16,7 @@ class Test_Deployer(unittest.TestCase):
         self.deployer = Deployer(
             params={
                 "debug": False,
-                "prefix": "ovcloud",
+                "prefix": "isa",
                 "from_image": False,
                 "deployment_name": "test-1",
                 "existing": "ask",

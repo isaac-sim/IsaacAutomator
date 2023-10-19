@@ -35,16 +35,19 @@
 - name: Detect ECC status
   shell: nvidia-smi --query-gpu="ecc.mode.current" --format="csv,noheader" -i 0
   register: ecc_status
+  tags: on_stop_start
 - debug:
     msg: "ECC status: {{ ecc_status.stdout }}"
 #
 - name: Disable ECC
   shell: nvidia-smi --ecc-config=0
   when: ecc_status.stdout == 'Enabled'
+  tags: on_stop_start
 #
 - name: Reboot and wait
   reboot: post_reboot_delay=5 connect_timeout=3 reboot_timeout=600
   when: ecc_status.stdout == 'Enabled'
+  tags: on_stop_start
 
 # nvidia-docker2
 

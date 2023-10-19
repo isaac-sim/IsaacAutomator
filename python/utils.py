@@ -142,6 +142,23 @@ def format_app_name(app_name):
     return app_name
 
 
+def format_cloud_name(cloud_name):
+    """
+    Format cloud name for user output
+    """
+
+    formatted = {
+        "aws": "AWS",
+        "azure": "Azure",
+        "gcp": "GCP",
+    }
+
+    if cloud_name in formatted:
+        return formatted[cloud_name]
+
+    return cloud_name
+
+
 def azure_login(verbose=False):
     """
     Log into Azure

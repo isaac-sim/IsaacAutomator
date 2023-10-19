@@ -153,8 +153,7 @@ class Deployer:
             click.echo(colorize_info("* Deleting existing deployment..."))
 
             shell_command(
-                command=f'{self.config["app_dir"]}/destroy --yes'
-                + f' --deployment-name="{deployment_name}"'
+                command=f'{self.config["app_dir"]}/destroy "{deployment_name}" --yes'
                 + f' {"--debug" if debug else ""}',
                 verbose=debug,
             )
@@ -337,9 +336,7 @@ class Deployer:
             if isinstance(v, bool):
                 ansible_vars[k] = ansible_booleans[v]
 
-        template = Path(
-            f"{self.config['app_dir']}/ansible/inventory.template"
-        ).read_text()
+        template = Path(f"{self.config['ansible_dir']}/inventory.template").read_text()
         res = template.format(**ansible_vars)
 
         # write to file
@@ -421,17 +418,13 @@ class Deployer:
         # run ansible for isaac
         if "isaac" in self.params and self.params["isaac"]:
             click.echo(colorize_info("* Running Ansible for Isaac Sim..."))
-            self.run_ansible(
-                playbook_name="isaac", cwd=f"{self.config['app_dir']}/ansible"
-            )
+            self.run_ansible(playbook_name="isaac", cwd=f"{self.config['ansible_dir']}")
 
         # run ansible for ovami
         # todo: move to ./deploy-aws
         if "ovami" in self.params and self.params["ovami"]:
             click.echo(colorize_info("* Running Ansible for OV AMI..."))
-            self.run_ansible(
-                playbook_name="ovami", cwd=f"{self.config['app_dir']}/ansible"
-            )
+            self.run_ansible(playbook_name="ovami", cwd=f"{self.config['ansible_dir']}")
 
     def tf_output(self, key: str, default: str = ""):
         """
@@ -469,7 +462,7 @@ class Deployer:
 
     def upload_user_data(self):
         shell_command(
-            f'./upload --deployment-name "{self.params["deployment_name"]}" '
+            f'./upload "{self.params["deployment_name"]}" '
             + f'{"--debug" if self.params["debug"] else ""}',
             cwd=self.config["app_dir"],
             verbose=self.params["debug"],

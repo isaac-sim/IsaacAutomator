@@ -44,7 +44,7 @@ variable "base_ami_name" {
 
 # prebuilt - used when from_image is *true*
 variable "prebuilt_ami_name" {
-  default = "ovcloud.packer.isaac_image.*"
+  default = "isa.packer.isaac_image.*"
 }
 
 variable "ssh_port" {

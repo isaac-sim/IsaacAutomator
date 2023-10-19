@@ -1,0 +1,16 @@
+{
+  "debug_break": {
+    "scope": "python",
+    "prefix": "debug_break",
+    "body": [
+      "from python.debug import debug_break; debug_break()  # fmt: skip\n"
+    ]
+  },
+  "debug_start": {
+    "scope": "python",
+    "prefix": "debug_start",
+    "body": [
+      "from python.debug import debug_start; debug_start()  # fmt: skip\n"
+    ],
+  }
+}

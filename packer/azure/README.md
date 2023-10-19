@@ -5,7 +5,7 @@ See https://learn.microsoft.com/en-us/azure/virtual-machines/linux/build-image-w
 ## 1. Create resource group for packer output
 
 ```sh
-az group create -n ovcloud.packer -l westus3
+az group create -n isa.packer -l westus3
 ```
 
 ## 2. Create Azure service principal
