@@ -21,4 +21,4 @@ ssh_port: 22
 swap_size: 32G
 
 # password for the system user
-system_user_password: ubuntu
+system_user_password:
