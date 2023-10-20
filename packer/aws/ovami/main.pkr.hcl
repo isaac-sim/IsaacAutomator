@@ -60,11 +60,11 @@ variable "aws_region" {
 }
 
 variable "system_user_password" {
-  default = "Nvidia3D"
+  type = string
 }
 
 variable "vnc_password" {
-  default = "Nvidia3D"
+  type = string
 }
 
 data "amazon-ami" "ovami" {
