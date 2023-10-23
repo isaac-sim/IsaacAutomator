@@ -16,7 +16,6 @@
 
 deployment_name:
 
-# todo: store in config, pass via cli
 isaac_image:
 
 isaac_cache_dir: /home/{{ ansible_user }}/isaac-cache
