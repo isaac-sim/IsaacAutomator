@@ -17,7 +17,7 @@
 deployment_name:
 
 # todo: store in config, pass via cli
-isaac_image: nvcr.io/nvidia/isaac-sim:2022.2.0
+isaac_image:
 
 isaac_cache_dir: /home/{{ ansible_user }}/isaac-cache
 

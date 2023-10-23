@@ -5,6 +5,7 @@ cloud="{cloud}"
 ssh_port={ssh_port}
 ansible_user="ubuntu"
 ngc_api_key="{ngc_api_key}"
+isaac_image="{isaac_image}"
 vnc_password="{vnc_password}"
 omniverse_user="{omniverse_user}"
 deployment_name="{deployment_name}"
