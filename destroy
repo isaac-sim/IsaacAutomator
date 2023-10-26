@@ -31,6 +31,7 @@ from src.python.utils import (
     colorize_prompt,
     colorize_result,
     deployments,
+    format_cloud_name,
     gcp_login,
     shell_command,
 )
@@ -87,23 +88,24 @@ def main(
     cloud = "none"
 
     if Path(tfstate_file).exists():
-        if "registry.terraform.io/hashicorp/aws" in Path(tfstate_file).read_text():
-            cloud = "AWS"
-        elif (
-            "registry.terraform.io/hashicorp/azurerm" in Path(tfstate_file).read_text()
-        ):
-            cloud = "Azure"
-        elif "registry.terraform.io/hashicorp/google" in Path(tfstate_file).read_text():
-            cloud = "GCP"
+        text = Path(tfstate_file).read_text()
+        if "registry.terraform.io/hashicorp/aws" in text:
+            cloud = "aws"
+        elif "registry.terraform.io/hashicorp/azurerm" in text:
+            cloud = "azure"
+        elif "registry.terraform.io/hashicorp/google" in text:
+            cloud = "gcp"
+        elif "registry.terraform.io/hashicorp/alicloud" in text:
+            cloud = "alicloud"
 
     if cloud == "none":
         print(colorize_info(f'* No cloud resources found for "{deployment_name}"'))
 
     # login if needed
     if login:
-        if "Azure" == cloud:
+        if "azure" == cloud:
             azure_login(verbose=debug)
-        elif "GCP" == cloud:
+        elif "gcp" == cloud:
             gcp_login(verbose=debug)
 
     if cloud != "none":
@@ -113,7 +115,11 @@ def main(
         shell_command(
             f"terraform init -upgrade -no-color -input=false {' > /dev/null' if not debug else ''}",
             verbose=debug,
+<<<<<<< HEAD
             cwd=f"{config['terraform_dir']}/{cloud.lower()}",
+=======
+            cwd=f"/app/terraform/{cloud}",
+>>>>>>> 5e4abbc (Rerfactor destroy utility)
         )
 
         if dryrun:
@@ -121,7 +127,7 @@ def main(
 
             click.echo(
                 colorize_info(
-                    f'* Showing changes to {cloud} resources used by "{deployment_name}"...'
+                    f'* Showing changes to {format_cloud_name(cloud)} resources used by "{deployment_name}"...'
                 )
             )
 
@@ -137,7 +143,7 @@ def main(
 
             click.echo(
                 colorize_info(
-                    f'* Destroying {cloud} resources used by "{deployment_name}"...'
+                    f'* Destroying {format_cloud_name(cloud)} resources used by "{deployment_name}"...'
                 )
             )
 
