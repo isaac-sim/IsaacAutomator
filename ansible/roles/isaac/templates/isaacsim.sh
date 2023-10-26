@@ -3,9 +3,10 @@
 # default parameter values
 
 # isaac sim startup command
-CMD="/isaac-sim/kit/kit /isaac-sim/apps/omni.isaac.sim.kit \
-  --allow-root --ext-folder /isaac-sim/apps \
-  --/persistent/isaac/asset_root/default=http://omniverse-content-staging.s3-us-west-2.amazonaws.com/Assets/Isaac/2022.2"
+CMD="/isaac-sim/kit/kit \
+  /isaac-sim/apps/omni.isaac.sim.kit \
+  --allow-root \
+  --ext-folder /isaac-sim/apps"
 
 DISPLAY=":0"
 CONTAINER_NAME="isaacsim"
