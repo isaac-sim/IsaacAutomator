@@ -82,7 +82,7 @@ RUN mkdir /root/.config && ln -s /app/state/.gcp /root/.config/gcloud
 COPY . /app
 
 # customoize bash prompt
-RUN echo "export PS1='\[\033[01;36m\][Isaac Sim Automator ${VERSION}]\[\033[00m\]:\w\$ '" >>  /root/.bashrc
+RUN echo "export PS1='\[\033[01;36m\][Isaac Sim Automator \${VERSION}]\[\033[00m\]:\w\$ '" >>  /root/.bashrc
 
 WORKDIR /app
 
