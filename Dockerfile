@@ -78,6 +78,11 @@ RUN curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyri
 RUN apt-get update && apt-get install -yq google-cloud-cli
 RUN mkdir /root/.config && ln -s /app/state/.gcp /root/.config/gcloud
 
+# alibaba cloud cli
+# @see https://github.com/aliyun/aliyun-cli#installation
+RUN /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/aliyun/aliyun-cli/HEAD/install.sh)"
+RUN aliyun auto-completion
+
 # copy app code into container
 COPY . /app
 

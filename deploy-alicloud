@@ -1,0 +1,205 @@
+#!/usr/bin/env python3
+
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+import os
+
+import click
+
+from python.config import c as config
+from python.debug import debug_break, debug_start  # noqa
+from python.deploy_command import DeployCommand
+from python.deployer import Deployer
+from python.utils import colorize_error, colorize_info, colorize_prompt
+
+# debug_start()
+
+
+class DeployAlicloudCommand(DeployCommand):
+    """
+    Defines options specific for "deploy-alicloud" command.
+    """
+
+    # supported AliCloud instance types for DRIVE Sim/Isaac Sim
+    # @see https://www.alibabacloud.com/help/en/ecs/user-guide/overview-of-instance-families
+    ALICLOUD_OVKIT_INSTANCE_TYPES = [
+        "ecs.gn7e-c16g1.4xlarge",  # 1x A100-80G, 16 vCPUs, 125 GB RAM
+        "ecs.gn7e-c16g1.16xlarge",  # 4x A100-80G, 64 vCPUs, 500 GB RAM
+        "ecs.ebmgn7e.32xlarge",  # 8x A100-80G, 128 vCPUs, 1024 GB RAM
+        "ecs.gn7e-c16g1.32xlarge",  # 8x A100-80G, 128 vCPUs, 1000 GB RAM
+        "ecs.gn7i-c8g1.2xlarge",  # 1x A10, 8 vCPUs, 30 GB RAM
+        "ecs.gn7i-c16g1.4xlarge",  # 1x A10, 16 vCPUs, 60 GB RAM
+        "ecs.gn7i-c32g1.8xlarge",  # 1x A10, 32 vCPUs, 188 GB RAM
+        "ecs.gn7i-c48g1.12xlarge",  # 1x A10, 48 vCPUs, 310 GB RAM
+        "ecs.gn7i-c56g1.14xlarge",  # 1x A10, 56 vCPUs, 346 GB RAM
+        "ecs.gn7i-c32g1.16xlarge",  # 2x A10, 64 vCPUs, 376 GB RAM
+        "ecs.gn7i-c32g1.32xlarge",  # 4x A10, 128 vCPUs, 752 GB RAM
+        "ecs.ebmgn7i.32xlarge",  # 4x A10, 128 vCPUs, 768 GB RAM
+        "ecs.gn6i-c4g1.xlarge",  # 1x T4, 4 vCPUs, 15 GB RAM
+        "ecs.gn6i-c8g1.2xlarge",  # 1x T4, 8 vCPUs, 31 GB RAM
+        "ecs.gn6i-c16g1.4xlarge",  # 1x T4, 16 vCPUs, 62 GB RAM
+        "ecs.gn6i-c24g1.6xlarge",  # 1x T4, 24 vCPUs, 93 GB RAM
+        "ecs.gn6i-c40g1.10xlarge",  # 1x T4, 40 vCPUs, 155 GB RAM
+        "ecs.gn6i-c24g1.12xlarge",  # 2x T4, 48 vCPUs, 186 GB RAM
+        "ecs.gn6i-c24g1.24xlarge",  # 4x T4, 96 vCPUs, 372 GB RAM
+        "ecs.ebmgn6i.24xlarge	",  # 4x T4, 96 vCPUs, 384 GB RAM
+    ]
+
+    @staticmethod
+    def ovkit_instance_type_callback(ctx, param, value):
+        """
+        Called after parsing --isaac-instance-type option
+        """
+
+        # warn of other unsupported types
+        if value not in DeployAlicloudCommand.ALICLOUD_OVKIT_INSTANCE_TYPES:
+            raise click.BadParameter(
+                colorize_error(
+                    f"Invalid instance type: {value}. Choose one of: "
+                    + ", ".join(DeployAlicloudCommand.ALICLOUD_OVKIT_INSTANCE_TYPES)
+                    + "."
+                )
+            )
+
+        return value
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # --isaac-instance-type
+        self.params.insert(
+            # insert after --isaac option
+            self.param_index("isaac") + 1,
+            click.core.Option(
+                ("--isaac-instance-type",),
+                prompt=colorize_prompt(
+                    "* Isaac Sim Instance Type "
+                    + "(see https://www.alibabacloud.com/help/en/ecs/user-guide/overview-of-instance-families "
+                    + "for availability and pricing. Instances with NVIDIA A100, A10 and T4 GPUs are supported)"
+                ),
+                show_default=True,
+                default=config["alicloud_default_isaac_instance_type"],
+                callback=DeployAlicloudCommand.ovkit_instance_type_callback,
+                help="Isaac Sim instance type. Currently supported: "
+                + ", ".join(self.ALICLOUD_OVKIT_INSTANCE_TYPES)
+                + ".",
+            ),
+        )
+
+        # --region
+        self.params.insert(
+            # insert before --isaac option
+            self.param_index("isaac"),
+            click.core.Option(
+                ("--region",),
+                show_default=True,
+                default=config["alicloud_default_region"],
+                prompt=colorize_prompt("* Alibaba Cloud Region"),
+                callback=lambda ctx, param, value: value.lower().replace(" ", "-"),
+            ),
+        )
+
+        # --alicloud-access-key-id
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--alicloud-access-key",),
+                prompt=colorize_prompt(
+                    "* Alibaba Cloud Access Key "
+                    + "(https://ram.console.aliyun.com/manage/ak to create one)"
+                ),
+                default=os.environ.get("ALICLOUD_ACCESS_KEY", ""),
+                show_default="<ALICLOUD_ACCESS_KEY environment variable>",
+            ),
+        )
+
+        # --alicloud-secret-access-key
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--alicloud-secret-key",),
+                prompt=colorize_prompt("* Alibaba Cloud Secret Key"),
+                default=os.environ.get("ALICLOUD_SECRET_KEY", ""),
+                show_default="<ALICLOUD_SECRET_KEY environment variable>",
+            ),
+        )
+
+        # defaults
+
+        self.params[self.param_index("from_image")].default = config[
+            "alicloud_default_from_image"
+        ]
+
+
+class AlicloudDeployer(Deployer):
+    """
+    Deploys stuff to Alibaba Cloud
+    """
+
+    def __init__(self, params, config):
+        super().__init__(params, config)
+
+    def main(self):
+        # ask what to do if deployment already exists
+        self.ask_existing_behavior()
+
+        # check if ngc api key is valid and has access to Isaac Sim
+        if self.params["isaac"]:
+            self.validate_ngc_api_key(self.params["isaac_image"])
+
+        if self.existing_behavior != "run_ansible":
+            # create tfvars file, deal with existing deployment
+            self.create_tfvars(
+                {
+                    "region": self.params["region"],
+                    "alicloud_access_key": self.params["alicloud_access_key"],
+                    "alicloud_secret_key": self.params["alicloud_secret_key"],
+                }
+            )
+
+            # run terraform
+            click.echo(colorize_info("* Running Terraform..."))
+            self.initialize_terraform(cwd="/app/terraform/alicloud")
+            self.run_terraform(cwd="/app/terraform/alicloud")
+
+        # export ssh key from terraform
+        self.export_ssh_key()
+
+        # create ansible inventory file
+        self.create_ansible_inventory()
+
+        # save instructions
+        self.output_deployment_info(print_text=False)
+
+        # run ansible
+        self.run_all_ansible()
+
+        # upload user data
+        if self.params["upload"]:
+            self.upload_user_data()
+
+        # print info for the user
+        self.output_deployment_info()
+
+
+@click.command(cls=DeployAlicloudCommand)
+def main(**params):
+    AlicloudDeployer(params, config).main()
+
+
+if __name__ == "__main__":
+    main()  # noqa
