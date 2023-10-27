@@ -7,6 +7,7 @@ RUN apt-get install -qy git nano
 ENV PYTHON_PATH="/isaac-sim/python.sh"
 RUN echo 'alias "python"="${PYTHON_PATH}"' >> /root/.bashrc
 RUN echo 'alias "pip"="${PYTHON_PATH} -m pip"' >> /root/.bashrc
+RUN echo 'alias "PYTHON_PATH"="${PYTHON_PATH}"' >> /root/.bashrc
 
 WORKDIR /
 RUN git clone https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs.git
