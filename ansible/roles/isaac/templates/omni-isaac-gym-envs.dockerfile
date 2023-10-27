@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/isaac-sim:2023.1.0
+FROM "{{ isaac_image }}"
 
 RUN apt-get update
 RUN apt-get install -qy git nano
