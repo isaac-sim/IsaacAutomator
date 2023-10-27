@@ -18,7 +18,7 @@ deployment_name:
 
 isaac_image:
 
-isaac_cache_dir: /home/{{ ansible_user }}/isaac-cache
+isaac_cache_dir: /home/{{ ansible_user }}/isaac
 
 # "none" skips login/pull
 ngc_api_key:
