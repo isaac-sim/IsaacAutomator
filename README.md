@@ -1,29 +1,28 @@
 # Isaac Sim Automator
 
 - [Usage](#usage)
-  - [Pre-requisites](#pre-requisites)
+  - [Pre-Requisites](#pre-requisites)
   - [Deploying](#deploying)
     - [AWS](#aws)
     - [GCP](#gcp)
     - [Azure](#azure)
-      - [If You Have Single Subscription](#if-you-have-single-subscription)
-      - [If You Have Multiple Subscriptions](#if-you-have-multiple-subscriptions)
   - [Connecting to Deployed Instances](#connecting-to-deployed-instances)
-  - [Running Isaac Sim](#running-isaac-sim)
+  - [Running Applications](#running-applications)
+    - [Isaac Sim](#isaac-sim)
+    - [Shell in Isaac Sim Container](#shell-in-isaac-sim-container)
+    - [Omniverse Isaac Gym](#omniverse-isaac-gym)
   - [Pausing and Resuming](#pausing-and-resuming)
   - [Uploading Data](#uploading-data)
   - [Downloading Data](#downloading-data)
   - [Destroying](#destroying)
 - [Known Issues](#known-issues)
   - [Apple Silicon Support](#apple-silicon-support)
-    - [Issue](#issue)
-    - [Workaround](#workaround)
 
 This tool automates [Isaac Sim](https://developer.nvidia.com/isaac-sim) deployment to public clouds. AWS, Azure and GCP are currently supported.
 
 ## Usage
 
-### Pre-requisites
+### Pre-Requisites
 
 1. `docker` should be present on your system. Visit <https://docs.docker.com/engine/install/> for installation instructions.
 
@@ -65,7 +64,7 @@ Tip: Run `./deploy-gcp --help` to see more options.
 
 #### Azure
 
-##### If You Have Single Subscription
+If You Have Single Subscription:
 
 ```sh
 # enter the container
@@ -74,7 +73,7 @@ docker run -it --rm -v `pwd`:/app isa bash
 ./deploy-azure
 ```
 
-##### If You Have Multiple Subscriptions
+If You Have Multiple Subscriptions:
 
 ```sh
 # enter the container
@@ -101,16 +100,34 @@ Look for the connection instructions at the end of the deploymnt command output.
 
 You can view available arguments with `--help` switch for the start scripts, in most cases you wouldn't need to change the defaults.
 
-### Running Isaac Sim
+### Running Applications
 
-Isaac Sim will be automatically started when cloud VM is deployed. To run it manually, connect using noVNC or NoMachine, click "Isaac Sim" icon on the desktop or run the following command in the terminal on the deployed instance:
+To use installed applications, connect to the deployed instance using noVNC or NoMachine. You can find the connection instructions at the end of the deployment command output. Additionally, this info is saved in `state/<deployment-name>/info.txt` file.
+
+#### Isaac Sim
+
+Isaac Sim will be automatically started when cloud VM is deployed. Alternatively you can click "Isaac Sim" icon on the desktop or run the following command in the terminal on the deployed instance or launch it from the terminal as follows:
 
 ```sh
-cd ~/Desktop
-# with user interface
-./isaacsim.sh
-# or open shell inside  isaacsim
-./isaacsim-shell.sh
+~/Desktop/isaacsim.sh
+```
+
+#### Shell in Isaac Sim Container
+
+If you want a shell, click "Isaac Sim" icon on the desktop you can run the following command in the terminal on the deployed instance:
+
+```sh
+~/Desktop/isaacsim-shell.sh
+```
+
+#### Omniverse Isaac Gym
+
+[Omniverse Isaac Gym Reinforcement Learning Environments for Isaac Sim](https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs) ("Omniverse Isaac Gym") is pre-installed on the deployed Isaac instances.
+
+To run Omniverse Isaac Gym click "Omni Isaac Gym" icon on the desktop or run the following command in the terminal:
+
+```sh
+~/Desktop/omni-isaac-gym-envs.sh
 ```
 
 ### Pausing and Resuming
@@ -160,11 +177,11 @@ You will be prompted to enter the deployment name to destroy.
 
 ### Apple Silicon Support
 
-#### Issue
+Issue:
 
 Some packages in the application docker container are not compatible with ARM architecture of Apple Silicon (M1/M2/etc).
 
-#### Workaround
+Workaround:
 
 Build the ap container using Docker Desktop or standalone Docker installation with the `--platform linux/x86_64` flag like so:
 
