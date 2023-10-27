@@ -3,9 +3,10 @@ FROM nvcr.io/nvidia/isaac-sim:2023.1.0
 RUN apt-get update
 RUN apt-get install -qy git nano
 
+# set python and pip paths
 ENV PYTHON_PATH="/isaac-sim/python.sh"
-RUN alias "python"="${PYTHON_PATH}"
-RUN alias "pip"="${PYTHON_PATH} -m pip"
+RUN echo 'alias "python"="${PYTHON_PATH}"' >> /root/.bashrc
+RUN echo 'alias "pip"="${PYTHON_PATH} -m pip"' >> /root/.bashrc
 
 WORKDIR /
 RUN git clone https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs.git
