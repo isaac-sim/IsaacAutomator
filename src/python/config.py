@@ -39,7 +39,6 @@ c["default_ssh_port"] = 22
 # --from-image
 c["azure_default_from_image"] = False
 c["aws_default_from_image"] = False
-c["alicloud_default_from_image"] = False
 
 # --omniverse-user
 c["default_omniverse_user"] = "omniverse"

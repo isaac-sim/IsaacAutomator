@@ -138,11 +138,8 @@ class DeployAlicloudCommand(DeployCommand):
             ),
         )
 
-        # defaults
-
-        self.params[self.param_index("from_image")].default = config[
-            "alicloud_default_from_image"
-        ]
+        # remove --from-image
+        del self.params[self.param_index("from_image")]
 
 
 class AlicloudDeployer(Deployer):
