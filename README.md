@@ -114,7 +114,7 @@ Isaac Sim will be automatically started when cloud VM is deployed. Alternatively
 
 #### Shell in Isaac Sim Container
 
-If you want a shell, click "Isaac Sim" icon on the desktop you can run the following command in the terminal on the deployed instance:
+To get a shell inside Isaac Sim container, click "Isaac Sim Shell" icon on the desktop. Alternatively you can run the following command in the terminal on the deployed instance:
 
 ```sh
 ~/Desktop/isaacsim-shell.sh
