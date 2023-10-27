@@ -17,6 +17,8 @@
 # endregion
 
 
+import os
+import sys
 from pathlib import Path
 
 import click
@@ -128,4 +130,9 @@ def main(
 
 
 if __name__ == "__main__":
-    main()
+    if os.path.exists("/.dockerenv"):
+        # we're in docker, run command
+        main()
+    else:
+        # we're outside, start docker container first
+        shell_command(f"docker run -it --rm -v `pwd`:/app isa {' '.join(sys.argv)}")

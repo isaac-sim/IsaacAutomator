@@ -17,12 +17,15 @@
 # endregion
 
 
+import os
+import sys
+
 import click
 
 from python.utils import (
+    colorize_error,
     colorize_info,
     colorize_result,
-    colorize_error,
     deployments,
     format_app_name,
     format_cloud_name,
@@ -118,4 +121,9 @@ def main(
 
 
 if __name__ == "__main__":
-    main()
+    if os.path.exists("/.dockerenv"):
+        # we're in docker, run command
+        main()
+    else:
+        # we're outside, start docker container first
+        shell_command(f"docker run -it --rm -v `pwd`:/app isa {' '.join(sys.argv)}")
