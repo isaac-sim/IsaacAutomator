@@ -3,9 +3,10 @@
 # default parameter values
 
 # isaac sim startup command
-CMD="/isaac-sim/kit/kit /isaac-sim/apps/omni.isaac.sim.kit \
-  --allow-root --ext-folder /isaac-sim/apps \
-  --/persistent/isaac/asset_root/default=http://omniverse-content-staging.s3-us-west-2.amazonaws.com/Assets/Isaac/2022.2"
+CMD="/isaac-sim/kit/kit \
+      /isaac-sim/apps/omni.isaac.sim.kit \
+      --ext-folder /isaac-sim/apps \
+      --allow-root"
 
 DISPLAY=":0"
 CONTAINER_NAME="isaacsim"
@@ -125,7 +126,7 @@ docker run \
   -v "${CACHE_DIR}/logs":/root/.nvidia-omniverse/logs:rw \
   -v "${CACHE_DIR}/config":/root/.nvidia-omniverse/config:rw \
   -v "${CACHE_DIR}/data":/root/.local/share/ov/data:rw \
-  -v "${CACHE_DIR}/documents":/root/Documents:rw \
+  -v "${CACHE_DIR}/docs":/root/Documents:rw \
   \
   -v "${OUT_DIR}":/results \
   \

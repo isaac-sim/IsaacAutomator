@@ -18,7 +18,10 @@ deployment_name:
 
 isaac_image:
 
-isaac_cache_dir: /home/{{ ansible_user }}/isaac-cache
+isaac_cache_dir: /home/{{ ansible_user }}/isaac
+
+# directory for installing OmniIsaacGymEnvs assets (dockerfile, etc.)
+omni_isaac_gym_envs_dir: /opt/omni-isaac-gym-envs
 
 # "none" skips login/pull
 ngc_api_key:
