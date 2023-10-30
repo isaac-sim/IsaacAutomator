@@ -1,0 +1,3 @@
+#!/bin/bash
+SELF_DIR=$(realpath $(dirname ${BASH_SOURCE}))
+docker build -t isa "${SELF_DIR}"

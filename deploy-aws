@@ -18,6 +18,7 @@
 
 import os
 import re
+import sys
 
 import click
 
@@ -25,7 +26,7 @@ from python.config import c as config
 from python.debug import debug_break, debug_start  # noqa
 from python.deploy_command import DeployCommand
 from python.deployer import Deployer
-from python.utils import colorize_error, colorize_info, colorize_prompt
+from python.utils import colorize_error, colorize_info, colorize_prompt, shell_command
 
 
 class DeployAWSCommand(DeployCommand):
@@ -246,4 +247,13 @@ def main(**params):
 
 
 if __name__ == "__main__":
-    main()  # noqa
+    if os.path.exists("/.dockerenv"):
+        # we're in docker, run command
+        main()
+    else:
+        # we're outside, start docker container first
+        shell_command(
+            f"docker run -it --rm -v $(pwd):{config['app_dir']} "
+            + f"{config['app_image_name']} '{' '.join(sys.argv)}'",
+            verbose=True,
+        )
