@@ -1,8 +1,12 @@
 # Isaac Sim Automator
 
+- [Installation](#installation)
+  - [Installing Docker](#installing-docker)
+  - [Obtaining NGC API Key](#obtaining-ngc-api-key)
+  - [Building the Container](#building-the-container)
 - [Usage](#usage)
-  - [Pre-Requisites](#pre-requisites)
-  - [Deploying](#deploying)
+  - [Tip: Running the Automator Commands](#tip-running-the-automator-commands)
+  - [Deploying Isaac Sim](#deploying-isaac-sim)
     - [AWS](#aws)
     - [GCP](#gcp)
     - [Azure](#azure)
@@ -20,32 +24,66 @@
 
 This tool automates [Isaac Sim](https://developer.nvidia.com/isaac-sim) deployment to public clouds. AWS, Azure and GCP are currently supported.
 
-## Usage
+## Installation
 
-### Pre-Requisites
+### Installing Docker
 
-1. `docker` should be present on your system. Visit <https://docs.docker.com/engine/install/> for installation instructions.
+`docker` should be present on your system. Visit <https://docs.docker.com/engine/install/> for installation instructions.
 
-2. Build the application container:
+### Obtaining NGC API Key
+
+**NGC API Key** allows you to download docker images from <https://ngc.nvidia.com/>. Please prepare one or obtain it at <https://ngc.nvidia.com/setup/api-key>.
+
+### Building the Container
+
+Please enter the following command in the project root directory to build the container:
 
 ```sh
-docker build -t isa .
+./build
 ```
 
-3. Prepare or obtain an **NGC API Key** at <https://ngc.nvidia.com/setup/api-key>.
+This will build the Isaac Sim Automator container and tag it as `isa`.
 
-### Deploying
+## Usage
+
+### Tip: Running the Automator Commands
+
+There are two ways to run the automator commands:
+
+1. First enter the automator container and then run the command inside the container:
+
+```sh
+# enter the automator container
+./run
+# inside container:
+./someconnad
+```
+
+2. Simply prepend the command with `./run` like so:
+
+```sh
+./run ./somecommand <parameters>
+```
+
+for example:
+
+```sh
+./run ./deploy-aws
+./run ./destroy my-deployment
+```
+
+### Deploying Isaac Sim
 
 #### AWS
 
 You will need **AWS Access Key** and **AWS Secret Key** for an existing account. You or your account administrator can obtain those in [Identity and Access Management (IAM) Section](https://console.aws.amazon.com/iamv2/home#/home) in AWS console.
 
-Now you are ready to start a new deployment. To do so, run the following command:
+Now you are ready to start a new deployment. To do so, run the following command in the project root directory:
 
 ```sh
-# enter the container
-docker run -it --rm -v `pwd`:/app isa bash
-# inside container
+# enter the automator container
+./run
+# inside container:
 ./deploy-aws
 ```
 
@@ -54,9 +92,9 @@ Tip: Run `./deploy-aws --help` to see more options.
 #### GCP
 
 ```sh
-# enter the container
-docker run -it --rm -v `pwd`:/app isa bash
-# inside container
+# enter the automator container
+./run
+# inside container:
 ./deploy-gcp
 ```
 
@@ -67,17 +105,17 @@ Tip: Run `./deploy-gcp --help` to see more options.
 If You Have Single Subscription:
 
 ```sh
-# enter the container
-docker run -it --rm -v `pwd`:/app isa bash
-# inside container
+# enter the automator container
+./run
+# inside container:
 ./deploy-azure
 ```
 
 If You Have Multiple Subscriptions:
 
 ```sh
-# enter the container
-docker run -it --rm -v `pwd`:/app isa bash
+ # enter the automator container
+./run
 
 # inside container:
 az login # login
@@ -135,8 +173,11 @@ To run Omniverse Isaac Gym click "Omni Isaac Gym" icon on the desktop or run the
 You can stop and re-start instances to save on cloud costs. To do so, run the following commands:
 
 ```sh
-docker run -it --rm -v `pwd`:/app isa ./stop <deployment-name>
-docker run -it --rm -v `pwd`:/app isa ./start <deployment-name>
+# enter the automator container
+./run
+# inside container:
+./stop <deployment-name>
+./start <deployment-name>
 ```
 
 Currently, stop-start is only supported for Azure deployments, other clouds will be added soon.
@@ -146,7 +187,10 @@ Currently, stop-start is only supported for Azure deployments, other clouds will
 You can upload user data from `uploads/` folder (in the project root) to the deployment by running the following command:
 
 ```sh
-docker run -it --rm -v `pwd`:/app isa ./upload <deployment-name>
+# enter the automator container
+./run
+# inside container:
+./upload <deployment-name>
 ```
 
 Data will be uploaded to `/home/ubuntu/uploads` directory by default to all deployed instances. You can change this by passing `--remote-dir` argument to the command. Run `./upload --help` to see more options.
@@ -156,7 +200,10 @@ Data will be uploaded to `/home/ubuntu/uploads` directory by default to all depl
 You can download user data to `results/` folder (in the project root) from deployed instances by running the following command:
 
 ```sh
-docker run -it --rm -v `pwd`:/app isa ./download <deployment-name>
+# enter the automator container
+./run
+# inside container:
+./download <deployment-name>
 ```
 
 Data will be downloaded from `/home/ubuntu/results` directory by default. You can change this by passing `--remote-dir` argument to the command. Run `./download --help` to see more options.
@@ -166,7 +213,10 @@ Data will be downloaded from `/home/ubuntu/results` directory by default. You ca
 To destroy a deployment, run the following command:
 
 ```sh
-docker run -it --rm -v `pwd`:/app isa ./destroy <deployment-name>
+# enter the automator container
+./run
+# inside container:
+./destroy <deployment-name>
 ```
 
 You will be prompted to enter the deployment name to destroy.
