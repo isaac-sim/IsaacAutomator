@@ -25,7 +25,6 @@ from python.config import c as config
 from python.debug import debug_break  # noqa
 from python.utils import (
     colorize_info,
-    colorize_prompt,
     colorize_result,
     deployments,
     format_app_name,

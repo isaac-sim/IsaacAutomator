@@ -24,7 +24,6 @@ import click
 from python.config import c as config
 from python.debug import debug_break  # noqa
 from python.utils import (
-    colorize_prompt,
     colorize_result,
     deployments,
     read_meta,
