@@ -223,4 +223,8 @@ if __name__ == "__main__":
         main()
     else:
         # we're outside, start docker container first
-        shell_command(f"docker run -it --rm -v `pwd`:/app isa {' '.join(sys.argv)}")
+        shell_command(
+            f"docker run -it --rm -v $(pwd):{config['app_dir']} "
+            + f"{config['app_image_name']} '{' '.join(sys.argv)}'",
+            verbose=True,
+        )
