@@ -1,3 +1,3 @@
 #!/bin/bash
 SELF_DIR=$(realpath $(dirname ${BASH_SOURCE}))
-docker run -it --rm -v "${SELF_DIR}":/app isa "${@:-bash}"
+docker build -t isa "${SELF_DIR}"
