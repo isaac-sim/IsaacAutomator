@@ -123,9 +123,9 @@ build {
   provisioner "ansible" {
     use_proxy     = false
     groups        = ["ovami"]
-    playbook_file = "/app/ansible/ovami.yml"
+    playbook_file = "/app/src/ansible/ovami.yml"
     ansible_env_vars = [
-      "ANSIBLE_CONFIG=/app/ansible/ansible.cfg"
+      "ANSIBLE_CONFIG=/app/src/ansible/ansible.cfg"
     ]
     extra_arguments = [
       "--skip-tags", "${var.skip_tags}",

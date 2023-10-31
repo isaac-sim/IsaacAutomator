@@ -115,9 +115,9 @@ build {
   provisioner "ansible" {
     use_proxy     = false
     groups        = ["isaac"]
-    playbook_file = "/app/ansible/isaac.yml"
+    playbook_file = "/app/src/ansible/isaac.yml"
     ansible_env_vars = [
-      "ANSIBLE_CONFIG=/app/ansible/ansible.cfg"
+      "ANSIBLE_CONFIG=/app/src/ansible/ansible.cfg"
     ]
     extra_arguments = [
       "--skip-tags", "${var.skip_tags}",
