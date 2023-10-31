@@ -76,9 +76,30 @@ for example:
 
 #### AWS
 
-You will need **AWS Access Key** and **AWS Secret Key** for an existing account. You or your account administrator can obtain those in [Identity and Access Management (IAM) Section](https://console.aws.amazon.com/iamv2/home#/home) in AWS console.
+<details>
+  <a href="#aws-permissions"></a>
+  <summary>Enabling Access Permissions</summary>
 
-Now you are ready to start a new deployment. To do so, run the following command in the project root directory:
+  You need _AmazonEC2FullAccess_ permissions enabled for your AWS user. You can enable those in [Identity and Access Management (IAM) Section](https://console.aws.amazon.com/iamv2/home#/home) in AWS console like so:
+
+  1. Go to <https://console.aws.amazon.com/iamv2/home#/home>
+  2. Click "Access Management" \> "Users" in the left menu
+  3. Search for your user name
+  4. Under "Permissions" tab click "Add permissions"
+  5. Choose "Attach existing policies directly"
+  6. Search for _AmazonEC2FullAccess_, check the box next to it, click "Next"
+  7. Click "Add permissions"
+</details>
+
+<details>
+  <a href="#aws-access-creds"></a>
+  <summary>Getting Access Credentials</summary>
+  You will need **AWS Access Key** and **AWS Secret Key** for an existing account. You can obtain those in [Identity and Access Management (IAM) Section](https://console.aws.amazon.com/iamv2/home#/home) in AWS console.
+</details>
+
+<br>
+
+If yoou have completed the above steps or already have your permissions and credentials set up, run the following command in the project root directory:
 
 ```sh
 # enter the automator container
