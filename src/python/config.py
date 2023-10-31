@@ -22,7 +22,7 @@ c["state_dir"] = "/app/state"
 c["results_dir"] = "/app/results"
 c["uploads_dir"] = "/app/uploads"
 c["ansible_dir"] = "/app/ansible"
-c["terraform_dir"] = "/app/terraform"
+c["terraform_dir"] = "/app/src/terraform"
 
 # app image name
 c["app_image_name"] = "isa"
