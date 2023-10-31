@@ -21,6 +21,7 @@ c["app_dir"] = "/app"
 c["state_dir"] = "/app/state"
 c["results_dir"] = "/app/results"
 c["uploads_dir"] = "/app/uploads"
+c["tests_dir"] = "/app/src/tests"
 c["ansible_dir"] = "/app/src/ansible"
 c["terraform_dir"] = "/app/src/terraform"
 
