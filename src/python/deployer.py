@@ -23,7 +23,7 @@ from pathlib import Path
 
 import click
 
-from python.utils import (
+from src.python.utils import (
     colorize_error,
     colorize_info,
     colorize_prompt,
@@ -31,8 +31,8 @@ from python.utils import (
     read_meta,
     shell_command,
 )
-from python.debug import debug_break  # noqa
-from python.ngc import check_ngc_access
+from src.python.debug import debug_break  # noqa
+from src.python.ngc import check_ngc_access
 
 
 class Deployer:

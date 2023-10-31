@@ -2,8 +2,8 @@
 
 import unittest
 
-from python.config import c
-from python.deployer import Deployer
+from src.python.config import c
+from src.python.deployer import Deployer
 
 from pathlib import Path
 

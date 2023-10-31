@@ -25,9 +25,9 @@ import click
 import randomname
 from pwgen import pwgen
 
-from python.config import c as config
-from python.debug import debug_break  # noqa
-from python.utils import colorize_error, colorize_prompt
+from src.python.config import c as config
+from src.python.debug import debug_break  # noqa
+from src.python.utils import colorize_error, colorize_prompt
 
 
 class DeployCommand(click.core.Command):

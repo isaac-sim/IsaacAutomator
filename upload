@@ -21,9 +21,9 @@ import sys
 
 import click
 
-from python.config import c as config
-from python.debug import debug_break  # noqa
-from python.utils import (
+from src.python.config import c as config
+from src.python.debug import debug_break  # noqa
+from src.python.utils import (
     colorize_info,
     colorize_result,
     deployments,

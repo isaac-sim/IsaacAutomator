@@ -21,11 +21,11 @@ import sys
 
 import click
 
-from python.config import c as config
-from python.debug import debug_break  # noqa
-from python.deploy_command import DeployCommand
-from python.deployer import Deployer
-from python.utils import (
+from src.python.config import c as config
+from src.python.debug import debug_break  # noqa
+from src.python.deploy_command import DeployCommand
+from src.python.deployer import Deployer
+from src.python.utils import (
     colorize_error,
     colorize_info,
     colorize_prompt,
