@@ -97,8 +97,6 @@ for example:
   You will need **AWS Access Key** and **AWS Secret Key** for an existing account. You can obtain those in [Identity and Access Management (IAM) Section](https://console.aws.amazon.com/iamv2/home#/home) in AWS console.
 </details>
 
-<br>
-
 If yoou have completed the above steps or already have your permissions and credentials set up, run the following command in the project root directory:
 
 ```sh
