@@ -8,12 +8,23 @@ provider "alicloud" {
   region     = var.region
 }
 
+module "common" {
+  source = "./common"
+  prefix = "${var.prefix}-${var.deployment_name}-common"
+  region = var.region
+}
+
 module "isaac" {
-  source          = "./ovkit"
-  count           = var.isaac_enabled ? 1 : 0
-  isaac_enabled   = var.isaac_enabled
-  prefix          = "${var.prefix}.${var.deployment_name}.isaac"
-  deployment_name = var.deployment_name
-  instance_type   = var.isaac_instance_type
-  ssh_port        = var.ssh_port
+  count = var.isaac_enabled ? 1 : 0
+
+  source         = "./ovkit"
+  prefix         = "${var.prefix}-${var.deployment_name}-isaac"
+  vswitch_netnum = 1
+
+  ssh_port       = var.ssh_port
+  isaac_enabled  = var.isaac_enabled
+  vpc            = module.common.vpc
+  key_pair       = module.common.key_pair
+  instance_type  = var.isaac_instance_type
+  resource_group = module.common.resource_group
 }
