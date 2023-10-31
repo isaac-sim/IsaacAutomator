@@ -235,7 +235,11 @@ class Deployer:
                 #
                 "prefix": self.params["prefix"],
                 "ssh_port": self.params["ssh_port"],
-                "from_image": self.params["from_image"],
+                #
+                "from_image": self.params["from_image"]
+                if "from_image" in self.params
+                else False,
+                #
                 "deployment_name": self.params["deployment_name"],
             }
         )

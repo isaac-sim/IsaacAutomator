@@ -26,8 +26,6 @@ from python.deploy_command import DeployCommand
 from python.deployer import Deployer
 from python.utils import colorize_error, colorize_info, colorize_prompt
 
-# debug_start()
-
 
 class DeployAlicloudCommand(DeployCommand):
     """
@@ -170,8 +168,8 @@ class AlicloudDeployer(Deployer):
 
             # run terraform
             click.echo(colorize_info("* Running Terraform..."))
-            self.initialize_terraform(cwd="/app/terraform/alicloud")
-            self.run_terraform(cwd="/app/terraform/alicloud")
+            self.initialize_terraform(cwd=f"{config['terraform_dir']}/alicloud")
+            self.run_terraform(cwd=f"{config['terraform_dir']}/alicloud")
 
         # export ssh key from terraform
         self.export_ssh_key()
