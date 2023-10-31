@@ -94,7 +94,7 @@ for example:
 <details>
   <a href="#aws-access-creds"></a>
   <summary>Getting Access Credentials</summary>
-  You will need **AWS Access Key** and **AWS Secret Key** for an existing account. You can obtain those in [Identity and Access Management (IAM) Section](https://console.aws.amazon.com/iamv2/home#/home) in AWS console.
+  You will need _AWS Access Key_ and _AWS Secret Key_ for an existing account. You can obtain those in <a href="https://console.aws.amazon.com/iamv2/home#/home">Identity and Access Management (IAM) Section</a> in the AWS console.
 </details>
 
 If yoou have completed the above steps or already have your permissions and credentials set up, run the following command in the project root directory:
