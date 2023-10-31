@@ -24,16 +24,16 @@ resource "alicloud_eip_address" "default" {
   internet_charge_type = "PayByTraffic"
 }
 
-# ecs disk
-# @see: https://registry.terraform.io/providers/aliyun/alicloud/latest/docs/resources/ecs_disk
-resource "alicloud_ecs_disk" "default" {
-  disk_name         = "${var.prefix}-disk"
-  resource_group_id = var.resource_group.id
-  zone_id           = sort(data.alicloud_zones.instance_availability.ids)[0]
-  # category          = "cloud_auto"
-  size              = var.disk_size_gib
-  performance_level = "PL1" # @see: https://www.alibabacloud.com/help/en/ecs/user-guide/essds
-}
+# # ecs disk
+# # @see: https://registry.terraform.io/providers/aliyun/alicloud/latest/docs/resources/ecs_disk
+# resource "alicloud_ecs_disk" "default" {
+#   disk_name         = "${var.prefix}-disk"
+#   resource_group_id = var.resource_group.id
+#   zone_id           = sort(data.alicloud_zones.instance_availability.ids)[0]
+#   # category          = "cloud_auto"
+#   size              = var.disk_size_gib
+#   performance_level = "PL1" # @see: https://www.alibabacloud.com/help/en/ecs/user-guide/essds
+# }
 
 # create instance
 # @see: https://registry.terraform.io/providers/aliyun/alicloud/latest/docs/resources/instance
@@ -62,10 +62,10 @@ resource "alicloud_eip_association" "default" {
   allocation_id = alicloud_eip_address.default.id
 }
 
-resource "alicloud_ecs_disk_attachment" "default" {
-  instance_id = alicloud_instance.default.id
-  disk_id     = alicloud_ecs_disk.default.id
-}
+# resource "alicloud_ecs_disk_attachment" "default" {
+#   instance_id = alicloud_instance.default.id
+#   disk_id     = alicloud_ecs_disk.default.id
+# }
 
 #  + resource "alicloud_instance" "ovkit_vm" {
 #       + availability_zone                  = "us-east-1a"
