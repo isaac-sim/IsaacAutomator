@@ -23,6 +23,9 @@ c["results_dir"] = "/app/results"
 c["uploads_dir"] = "/app/uploads"
 c["ansible_dir"] = "/app/ansible"
 
+# app image name
+c["app_image_name"] = "isa"
+
 # defaults
 
 # --isaac-image

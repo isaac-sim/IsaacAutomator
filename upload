@@ -17,6 +17,7 @@
 # endregion
 
 import os
+import sys
 
 import click
 
@@ -24,7 +25,6 @@ from python.config import c as config
 from python.debug import debug_break  # noqa
 from python.utils import (
     colorize_info,
-    colorize_prompt,
     colorize_result,
     deployments,
     format_app_name,
@@ -147,4 +147,13 @@ def main(
 
 
 if __name__ == "__main__":
-    main()
+    if os.path.exists("/.dockerenv"):
+        # we're in docker, run command
+        main()
+    else:
+        # we're outside, start docker container first
+        shell_command(
+            f"docker run -it --rm -v $(pwd):{config['app_dir']} "
+            + f"{config['app_image_name']} '{' '.join(sys.argv)}'",
+            verbose=True,
+        )
