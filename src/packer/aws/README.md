@@ -24,5 +24,5 @@ packer build -force \
 -var=image_name=ovami-test-1 \
 -var=system_user_password="nvidia123" \
 -var=vnc_password="nvidia123" \
-/app/packer/aws/ovami
+/app/src/packer/aws/ovami
 ```

@@ -32,19 +32,19 @@ Pre-built VM images are created using [Packer](https://www.packer.io/) and can b
 
 #### AWS
 
-Refer to [../packer/aws/README.md](packer/aws/README.md) for pre-requisites. Then:
+Refer to [../src/packer/aws/README.md](src/packer/aws/README.md) for pre-requisites. Then:
 
 ```sh
-packer build -force /app/packer/aws/isaac
+packer build -force /app/src/packer/aws/isaac
 ...
 ```
 
 #### Azure
 
-Refer to [../packer/azure/README.md](packer/azure/README.md) for pre-requisites. Then:
+Refer to [../src/packer/azure/README.md](src/packer/azure/README.md) for pre-requisites. Then:
 
 ```sh
-packer build -force /app/packer/azure/isaac
+packer build -force /app/src/packer/azure/isaac
 ...
 ```
 
