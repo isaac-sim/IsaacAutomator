@@ -115,11 +115,7 @@ def main(
         shell_command(
             f"terraform init -upgrade -no-color -input=false {' > /dev/null' if not debug else ''}",
             verbose=debug,
-<<<<<<< HEAD
             cwd=f"{config['terraform_dir']}/{cloud.lower()}",
-=======
-            cwd=f"/app/terraform/{cloud}",
->>>>>>> 5e4abbc (Rerfactor destroy utility)
         )
 
         if dryrun:
