@@ -2,40 +2,69 @@
 
 data "alicloud_zones" "instance_availability" {
   available_instance_type = var.instance_type
-  available_disk_category = var.system_disk_category
+  # available_disk_category = "cloud_essd"
 }
 
 # create a subnet for the instance on alicloud
-# https://registry.terraform.io/providers/aliyun/alicloud/latest/docs/resources/vswitch
+# @see: https://registry.terraform.io/providers/aliyun/alicloud/latest/docs/resources/vswitch
 resource "alicloud_vswitch" "default" {
+  vswitch_name = "${var.prefix}-vswitch"
   vpc_id       = var.vpc.id
   cidr_block   = cidrsubnet(var.vpc.cidr_block, 8, var.vswitch_netnum)
-  vswitch_name = "${var.prefix}-vswitch"
   zone_id      = sort(data.alicloud_zones.instance_availability.ids)[0]
 }
 
-# create instance
-# https://registry.terraform.io/providers/aliyun/alicloud/latest/docs/resources/instance
-
-resource "alicloud_instance" "ovkit_vm" {
-  instance_name = "${var.prefix}-vm"
-  instance_type = var.instance_type
-
+# elastic ip
+# @see: https://registry.terraform.io/providers/aliyun/alicloud/latest/docs/resources/eip_address
+# TODO: check if isp needs special setting for China (https://registry.terraform.io/providers/aliyun/alicloud/latest/docs/resources/eip_address#isp)
+resource "alicloud_eip_address" "default" {
+  address_name         = "${var.prefix}-eip"
   resource_group_id    = var.resource_group.id
-  availability_zone    = sort(data.alicloud_zones.instance_availability.ids)[0]
-  security_groups      = alicloud_security_group.default.*.id
-  vswitch_id           = alicloud_vswitch.default.id
-  image_id             = "ubuntu_18_04_64_20G_alibase_20190624.vhd"
+  bandwidth            = "100"
   internet_charge_type = "PayByTraffic"
+}
 
-  system_disk_category          = var.system_disk_category
-  system_disk_size              = var.system_disk_size
-  system_disk_performance_level = "PL1" # https://www.alibabacloud.com/help/en/ecs/user-guide/essds
-  system_disk_encrypted         = false
+# ecs disk
+# @see: https://registry.terraform.io/providers/aliyun/alicloud/latest/docs/resources/ecs_disk
+resource "alicloud_ecs_disk" "default" {
+  disk_name         = "${var.prefix}-disk"
+  resource_group_id = var.resource_group.id
+  zone_id           = sort(data.alicloud_zones.instance_availability.ids)[0]
+  # category          = "cloud_auto"
+  size              = var.disk_size_gib
+  performance_level = "PL1" # @see: https://www.alibabacloud.com/help/en/ecs/user-guide/essds
+}
 
-  host_name = "${var.prefix}-vm"
+# create instance
+# @see: https://registry.terraform.io/providers/aliyun/alicloud/latest/docs/resources/instance
+resource "alicloud_instance" "default" {
+  instance_name     = "${var.prefix}-vm"
+  resource_group_id = var.resource_group.id
 
-  key_name = var.key_pair.key_pair_name
+  host_name            = "${var.prefix}-vm"
+  instance_type        = var.instance_type
+  internet_charge_type = "PayByTraffic"
+  stopped_mode         = "StopCharging"
+  image_id             = "ubuntu_18_04_64_20G_alibase_20190624.vhd"
+  key_name             = var.key_pair.key_pair_name
+  vswitch_id           = alicloud_vswitch.default.id
+  security_groups      = alicloud_security_group.default.*.id
+  availability_zone    = sort(data.alicloud_zones.instance_availability.ids)[0]
+
+  # @see: https://www.alibabacloud.com/help/en/ecs/user-guide/essds
+  system_disk_performance_level = "PL1"
+  system_disk_size              = var.disk_size_gib
+  system_disk_category          = "cloud_auto"
+}
+
+resource "alicloud_eip_association" "default" {
+  instance_id   = alicloud_instance.default.id
+  allocation_id = alicloud_eip_address.default.id
+}
+
+resource "alicloud_ecs_disk_attachment" "default" {
+  instance_id = alicloud_instance.default.id
+  disk_id     = alicloud_ecs_disk.default.id
 }
 
 #  + resource "alicloud_instance" "ovkit_vm" {

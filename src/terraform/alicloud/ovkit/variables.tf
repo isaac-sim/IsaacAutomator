@@ -19,16 +19,9 @@ variable "vswitch_netnum" {
   type        = number
 }
 
-variable "system_disk_category" {
-  description = "Category of the system disk: ephemeral_ssd, cloud_efficiency, cloud_ssd, cloud_essd, cloud, cloud_auto."
-  type        = string
-  default     = "cloud_ssd"
-}
-
-variable "system_disk_size" {
-  description = "Size of the system disk in GiB."
-  type        = number
-  default     = 256
+variable "disk_size_gib" {
+  type    = number
+  default = 256
 }
 
 variable "vpc" {
