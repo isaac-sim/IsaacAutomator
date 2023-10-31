@@ -1,0 +1,5 @@
+Contents of this folder will be automatically uploaded to each created cloud instance ($HOME/uploads directory).
+
+To manually run the upload:
+
+./upload --deployment-name <deployment_name>

@@ -1,0 +1,5 @@
+This directory contains results that are downloaded from the cloud instances.
+
+To manually download the results:
+
+./download --deployment-name <deployment_name> [--drivesim] [--nucleus]
