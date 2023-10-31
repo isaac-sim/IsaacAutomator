@@ -189,8 +189,8 @@ class GCPDeployer(Deployer):
 
             # run terraform
             click.echo(colorize_info("* Running Terraform..."))
-            self.initialize_terraform(cwd="/app/terraform/gcp")
-            self.run_terraform(cwd="/app/terraform/gcp")
+            self.initialize_terraform(cwd=f"{config['terraform_dir']}/gcp")
+            self.run_terraform(cwd=f"{config['terraform_dir']}/gcp")
 
         # create ansible inventory file
         self.create_ansible_inventory()

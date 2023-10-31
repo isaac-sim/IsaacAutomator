@@ -223,8 +223,8 @@ class AWSDeployer(Deployer):
 
             # run terraform
             click.echo(colorize_info("* Running Terraform..."))
-            self.initialize_terraform(cwd="/app/terraform/aws")
-            self.run_terraform(cwd="/app/terraform/aws")
+            self.initialize_terraform(cwd=f"{config['terraform_dir']}/aws")
+            self.run_terraform(cwd=f"{config['terraform_dir']}/aws")
 
         # export ssh key from terraform
         self.export_ssh_key()

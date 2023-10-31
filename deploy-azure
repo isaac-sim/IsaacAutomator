@@ -192,12 +192,12 @@ class AzureDeployer(Deployer):
 
             # run terraform
             click.echo(colorize_info("* Running Terraform..."))
-            self.initialize_terraform(cwd="/app/terraform/azure")
+            self.initialize_terraform(cwd=f"{config['terraform_dir']}/azure")
 
             if len(self.params["resource_group"]) > 0:
-                self.import_resource_group(cwd="/app/terraform/azure")
+                self.import_resource_group(cwd=f"{config['terraform_dir']}/azure")
 
-            self.run_terraform(cwd="/app/terraform/azure")
+            self.run_terraform(cwd=f"{config['terraform_dir']}/azure")
 
         # create ansible inventory file
         self.create_ansible_inventory()
