@@ -157,6 +157,8 @@ Look for the connection instructions at the end of the deploymnt command output.
 
 You can view available arguments with `--help` switch for the start scripts, in most cases you wouldn't need to change the defaults.
 
+Tip: You can use `./connect <deployment-name>` helper command to connect to the deployed instance via ssh.
+
 ### Running Applications
 
 To use installed applications, connect to the deployed instance using noVNC or NoMachine. You can find the connection instructions at the end of the deployment command output. Additionally, this info is saved in `state/<deployment-name>/info.txt` file.
