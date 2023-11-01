@@ -14,6 +14,9 @@ RUN git clone https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs.git
 RUN (cd OmniIsaacGymEnvs && ${PYTHON_PATH} -m pip install -e .)
 WORKDIR /OmniIsaacGymEnvs/omniisaacgymenvs
 
+# link output dir to /results
+RUN mkidr /results ; ln -s /results /OmniIsaacGymEnvs/omniisaacgymenvs/runs
+
 # customoize bash prompt
 RUN echo "export PS1='\[\033[01;33m\][OmniIsaacGymEnvs]\[\033[00m\]:\w\$ '" >>  /root/.bashrc
 
