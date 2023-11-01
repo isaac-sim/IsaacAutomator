@@ -14,11 +14,11 @@ variable "ssh_port" {
   type = number
 }
 
-variable "alicloud_access_key" {
+variable "aliyun_access_key" {
   type = string
 }
 
-variable "alicloud_secret_key" {
+variable "aliyun_secret_key" {
   type = string
 }
 

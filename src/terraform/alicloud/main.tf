@@ -3,8 +3,8 @@ terraform {
 }
 
 provider "alicloud" {
-  access_key = var.alicloud_access_key
-  secret_key = var.alicloud_secret_key
+  access_key = var.aliyun_access_key
+  secret_key = var.aliyun_secret_key
   region     = var.region
 }
 

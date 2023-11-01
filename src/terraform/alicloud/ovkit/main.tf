@@ -2,7 +2,6 @@
 
 data "alicloud_zones" "instance_availability" {
   available_instance_type = var.instance_type
-  # available_disk_category = "cloud_essd"
 }
 
 # create a subnet for the instance on alicloud
@@ -45,7 +44,7 @@ resource "alicloud_instance" "default" {
   instance_type        = var.instance_type
   internet_charge_type = "PayByTraffic"
   stopped_mode         = "StopCharging"
-  image_id             = "ubuntu_18_04_64_20G_alibase_20190624.vhd"
+  image_id             = "ubuntu_20_04_x64_20G_alibase_20230907.vhd"
   key_name             = var.key_pair.key_pair_name
   vswitch_id           = alicloud_vswitch.default.id
   security_groups      = alicloud_security_group.default.*.id

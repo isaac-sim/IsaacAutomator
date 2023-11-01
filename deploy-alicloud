@@ -20,11 +20,11 @@ import os
 
 import click
 
-from python.config import c as config
-from python.debug import debug_break, debug_start  # noqa
-from python.deploy_command import DeployCommand
-from python.deployer import Deployer
-from python.utils import colorize_error, colorize_info, colorize_prompt
+from src.python.config import c as config
+from src.python.debug import debug_break, debug_start  # noqa
+from src.python.deploy_command import DeployCommand
+from src.python.deployer import Deployer
+from src.python.utils import colorize_error, colorize_info, colorize_prompt
 
 
 class DeployAlicloudCommand(DeployCommand):
@@ -111,28 +111,28 @@ class DeployAlicloudCommand(DeployCommand):
             ),
         )
 
-        # --alicloud-access-key-id
+        # --aliyun-access-key
         self.params.insert(
             len(self.params),
             click.core.Option(
-                ("--alicloud-access-key",),
+                ("--aliyun-access-key",),
                 prompt=colorize_prompt(
                     "* Alibaba Cloud Access Key "
                     + "(https://ram.console.aliyun.com/manage/ak to create one)"
                 ),
-                default=os.environ.get("ALICLOUD_ACCESS_KEY", ""),
-                show_default="<ALICLOUD_ACCESS_KEY environment variable>",
+                default=os.environ.get("ALIYUN_ACCESS_KEY", ""),
+                show_default="<ALIYUN_ACCESS_KEY environment variable>",
             ),
         )
 
-        # --alicloud-secret-access-key
+        # --aliyun-secret-key
         self.params.insert(
             len(self.params),
             click.core.Option(
-                ("--alicloud-secret-key",),
+                ("--aliyun-secret-key",),
                 prompt=colorize_prompt("* Alibaba Cloud Secret Key"),
-                default=os.environ.get("ALICLOUD_SECRET_KEY", ""),
-                show_default="<ALICLOUD_SECRET_KEY environment variable>",
+                default=os.environ.get("ALIYUN_SECRET_KEY", ""),
+                show_default="<ALIYUN_SECRET_KEY environment variable>",
             ),
         )
 
@@ -161,8 +161,8 @@ class AlicloudDeployer(Deployer):
             self.create_tfvars(
                 {
                     "region": self.params["region"],
-                    "alicloud_access_key": self.params["alicloud_access_key"],
-                    "alicloud_secret_key": self.params["alicloud_secret_key"],
+                    "aliyun_access_key": self.params["aliyun_access_key"],
+                    "aliyun_secret_key": self.params["aliyun_secret_key"],
                 }
             )
 

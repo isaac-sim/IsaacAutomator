@@ -11,5 +11,5 @@ output "resource_group" {
 }
 
 output "key_pair" {
-  value = alicloud_key_pair.default
+  value = alicloud_ecs_key_pair.default
 }
