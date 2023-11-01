@@ -157,6 +157,8 @@ Look for the connection instructions at the end of the deploymnt command output.
 
 You can view available arguments with `--help` switch for the start scripts, in most cases you wouldn't need to change the defaults.
 
+Tip: You can use `./connect <deployment-name>` helper command to connect to the deployed instance via ssh.
+
 ### Running Applications
 
 To use installed applications, connect to the deployed instance using noVNC or NoMachine. You can find the connection instructions at the end of the deployment command output. Additionally, this info is saved in `state/<deployment-name>/info.txt` file.
@@ -186,6 +188,8 @@ To run Omniverse Isaac Gym click "Omni Isaac Gym" icon on the desktop or run the
 ```sh
 ~/Desktop/omni-isaac-gym-envs.sh
 ```
+
+Default output directory (`/OmniIsaacGymEnvs/omniisaacgymenvs/runs`) in the OmniIsaacGymEnvs contaner will be linked to the default results directory (`/home/ubuntu/results`) on the deployed instance. You can download the contents of this directory to your local machine using `./download <deployment_name>` command.
 
 ### Pausing and Resuming
 

@@ -23,9 +23,9 @@ from pathlib import Path
 
 import click
 
-from python.config import c as config
-from python.debug import debug_break  # noqa
-from python.utils import (
+from src.python.config import c as config
+from src.python.debug import debug_break  # noqa
+from src.python.utils import (
     azure_login,
     colorize_info,
     colorize_prompt,
@@ -113,7 +113,7 @@ def main(
         shell_command(
             f"terraform init -upgrade -no-color -input=false {' > /dev/null' if not debug else ''}",
             verbose=debug,
-            cwd=f"/app/terraform/{cloud.lower()}",
+            cwd=f"{config['terraform_dir']}/{cloud.lower()}",
         )
 
         if dryrun:
@@ -127,7 +127,7 @@ def main(
 
             shell_command(
                 command=f'terraform plan -destroy -var-file="{tfvars_file}" -state="{tfstate_file}"',
-                cwd=f"/app/terraform/{cloud.lower()}",
+                cwd=f"{config['terraform_dir']}/{cloud.lower()}",
                 exit_on_error=False,
                 verbose=debug,
             )
@@ -143,7 +143,7 @@ def main(
 
             shell_command(
                 command=f'terraform destroy -auto-approve -var-file="{tfvars_file}" -state="{tfstate_file}"',
-                cwd=f"/app/terraform/{cloud.lower()}",
+                cwd=f"{config['terraform_dir']}/{cloud.lower()}",
                 exit_on_error=True,
                 verbose=debug,
             )

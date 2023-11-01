@@ -2,8 +2,8 @@
 
 import unittest
 
-from python.config import c
-from python.deployer import Deployer
+from src.python.config import c
+from src.python.deployer import Deployer
 
 from pathlib import Path
 
@@ -11,7 +11,7 @@ from pathlib import Path
 class Test_Deployer(unittest.TestCase):
     def setUp(self):
         self.config = c
-        self.config["state_dir"] = "/app/tests/res/state"
+        self.config["state_dir"] = f"{c['tests_dir']}/res/state"
 
         self.deployer = Deployer(
             params={

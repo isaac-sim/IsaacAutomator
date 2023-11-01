@@ -19,7 +19,7 @@
 import os
 import unittest
 
-from python.ngc import check_ngc_access
+from src.python.ngc import check_ngc_access
 
 
 class Test_NGC_Key_Validation(unittest.TestCase):

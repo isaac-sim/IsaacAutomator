@@ -1,6 +1,6 @@
 # Running packer for Azure
 
-See https://learn.microsoft.com/en-us/azure/virtual-machines/linux/build-image-with-packer
+See <https://learn.microsoft.com/en-us/azure/virtual-machines/linux/build-image-with-packer>
 
 ## 1. Create resource group for packer output
 
@@ -40,7 +40,7 @@ packer build [-var=image_name=...] <folder>/
 
 For example:
 
-```
+```sh
 packer build isaac/
 packer build -var=image_name=my_image_1 isaac/
 ```

@@ -22,11 +22,16 @@ import sys
 
 import click
 
-from python.config import c as config
-from python.debug import debug_break, debug_start  # noqa
-from python.deploy_command import DeployCommand
-from python.deployer import Deployer
-from python.utils import colorize_error, colorize_info, colorize_prompt, shell_command
+from src.python.config import c as config
+from src.python.debug import debug_break, debug_start  # noqa
+from src.python.deploy_command import DeployCommand
+from src.python.deployer import Deployer
+from src.python.utils import (
+    colorize_error,
+    colorize_info,
+    colorize_prompt,
+    shell_command,
+)
 
 
 class DeployAWSCommand(DeployCommand):
@@ -218,8 +223,8 @@ class AWSDeployer(Deployer):
 
             # run terraform
             click.echo(colorize_info("* Running Terraform..."))
-            self.initialize_terraform(cwd="/app/terraform/aws")
-            self.run_terraform(cwd="/app/terraform/aws")
+            self.initialize_terraform(cwd=f"{config['terraform_dir']}/aws")
+            self.run_terraform(cwd=f"{config['terraform_dir']}/aws")
 
         # export ssh key from terraform
         self.export_ssh_key()

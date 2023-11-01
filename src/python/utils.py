@@ -27,7 +27,7 @@ from pathlib import Path
 
 import click
 
-from python.config import c as config
+from src.python.config import c as config
 
 
 def colorize_prompt(text):

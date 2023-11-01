@@ -40,7 +40,7 @@ EOF
 }
 
 variable "image_name" {
-  default = "$PREFIX.isaac_image.$VERSION"
+  default = "$PREFIX.ovami_image.$VERSION"
 }
 
 variable "ngc_api_key" {
@@ -48,7 +48,7 @@ variable "ngc_api_key" {
 }
 
 variable skip_tags {
-  default = "skip_in_image"
+  default = "skip_in_ovami"
 }
 
 variable "skip_create_ami" {
@@ -59,7 +59,15 @@ variable "aws_region" {
   default = "us-east-1"
 }
 
-data "amazon-ami" "isaac_instance_ami" {
+variable "system_user_password" {
+  type = string
+}
+
+variable "vnc_password" {
+  type = string
+}
+
+data "amazon-ami" "ovami" {
   most_recent = true
   owners      = ["099720109477"] # Canonical
   region      = "${var.aws_region}"
@@ -75,13 +83,13 @@ locals {
   expanded_image_name = replace(replace(var.image_name, "$VERSION", var.version), "$PREFIX", "isa.packer")
 }
 
-source "amazon-ebs" "isaac" {
+source "amazon-ebs" "ovami" {
   ami_name      = "${local.expanded_image_name}"
   access_key    = "${var.aws_access_key_id}"
   secret_key    = "${var.aws_secret_access_key}"
-  instance_type = "g5.2xlarge"
+  instance_type = "g5.4xlarge"
   region        = "${var.aws_region}"
-  source_ami    = data.amazon-ami.isaac_instance_ami.id
+  source_ami    = data.amazon-ami.ovami.id
   ssh_username  = "ubuntu"
   encrypt_boot  = false
 
@@ -110,18 +118,52 @@ source "amazon-ebs" "isaac" {
 }
 
 build {
-  sources = ["source.amazon-ebs.isaac"]
+  sources = ["source.amazon-ebs.ovami"]
 
   provisioner "ansible" {
     use_proxy     = false
-    groups        = ["isaac"]
-    playbook_file = "/app/ansible/isaac.yml"
+    groups        = ["ovami"]
+    playbook_file = "/app/src/ansible/ovami.yml"
     ansible_env_vars = [
-      "ANSIBLE_CONFIG=/app/ansible/ansible.cfg"
+      "ANSIBLE_CONFIG=/app/src/ansible/ansible.cfg"
     ]
     extra_arguments = [
       "--skip-tags", "${var.skip_tags}",
-      "--extra-vars", "cloud='aws' deployment_name='aws_image' ngc_api_key='${var.ngc_api_key} omniverse_user='''"
+      "--extra-vars", "cloud='aws' deployment_name='aws_image' system_user_password='${var.system_user_password}' vnc_password='${var.vnc_password}'"
+    ]
+  }
+
+  # add cleanup steps
+  # @see https://docs.aws.amazon.com/imagebuilder/latest/userguide/security-best-practices.html
+  provisioner "shell" {
+    # @see https://developer.hashicorp.com/packer/docs/provisioners/shell#sudo-example
+    execute_command = "echo 'packer' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
+    inline = [
+      "sudo shred -zufv /etc/sudoers.d/90-cloud-init-users 2>&1 || true",
+      "sudo shred -zufv /etc/locale.conf 2>&1 || true",
+      "sudo shred -zufv /var/log/cloud-init.log 2>&1 || true",
+      "sudo shred -zufv /var/log/cloud-init-output.log 2>&1 || true",
+      "sudo shred -zufv /etc/.updated 2>&1 || true",
+      "sudo shred -zufv /etc/aliases.db 2>&1 || true",
+      "sudo shred -zufv /etc/hostname 2>&1 || true",
+      "sudo shred -zufv /var/lib/misc/postfix.aliasesdb-stamp 2>&1 || true",
+      "sudo shred -zufv /var/lib/postfix/master.lock 2>&1 || true",
+      "sudo shred -zufv /var/spool/postfix/pid/master.pid 2>&1 || true",
+      "sudo shred -zufv /var/.updated 2>&1 || true",
+      "sudo shred -zufv /var/cache/yum/x86_64/2/.gpgkeyschecked.yum 2>&1 || true",
+      "sudo shred -zufv /etc/ssh/ssh_host_rsa_key 2>&1 || true",
+      "sudo shred -zufv /etc/ssh/ssh_host_rsa_key.pub 2>&1 || true",
+      "sudo shred -zufv /etc/ssh/ssh_host_ecdsa_key 2>&1 || true",
+      "sudo shred -zufv /etc/ssh/ssh_host_ecdsa_key.pub 2>&1 || true",
+      "sudo shred -zufv /etc/ssh/ssh_host_ed25519_key 2>&1 || true",
+      "sudo shred -zufv /etc/ssh/ssh_host_ed25519_key.pub 2>&1 || true",
+      "sudo shred -zufv /root/.ssh/authorized_keys 2>&1 || true",
+      "sudo shred -zufv /home/ubuntu/.ssh/authorized_keys 2>&1 || true",
+      "sudo shred -zufv /var/log/audit/audit.log 2>&1 || true",
+      "sudo shred -zufv /var/log/boot.log 2>&1 || true",
+      "sudo shred -zufv /var/log/dmesg 2>&1 || true",
+      "sudo shred -zufv /var/log/cron 2>&1 || true",
+      "sudo shred -zufv /var/log/amazon/ssm/* 2>&1 || true"
     ]
   }
 }
