@@ -26,3 +26,15 @@ resource "alicloud_security_group_rule" "allow_novnc" {
   security_group_id = alicloud_security_group.default.id
   cidr_ip           = "0.0.0.0/0"
 }
+
+# security rule for ping
+resource "alicloud_security_group_rule" "allow_ping" {
+  type              = "ingress"
+  ip_protocol       = "icmp"
+  nic_type          = "intranet"
+  policy            = "accept"
+  port_range        = "-1/-1"
+  priority          = 3
+  security_group_id = alicloud_security_group.default.id
+  cidr_ip           = "0.0.0.0/0"
+}
