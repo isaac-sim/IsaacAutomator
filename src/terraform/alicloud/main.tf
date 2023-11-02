@@ -21,10 +21,11 @@ module "isaac" {
   prefix         = "${var.prefix}-${var.deployment_name}-isaac"
   vswitch_netnum = 1
 
-  ssh_port       = var.ssh_port
-  isaac_enabled  = var.isaac_enabled
-  vpc            = module.common.vpc
-  key_pair       = module.common.key_pair
-  instance_type  = var.isaac_instance_type
+  ssh_port      = var.ssh_port
+  isaac_enabled = var.isaac_enabled
+  vpc           = module.common.vpc
+  key_pair      = module.common.key_pair
+  # instance_type  = var.isaac_instance_type
+  instance_type  = "ecs.g7a.large"
   resource_group = module.common.resource_group
 }
