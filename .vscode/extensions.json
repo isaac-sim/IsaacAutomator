@@ -7,6 +7,8 @@
         "4ops.packer",
         "yzhang.markdown-all-in-one",
         "ms-python.black-formatter",
-        "maptz.regionfolder"
+        "maptz.regionfolder",
+        "ms-python.flake8",
+        "ms-python.mypy-type-checker"
     ]
 }

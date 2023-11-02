@@ -14,17 +14,10 @@
     },
     "editor.formatOnSave": true,
     "explorerExclude.backup": {},
-    "python.linting.mypyEnabled": false,
-    "python.linting.flake8Enabled": true,
-    "python.linting.enabled": false,
-    "python.linting.flake8Args": [
-        "--max-line-length=120"
-    ],
     "flake8.args": [
         "--max-line-length=120"
     ],
     "markdown.extension.toc.levels": "2..5",
-    "python.formatting.provider": "none",
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter",
         "editor.formatOnSave": true
