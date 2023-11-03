@@ -51,8 +51,6 @@
 # VNC
 - name: VNC server
   import_tasks: vnc.yml
-  tags:
-    - skip_in_ovami
 
 # NoMachine
 
@@ -60,14 +58,11 @@
   import_tasks: nomachine.yml
   when: "'nxserver.service' not in ansible_facts.services"
   tags:
-    - skip_in_image
     - skip_in_ovami
 
 # NoVNC
 - name: NoVNC server
   import_tasks: novnc.yml
-  tags:
-    - skip_in_ovami
 
 # do reboots if needed
 - name: Reboot if needed
