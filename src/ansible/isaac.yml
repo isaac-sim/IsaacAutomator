@@ -29,7 +29,7 @@
   gather_facts: true
   vars:
     application_name: isaac
-    prompt_ansi_color: 34 # bright blue
+    prompt_ansi_color: 36 # cyan
     nvidia_generic_driver_package: nvidia-driver-525-server
   roles:
     - isaac
