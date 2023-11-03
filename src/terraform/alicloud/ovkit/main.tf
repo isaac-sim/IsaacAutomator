@@ -54,6 +54,21 @@ resource "alicloud_instance" "default" {
   system_disk_performance_level = "PL1"
   system_disk_size              = var.disk_size_gib
   system_disk_category          = "cloud_auto"
+
+  # by default, only root user exists in ubuntu image
+  # create a new user, add public key, add user to sudoers
+  user_data = base64encode(<<-EOF
+    #!/bin/bash
+    USERNAME="ubuntu"
+    useradd -m -d /home/$USERNAME -s /bin/bash $USERNAME
+    mkdir /home/$USERNAME/.ssh
+    cat /root/.ssh/authorized_keys >> /home/$USERNAME/.ssh/authorized_keys
+    cp /home/$USERNAME/.ssh/authorized_keys /home/$USERNAME/.ssh/authorized_keys.bak
+    uniq /home/$USERNAME/.ssh/authorized_keys.bak > /home/$USERNAME/.ssh/authorized_keys
+    chown -R $USERNAME:$USERNAME /home/$USERNAME
+    echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+    EOF
+  )
 }
 
 resource "alicloud_eip_association" "default" {
