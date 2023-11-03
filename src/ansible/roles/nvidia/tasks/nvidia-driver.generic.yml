@@ -15,26 +15,26 @@
 # endregion
 
 ---
-- name: AWS / Add CUDA keyring
+- name: NVIDIA GPU Driver / Add CUDA keyring
   apt:
     deb: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.1-1_all.deb
 
-- name: AWS / Blacklist the nouveau driver module
+- name: NVIDIA GPU Driver / Blacklist the nouveau driver module
   kernel_blacklist: name=nouveau
     state=present
 
-- name: AWS / Install packages
+- name: NVIDIA GPU Driver / Install pre-requisites
   apt: name={{ item }}
     state=latest
     update_cache=yes
   with_items:
     - xserver-xorg
-    - "{{ nvidia_driver_package }}"
+    - "{{ nvidia_generic_driver_package }}"
 
-- name: AWS / Enable persistent mode for the driver
+- name: NVIDIA GPU Driver / Enable persistent mode
   shell: nvidia-smi -pm ENABLED
 
-- name: AWS / Check if reboot required
+- name: NVIDIA GPU Driver / Check if reboot is needed
   stat:
     path: /var/run/reboot-required
   register: reboot_required_file
