@@ -10,10 +10,6 @@ variable "ssh_port" {
   type = number
 }
 
-variable "isaac_enabled" {
-  type = bool
-}
-
 variable "vswitch_netnum" {
   description = "The number of the subnet to use for the app vswitch. 1-255."
   type        = number
