@@ -52,9 +52,13 @@ c["aws_default_isaac_instance_type"] = "g5.2xlarge"
 # str, 1-index in DeployAzureCommand.AZURE_OVKIT_INSTANCE_TYPES
 c["azure_default_isaac_instance_type"] = "2"
 c["gcp_default_isaac_instance_type"] = "g2-standard-8"
+c["alicloud_default_isaac_instance_type"] = "ecs.gn7i-c16g1.4xlarge"
 
 # --isaac-gpu-count
 c["gcp_default_isaac_gpu_count"] = 1
+
+# --region
+c["alicloud_default_region"] = "us-east-1"
 
 # --prefix for the created cloud resources
 c["default_prefix"] = "isa"

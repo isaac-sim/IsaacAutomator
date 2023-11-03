@@ -235,7 +235,11 @@ class Deployer:
                 #
                 "prefix": self.params["prefix"],
                 "ssh_port": self.params["ssh_port"],
-                "from_image": self.params["from_image"],
+                #
+                "from_image": self.params["from_image"]
+                if "from_image" in self.params
+                else False,
+                #
                 "deployment_name": self.params["deployment_name"],
             }
         )
@@ -395,7 +399,6 @@ class Deployer:
             f"terraform output -state={self.config['state_dir']}/{deployment_name}/.tfstate -raw ssh_key"
             + f" > {self.config['state_dir']}/{deployment_name}/key.pem && "
             + f"chmod 0600 {self.config['state_dir']}/{deployment_name}/key.pem",
-            cwd=f"{self.config['terraform_dir']}/azure",
             verbose=debug,
         )
 

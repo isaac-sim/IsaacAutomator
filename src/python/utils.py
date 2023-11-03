@@ -151,6 +151,7 @@ def format_cloud_name(cloud_name):
         "aws": "AWS",
         "azure": "Azure",
         "gcp": "GCP",
+        "alicloud": "Alibaba Cloud",
     }
 
     if cloud_name in formatted:
