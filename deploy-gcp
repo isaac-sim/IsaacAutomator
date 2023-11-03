@@ -56,17 +56,6 @@ class DeployGCPCommand(DeployCommand):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # display banner saying that this is experimental feature
-        click.echo(
-            click.style(
-                "******************************************************\n"
-                + "* GCP SUPPORT IS EXPERIMENTAL. USE AT YOUR OWN RISK! *\n"
-                + "******************************************************\n",
-                fg="bright_red",
-                italic=True,
-            )
-        )
-
         # --zone
 
         help_message = (
@@ -150,7 +139,7 @@ class DeployGCPCommand(DeployCommand):
 
 class GCPDeployer(Deployer):
     """
-    Deploys stuff to Azure
+    Deploys stuff to GCP
     """
 
     def __init__(self, params, config):
