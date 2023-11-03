@@ -19,7 +19,7 @@ resource "alicloud_vswitch" "default" {
 resource "alicloud_eip_address" "default" {
   address_name         = "${var.prefix}-eip"
   resource_group_id    = var.resource_group.id
-  bandwidth            = "100"
+  bandwidth            = "200"
   internet_charge_type = "PayByTraffic"
 }
 
