@@ -15,6 +15,13 @@
 # endregion
 
 ---
+- name: Prerequisites (PIP packages)
+  pip:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - pexpect
+
 - name: Install x11vnc and helper util
   apt: name={{ item }}
     update_cache=yes
