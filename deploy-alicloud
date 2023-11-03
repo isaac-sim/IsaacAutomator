@@ -78,6 +78,19 @@ class DeployAlicloudCommand(DeployCommand):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # display banner saying that alicloud support is experimental yet
+        click.echo(
+            click.style(
+                "*****************************************************\n"
+                + "* ALICLOUD SUPPORT IS EXPERIMENTAL!                 *\n"
+                + "* It can damage your car, set your house on fire,   *\n"
+                + "* or make your dog run away. Use at your own risk!  *\n"
+                + "*****************************************************",
+                fg="bright_red",
+                italic=True,
+            )
+        )
+
         # --isaac-instance-type
         self.params.insert(
             # insert after --isaac option
