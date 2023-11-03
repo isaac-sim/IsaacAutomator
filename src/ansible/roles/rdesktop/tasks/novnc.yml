@@ -1,5 +1,10 @@
 # Install noVNC
 
+- name: Prerequisites
+  apt:
+    name: snapd
+    state: latest
+
 # Install noVNC via snap package
 - name: Install noVNC
   snap:
