@@ -2,7 +2,6 @@
 # Isaac Automation OSS Contribution Rules
 
 - [Development Tips](#development-tips)
-  - [Building Docker Contaner for Development](#building-docker-contaner-for-development)
   - [Updating Pre-Built VM Images](#updating-pre-built-vm-images)
     - [Azure](#azure)
 - [Issue Tracking](#issue-tracking)
@@ -13,16 +12,6 @@
 - [Signing Your Work](#signing-your-work)
 
 ## Development Tips
-
-### Building Docker Contaner for Development
-
-```sh
-docker build -t isa \
-  --build-arg WITH_PACKER=true \
-  --build-arg WITH_GIT=true \
-  --platform linux/x86_64 \ # on Apple Silicon Macs when using Docker Desktop
-  .
-```
 
 ### Updating Pre-Built VM Images
 
