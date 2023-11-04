@@ -26,8 +26,8 @@ import click
 
 from src.python.alicloud import (
     alicloud_configure_cli,
-    alicloud_get_vm_status,
-    alicloud_start_vm,
+    alicloud_get_instance_status,
+    alicloud_start_instance,
 )
 from src.python.config import c as config
 from src.python.utils import (
@@ -112,13 +112,18 @@ def main(
             )
 
         elif "alicloud" == cloud:
-            # configure CLI
+            # configure aliyun cli
             alicloud_configure_cli(deployment_name, verbose=debug)
             # start
-            alicloud_start_vm(vm_id, verbose=debug)
+            alicloud_start_instance(vm_id, verbose=debug)
             # wait for VM to stop
             while True:
-                if "Running" == alicloud_get_vm_status(vm_id, verbose=debug):
+                if "Running" == alicloud_get_instance_status(vm_id, verbose=debug):
+                    click.echo()
+                    break
+                click.echo(colorize_info("."), nl=False)
+                time.sleep(2)
+
                     click.echo()
                     break
                 click.echo(colorize_info("."), nl=False)

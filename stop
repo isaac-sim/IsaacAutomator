@@ -25,8 +25,8 @@ import click
 
 from src.python.alicloud import (
     alicloud_configure_cli,
-    alicloud_get_vm_status,
-    alicloud_stop_vm,
+    alicloud_get_instance_status,
+    alicloud_stop_instance,
 )
 from src.python.config import c as config
 from src.python.utils import (
@@ -114,13 +114,13 @@ def main(
             extra_info = " On Azure stopped VMs still count towards the quota."
 
         elif "alicloud" == cloud:
-            # configure CLI
+            # configure aliyun cli
             alicloud_configure_cli(deployment_name, verbose=debug)
             # stop
-            alicloud_stop_vm(vm_id, verbose=debug)
-            # wait for VM to stop
+            alicloud_stop_instance(vm_id, verbose=debug)
+            # wait for vm to stop
             while True:
-                if "Stopped" == alicloud_get_vm_status(vm_id, verbose=debug):
+                if "Stopped" == alicloud_get_instance_status(vm_id, verbose=debug):
                     click.echo()
                     break
                 click.echo(colorize_info("."), nl=False)

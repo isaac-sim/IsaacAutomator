@@ -46,7 +46,7 @@ def alicloud_configure_cli(
     )
 
 
-def alicloud_start_vm(vm_id, verbose=False):
+def alicloud_start_instance(vm_id, verbose=False):
     """
     Start VM
     """
@@ -58,7 +58,7 @@ def alicloud_start_vm(vm_id, verbose=False):
     )
 
 
-def alicloud_stop_vm(vm_id, verbose=False):
+def alicloud_stop_instance(vm_id, verbose=False):
     """
     Stop VM
     """
@@ -70,7 +70,7 @@ def alicloud_stop_vm(vm_id, verbose=False):
     )
 
 
-def alicloud_get_vm_status(vm_id, verbose=False):
+def alicloud_get_instance_status(vm_id, verbose=False):
     """
     Query VM status
     Returns: "Stopping" | "Stopped" | "Starting" | "Running"
