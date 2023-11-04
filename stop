@@ -25,9 +25,11 @@ import click
 
 from src.python.alicloud import (
     alicloud_configure_cli,
-    alicloud_get_vm_status,
-    alicloud_stop_vm,
+    alicloud_get_instance_status,
+    alicloud_stop_instance,
 )
+from src.python.aws import aws_configure_cli, aws_get_instance_status, aws_stop_instance
+from src.python.azure import azure_login, azure_stop_instance
 from src.python.config import c as config
 from src.python.utils import (
     colorize_error,
@@ -71,8 +73,6 @@ def main(
     debug: bool,
     deployment_name: str,
 ):
-    # TODO: check login
-
     # cleck what cloud is deployment for
     cloud = read_tf_output(deployment_name, "cloud", verbose=debug)
 
@@ -84,12 +84,6 @@ def main(
         vm_id = read_tf_output(deployment_name, f"{app_name}_vm_id", verbose=debug)
         vm_ip = read_tf_output(deployment_name, f"{app_name}_ip", verbose=debug)
 
-        click.echo(
-            colorize_info(
-                f"* Stopping {format_app_name(app_name)} VM @ {format_cloud_name(cloud)} ({vm_ip})..."
-            )
-        )
-
         if vm_id in ["NA", ""]:
             # show "not found" message if:
             # - app is explicitly specified
@@ -100,30 +94,49 @@ def main(
 
         # stop VM
 
+        click.echo(
+            colorize_info(
+                f"* Stopping {format_app_name(app_name)} VM @ {format_cloud_name(cloud)} ({vm_ip})..."
+            ),
+            nl=False,
+        )
+
         extra_info = ""
 
         if "azure" == cloud:
-            shell_command(
-                f"az vm deallocate --ids {vm_id}",
-                verbose=debug,
-                exit_on_error=True,
-                capture_output=False,
-            )
-            extra_info = "\n- On Azure stopped VMs still count towards your quota."
+            click.echo()  # extra newline
+            extra_info = " On Azure stopped VMs still count towards the quota."
+            # login to azure if needed
+            azure_login(verbose=debug)
+            # stop
+            azure_stop_instance(vm_id, verbose=debug)
 
         elif "alicloud" == cloud:
-            # configure CLI
+            # configure aliyun cli
             alicloud_configure_cli(deployment_name, verbose=debug)
             # stop
-            alicloud_stop_vm(vm_id, verbose=debug)
-            # wait for VM to stop
+            alicloud_stop_instance(vm_id, verbose=debug)
+            # wait for vm to stop
             while True:
-                if "Stopped" == alicloud_get_vm_status(vm_id, verbose=debug):
+                if "Stopped" == alicloud_get_instance_status(vm_id, verbose=debug):
                     click.echo()
                     break
                 click.echo(colorize_info("."), nl=False)
                 time.sleep(2)
 
+        elif "aws" == cloud:
+            # configure aws cli
+            aws_configure_cli(deployment_name, verbose=debug)
+            # stop
+            aws_stop_instance(vm_id, verbose=debug)
+            # wait for vm to stop
+            while True:
+                status = aws_get_instance_status(vm_id, verbose=debug)
+                if "stopped" == status:
+                    click.echo()
+                    break
+                click.echo(colorize_info("."), nl=False)
+                time.sleep(2)
         else:
             click.echo(
                 colorize_error(
@@ -135,7 +148,7 @@ def main(
         click.echo(
             colorize_result(
                 f"* {format_app_name(app_name)} VM stopped."
-                + "\n- You may still be billed some amount for persistent storage and network resources."
+                + " Please note: Storage and network resources may still incur costs."
                 + extra_info
             )
         )

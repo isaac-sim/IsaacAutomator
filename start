@@ -26,9 +26,15 @@ import click
 
 from src.python.alicloud import (
     alicloud_configure_cli,
-    alicloud_get_vm_status,
-    alicloud_start_vm,
+    alicloud_get_instance_status,
+    alicloud_start_instance,
 )
+from src.python.aws import (
+    aws_configure_cli,
+    aws_get_instance_status,
+    aws_start_instance,
+)
+from src.python.azure import azure_login, azure_start_instance
 from src.python.config import c as config
 from src.python.utils import (
     colorize_error,
@@ -72,8 +78,6 @@ def main(
     debug: bool,
     deployment_name: str,
 ):
-    # TODO: check login
-
     # cleck what cloud is deployment for
     cloud = read_tf_output(deployment_name, "cloud", verbose=debug)
 
@@ -85,12 +89,6 @@ def main(
         vm_id = read_tf_output(deployment_name, f"{app_name}_vm_id", verbose=debug)
         vm_ip = read_tf_output(deployment_name, f"{app_name}_ip", verbose=debug)
 
-        click.echo(
-            colorize_info(
-                f"* Starting {format_app_name(app_name)} VM @ {format_cloud_name(cloud)} ({vm_ip})..."
-            )
-        )
-
         if vm_id in ["NA", ""]:
             # show "not found" message if:
             # - app is explicitly specified
@@ -99,24 +97,44 @@ def main(
                 click.echo(colorize_info(f"* No {format_app_name(app_name)} VM found"))
             continue
 
-        # stop VM
+        click.echo(
+            colorize_info(
+                f"* Starting {format_app_name(app_name)} VM @ {format_cloud_name(cloud)} ({vm_ip})..."
+            ),
+            nl=False,
+        )
+
+        # start VM
 
         if "azure" == cloud:
-            shell_command(
-                f"az vm start --ids {vm_id}",
-                verbose=debug,
-                exit_on_error=True,
-                capture_output=False,
-            )
+            click.echo()  # extra new line
+            # log into azure if needed
+            azure_login(verbose=debug)
+            # start
+            azure_start_instance(vm_id, verbose=debug)
 
         elif "alicloud" == cloud:
-            # configure CLI
+            # configure aliyun cli
             alicloud_configure_cli(deployment_name, verbose=debug)
             # start
-            alicloud_start_vm(vm_id, verbose=debug)
+            alicloud_start_instance(vm_id, verbose=debug)
             # wait for VM to stop
             while True:
-                if "Running" == alicloud_get_vm_status(vm_id, verbose=debug):
+                if "Running" == alicloud_get_instance_status(vm_id, verbose=debug):
+                    click.echo()
+                    break
+                click.echo(colorize_info("."), nl=False)
+                time.sleep(2)
+
+        elif "aws" == cloud:
+            # configure aws cli
+            aws_configure_cli(deployment_name, verbose=debug)
+            # start
+            aws_start_instance(vm_id, verbose=debug)
+            # wait for VM to start
+            while True:
+                status = aws_get_instance_status(vm_id, verbose=debug)
+                if "running" == status:
                     click.echo()
                     break
                 click.echo(colorize_info("."), nl=False)
@@ -132,9 +150,7 @@ def main(
         click.echo(colorize_result(f"* {format_app_name(app_name)} VM started."))
 
         # run "on_stop_start" tags in ansible
-        click.echo(
-            colorize_info(f"* Configuring {format_app_name(app_name)} instance...")
-        )
+        click.echo(colorize_info(f"* Configuring {format_app_name(app_name)} VM..."))
         shell_command(
             f"ansible-playbook -i {config['state_dir']}/{deployment_name}/.inventory"
             + f" {app_name}.yml"

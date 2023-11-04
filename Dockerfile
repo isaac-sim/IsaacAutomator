@@ -74,6 +74,13 @@ RUN mkdir /root/.config && ln -s /app/state/.gcp /root/.config/gcloud
 RUN /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/aliyun/aliyun-cli/HEAD/install.sh)"
 RUN aliyun auto-completion
 
+# aws cli
+# @see https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+WORKDIR /tmp
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+RUN unzip awscliv2.zip
+RUN ./aws/install
+
 # copy app code into container
 COPY . /app
 
