@@ -31,9 +31,10 @@ from src.python.alicloud import (
 )
 from src.python.aws import (
     aws_configure_cli,
-    aws_start_instance,
     aws_get_instance_status,
+    aws_start_instance,
 )
+from src.python.azure import azure_login, azure_start_instance
 from src.python.config import c as config
 from src.python.utils import (
     colorize_error,
@@ -77,8 +78,6 @@ def main(
     debug: bool,
     deployment_name: str,
 ):
-    # TODO: check login
-
     # cleck what cloud is deployment for
     cloud = read_tf_output(deployment_name, "cloud", verbose=debug)
 
@@ -105,16 +104,14 @@ def main(
             nl=False,
         )
 
-        # stop VM
+        # start VM
 
         if "azure" == cloud:
             click.echo()  # extra new line
-            shell_command(
-                f"az vm start --ids {vm_id}",
-                verbose=debug,
-                exit_on_error=True,
-                capture_output=False,
-            )
+            # log into azure if needed
+            azure_login(verbose=debug)
+            # start
+            azure_start_instance(vm_id, verbose=debug)
 
         elif "alicloud" == cloud:
             # configure aliyun cli

@@ -21,12 +21,12 @@ import sys
 
 import click
 
+from src.python.azure import azure_login
 from src.python.config import c as config
 from src.python.debug import debug_break  # noqa
 from src.python.deploy_command import DeployCommand
 from src.python.deployer import Deployer
 from src.python.utils import (
-    azure_login,
     colorize_error,
     colorize_info,
     colorize_prompt,
