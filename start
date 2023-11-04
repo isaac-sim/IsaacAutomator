@@ -85,12 +85,6 @@ def main(
         vm_id = read_tf_output(deployment_name, f"{app_name}_vm_id", verbose=debug)
         vm_ip = read_tf_output(deployment_name, f"{app_name}_ip", verbose=debug)
 
-        click.echo(
-            colorize_info(
-                f"* Starting {format_app_name(app_name)} VM @ {format_cloud_name(cloud)} ({vm_ip})..."
-            )
-        )
-
         if vm_id in ["NA", ""]:
             # show "not found" message if:
             # - app is explicitly specified
@@ -99,9 +93,17 @@ def main(
                 click.echo(colorize_info(f"* No {format_app_name(app_name)} VM found"))
             continue
 
+        click.echo(
+            colorize_info(
+                f"* Starting {format_app_name(app_name)} VM @ {format_cloud_name(cloud)} ({vm_ip})..."
+            ),
+            nl=False,
+        )
+
         # stop VM
 
         if "azure" == cloud:
+            click.echo()  # extra new line
             shell_command(
                 f"az vm start --ids {vm_id}",
                 verbose=debug,

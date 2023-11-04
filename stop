@@ -84,12 +84,6 @@ def main(
         vm_id = read_tf_output(deployment_name, f"{app_name}_vm_id", verbose=debug)
         vm_ip = read_tf_output(deployment_name, f"{app_name}_ip", verbose=debug)
 
-        click.echo(
-            colorize_info(
-                f"* Stopping {format_app_name(app_name)} VM @ {format_cloud_name(cloud)} ({vm_ip})..."
-            )
-        )
-
         if vm_id in ["NA", ""]:
             # show "not found" message if:
             # - app is explicitly specified
@@ -100,16 +94,24 @@ def main(
 
         # stop VM
 
+        click.echo(
+            colorize_info(
+                f"* Stopping {format_app_name(app_name)} VM @ {format_cloud_name(cloud)} ({vm_ip})..."
+            ),
+            nl=False,
+        )
+
         extra_info = ""
 
         if "azure" == cloud:
+            click.echo()  # extra newline
             shell_command(
                 f"az vm deallocate --ids {vm_id}",
                 verbose=debug,
                 exit_on_error=True,
                 capture_output=False,
             )
-            extra_info = "\n- On Azure stopped VMs still count towards your quota."
+            extra_info = " On Azure stopped VMs still count towards the quota."
 
         elif "alicloud" == cloud:
             # configure CLI
@@ -135,7 +137,7 @@ def main(
         click.echo(
             colorize_result(
                 f"* {format_app_name(app_name)} VM stopped."
-                + "\n- You may still be billed some amount for persistent storage and network resources."
+                + " Please note: Storage and network resources may still incur costs."
                 + extra_info
             )
         )
