@@ -23,7 +23,7 @@
 - [Known Issues](#known-issues)
   - [Apple Silicon Support](#apple-silicon-support)
 
-This tool automates [Isaac Sim](https://developer.nvidia.com/isaac-sim) deployment to public clouds. AWS, Azure and GCP are currently supported.
+This tool automates deployment of [Isaac Sim](https://developer.nvidia.com/isaac-sim) to public clouds.
 
 ## Installation
 
