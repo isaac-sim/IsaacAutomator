@@ -9,22 +9,18 @@ ENV force_color_prompt=yes
 ENV PYTHONPATH=/app:/app/lib:/app/src:/app/py:/app/python:/app/cli:/app/utils:/app/tests
 
 # misc
-RUN apt-get update 
-
-RUN apt-get install -qy \
-    apt-utils \
-    curl \
-    gpg \
-    lsb-release \
+RUN apt-get update && apt-get install -qy \
     openssh-client \
-    wget \
-    jq \
-    python3-pip
-
-RUN apt-get install -qy \
+    lsb-release \
+    python3-pip \
+    apt-utils \
     expect \
     unzip \
-    rsync
+    rsync \
+    curl \
+    wget \
+    gpg \
+    jq
 
 # hashicorp sources
 RUN wget -O- https://apt.releases.hashicorp.com/gpg | \
@@ -35,13 +31,13 @@ RUN echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \
     https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
     tee /etc/apt/sources.list.d/hashicorp.list
 
+RUN apt-get update
+
 # terraform
-RUN apt-get update && \
-    apt-get install -qy \
-    terraform
+RUN apt-get install -qy terraform
 
 # install packer
-RUN apt-get install -yq packer ; exit 0
+RUN apt-get install -yq packer
 
 # azure command line
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
