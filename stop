@@ -28,6 +28,7 @@ from src.python.alicloud import (
     alicloud_get_instance_status,
     alicloud_stop_instance,
 )
+from src.python.aws import aws_configure_cli, aws_get_instance_status, aws_stop_instance
 from src.python.config import c as config
 from src.python.utils import (
     colorize_error,
@@ -126,6 +127,19 @@ def main(
                 click.echo(colorize_info("."), nl=False)
                 time.sleep(2)
 
+        elif "aws" == cloud:
+            # configure aws cli
+            aws_configure_cli(deployment_name, verbose=debug)
+            # stop
+            aws_stop_instance(vm_id, verbose=debug)
+            # wait for vm to stop
+            while True:
+                status = aws_get_instance_status(vm_id, verbose=debug)
+                if "stopped" == status:
+                    click.echo()
+                    break
+                click.echo(colorize_info("."), nl=False)
+                time.sleep(2)
         else:
             click.echo(
                 colorize_error(

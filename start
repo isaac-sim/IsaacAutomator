@@ -29,6 +29,11 @@ from src.python.alicloud import (
     alicloud_get_instance_status,
     alicloud_start_instance,
 )
+from src.python.aws import (
+    aws_configure_cli,
+    aws_start_instance,
+    aws_get_instance_status,
+)
 from src.python.config import c as config
 from src.python.utils import (
     colorize_error,
@@ -124,6 +129,15 @@ def main(
                 click.echo(colorize_info("."), nl=False)
                 time.sleep(2)
 
+        elif "aws" == cloud:
+            # configure aws cli
+            aws_configure_cli(deployment_name, verbose=debug)
+            # start
+            aws_start_instance(vm_id, verbose=debug)
+            # wait for VM to start
+            while True:
+                status = aws_get_instance_status(vm_id, verbose=debug)
+                if "running" == status:
                     click.echo()
                     break
                 click.echo(colorize_info("."), nl=False)
@@ -139,9 +153,7 @@ def main(
         click.echo(colorize_result(f"* {format_app_name(app_name)} VM started."))
 
         # run "on_stop_start" tags in ansible
-        click.echo(
-            colorize_info(f"* Configuring {format_app_name(app_name)} instance...")
-        )
+        click.echo(colorize_info(f"* Configuring {format_app_name(app_name)} VM..."))
         shell_command(
             f"ansible-playbook -i {config['state_dir']}/{deployment_name}/.inventory"
             + f" {app_name}.yml"
