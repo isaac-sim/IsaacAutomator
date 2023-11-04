@@ -26,18 +26,13 @@
 
 - name: Desktop Icon
   import_tasks: icon.yml
-  tags: skip_in_image
 
 - name: Isaac App
   import_tasks: isaac_app.yml
-  tags: skip_in_image
 
 #  https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs
 - name: Omni Isaac Gym Envs
   import_tasks: omni-isaac-gym-envs.yml
-  tags:
-    - skip_in_image
-    - omni-isaac-gym-envs
 
 - name: Restart NX server
   meta: noop

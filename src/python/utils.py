@@ -151,35 +151,13 @@ def format_cloud_name(cloud_name):
         "aws": "AWS",
         "azure": "Azure",
         "gcp": "GCP",
+        "alicloud": "Alibaba Cloud",
     }
 
     if cloud_name in formatted:
         return formatted[cloud_name]
 
     return cloud_name
-
-
-def azure_login(verbose=False):
-    """
-    Log into Azure
-    """
-
-    # detect if we need to re-login
-    logged_in = (
-        '"Enabled"'
-        == shell_command(
-            "az account show --query state",
-            verbose=verbose,
-            exit_on_error=False,
-            capture_output=True,
-        )
-        .stdout.decode()
-        .strip()
-    )
-
-    if not logged_in:
-        click.echo(colorize_info("* Logging into Azure..."))
-        shell_command("az login --use-device-code", verbose=verbose)
 
 
 def gcp_login(verbose=False):

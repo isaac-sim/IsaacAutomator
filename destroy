@@ -23,14 +23,15 @@ from pathlib import Path
 
 import click
 
+from src.python.azure import azure_login
 from src.python.config import c as config
 from src.python.debug import debug_break  # noqa
 from src.python.utils import (
-    azure_login,
     colorize_info,
     colorize_prompt,
     colorize_result,
     deployments,
+    format_cloud_name,
     gcp_login,
     shell_command,
 )
@@ -87,23 +88,24 @@ def main(
     cloud = "none"
 
     if Path(tfstate_file).exists():
-        if "registry.terraform.io/hashicorp/aws" in Path(tfstate_file).read_text():
-            cloud = "AWS"
-        elif (
-            "registry.terraform.io/hashicorp/azurerm" in Path(tfstate_file).read_text()
-        ):
-            cloud = "Azure"
-        elif "registry.terraform.io/hashicorp/google" in Path(tfstate_file).read_text():
-            cloud = "GCP"
+        text = Path(tfstate_file).read_text()
+        if "registry.terraform.io/hashicorp/aws" in text:
+            cloud = "aws"
+        elif "registry.terraform.io/hashicorp/azurerm" in text:
+            cloud = "azure"
+        elif "registry.terraform.io/hashicorp/google" in text:
+            cloud = "gcp"
+        elif "registry.terraform.io/hashicorp/alicloud" in text:
+            cloud = "alicloud"
 
     if cloud == "none":
         print(colorize_info(f'* No cloud resources found for "{deployment_name}"'))
 
     # login if needed
     if login:
-        if "Azure" == cloud:
+        if "azure" == cloud:
             azure_login(verbose=debug)
-        elif "GCP" == cloud:
+        elif "gcp" == cloud:
             gcp_login(verbose=debug)
 
     if cloud != "none":
@@ -121,7 +123,7 @@ def main(
 
             click.echo(
                 colorize_info(
-                    f'* Showing changes to {cloud} resources used by "{deployment_name}"...'
+                    f'* Showing changes to {format_cloud_name(cloud)} resources used by "{deployment_name}"...'
                 )
             )
 
@@ -137,7 +139,7 @@ def main(
 
             click.echo(
                 colorize_info(
-                    f'* Destroying {cloud} resources used by "{deployment_name}"...'
+                    f'* Destroying {format_cloud_name(cloud)} resources used by "{deployment_name}"...'
                 )
             )
 

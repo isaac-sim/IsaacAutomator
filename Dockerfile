@@ -2,9 +2,6 @@
 
 FROM ubuntu:20.04
 
-ARG WITH_PACKER=false
-ARG WITH_GIT=false
-
 ENV DEBIAN_FRONTEND=noninteractive
 ENV force_color_prompt=yes
 
@@ -29,12 +26,6 @@ RUN apt-get install -qy \
     unzip \
     rsync
 
-# git, git completion
-RUN ${WITH_GIT} && \
-    apt-get install -yq git && \
-    curl https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.bash  >> ~/.bashrc \
-    ; exit 0
-
 # hashicorp sources
 RUN wget -O- https://apt.releases.hashicorp.com/gpg | \
     gpg --dearmor | \
@@ -49,8 +40,8 @@ RUN apt-get update && \
     apt-get install -qy \
     terraform
 
-# install packer plugins
-RUN ${WITH_PACKER} && apt-get install -yq packer ; exit 0
+# install packer
+RUN apt-get install -yq packer ; exit 0
 
 # azure command line
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
@@ -78,6 +69,18 @@ RUN curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyri
 RUN apt-get update && apt-get install -yq google-cloud-cli
 RUN mkdir /root/.config && ln -s /app/state/.gcp /root/.config/gcloud
 
+# alibaba cloud cli
+# @see https://github.com/aliyun/aliyun-cli#installation
+RUN /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/aliyun/aliyun-cli/HEAD/install.sh)"
+RUN aliyun auto-completion
+
+# aws cli
+# @see https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+WORKDIR /tmp
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+RUN unzip awscliv2.zip
+RUN ./aws/install
+
 # copy app code into container
 COPY . /app
 
@@ -88,4 +91,4 @@ WORKDIR /app
 
 ENTRYPOINT [ "/bin/sh", "-c" ]
 
-ENV VERSION="v1.5.0"
+ENV VERSION="v2.0.0"

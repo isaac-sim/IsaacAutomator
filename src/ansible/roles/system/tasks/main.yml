@@ -76,10 +76,8 @@
   register: swap_enabled
   tags:
     - skip_in_image
-    - skip_in_ovami
 
 - import_tasks: swap.yml
   when: swap_enabled.stdout | int == 0
   tags:
     - skip_in_image
-    - skip_in_ovami
