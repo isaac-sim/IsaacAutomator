@@ -49,18 +49,6 @@ def aws_configure_cli(
     )
 
 
-# def alicloud_start_vm(vm_id, verbose=False):
-#     """
-#     Start VM
-#     """
-#     shell_command(
-#         f"aliyun ecs StartInstance --InstanceId '{vm_id}'",
-#         verbose=verbose,
-#         exit_on_error=True,
-#         capture_output=True,
-#     )
-
-
 def aws_stop_instance(instance_id, verbose=False):
     shell_command(
         f"aws ec2 stop-instances --instance-ids '{instance_id}'",
@@ -96,22 +84,3 @@ def aws_get_instance_status(instance_id, verbose=False):
         .strip()
     )
     return status
-
-
-# def alicloud_get_vm_status(vm_id, verbose=False):
-#     """
-#     Query VM status
-#     Returns: "Stopping" | "Stopped" | "Starting" | "Running"
-#     """
-#     status = (
-#         shell_command(
-#             f"aliyun ecs DescribeInstances --InstanceIds '[\"{vm_id}\"]'"
-#             + " | jq -r .Instances.Instance[0].Status",
-#             verbose=verbose,
-#             exit_on_error=True,
-#             capture_output=True,
-#         )
-#         .stdout.decode()
-#         .strip()
-#     )
-#     return status
