@@ -10,6 +10,7 @@
     - [AWS](#aws)
     - [GCP](#gcp)
     - [Azure](#azure)
+    - [Alibaba Cloud](#alibaba-cloud)
   - [Connecting to Deployed Instances](#connecting-to-deployed-instances)
   - [Running Applications](#running-applications)
     - [Isaac Sim](#isaac-sim)
@@ -77,7 +78,7 @@ for example:
 #### AWS
 
 <details>
-  <a href="#aws-permissions"></a>
+  <a name="#aws-permissions"></a>
   <summary>Enabling Access Permissions</summary>
 
   You need _AmazonEC2FullAccess_ permissions enabled for your AWS user. You can enable those in [Identity and Access Management (IAM) Section](https://console.aws.amazon.com/iamv2/home#/home) in AWS console like so:
@@ -92,7 +93,7 @@ for example:
 </details>
 
 <details>
-  <a href="#aws-access-creds"></a>
+  <a name="#aws-access-creds"></a>
   <summary>Getting Access Credentials</summary>
   You will need _AWS Access Key_ and _AWS Secret Key_ for an existing account. You can obtain those in <a href="https://console.aws.amazon.com/iamv2/home#/home">Identity and Access Management (IAM) Section</a> in the AWS console.
 </details>
@@ -144,6 +145,27 @@ az account set --subscription "<subscription_name>"
 ```
 
 Tip: Run `./deploy-azure --help` to see more options.
+
+#### Alibaba Cloud
+
+<details>
+  <a name="#alicloud-access-creds"></a>
+  <summary>Getting Access Credentials</summary>
+  You will need <i>Access Key</i> and <i>Secret Key</i> for an existing AliCloud account. You can obtain those in <a href="https://usercenter.console.aliyun.com/#/manage/ak">AccessKey Management</a> section in the Alibaba Cloud console.
+</details>
+
+Once you have prepared the access credentials, run the following command in the project root directory:
+
+```sh
+# enter the automator container
+./run
+# inside container:
+./deploy-alicloud
+```
+
+Tip: Run `./deploy-alicloud --help` to see more options.
+
+GPU-accelerated instances with NVIDIA A100, A10 and T4 GPUs are supported. You can find the complete list of instance types, availability and pricing at <https://www.alibabacloud.com/help/en/ecs/user-guide/gpu-accelerated-compute-optimized-and-vgpu-accelerated-instance-families-1>. Please note that vGPU instances are not supported.
 
 ### Connecting to Deployed Instances
 
