@@ -1,2 +1,2 @@
 # don't change eols automatically
-* text=false
+* -text
