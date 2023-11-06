@@ -20,6 +20,7 @@ import os
 
 import click
 
+from src.python.alicloud import alicloud_list_regions
 from src.python.config import c as config
 from src.python.debug import debug_break, debug_start  # noqa
 from src.python.deploy_command import DeployCommand
@@ -75,6 +76,33 @@ class DeployAlicloudCommand(DeployCommand):
 
         return value
 
+    @staticmethod
+    def region_callback(ctx, param, value):
+        """
+        Called after parsing --region option
+        """
+
+        if value is None:
+            return value
+
+        value = value.lower().replace(" ", "-")
+
+        if "aliyun_access_key" in ctx.params and "aliyun_secret_key" in ctx.params:
+            valid_regions = alicloud_list_regions(
+                aliyun_access_key=ctx.params["aliyun_access_key"],
+                aliyun_secret_key=ctx.params["aliyun_secret_key"],
+            )
+            if value not in valid_regions:
+                raise click.BadParameter(
+                    colorize_error(
+                        f'Invalid region: "{value}". Choose one of: '
+                        + ", ".join(valid_regions)
+                        + "."
+                    )
+                )
+
+        return value
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -119,14 +147,15 @@ class DeployAlicloudCommand(DeployCommand):
                 ("--region",),
                 show_default=True,
                 default=config["alicloud_default_region"],
-                prompt=colorize_prompt("* Alibaba Cloud Region"),
-                callback=lambda ctx, param, value: value.lower().replace(" ", "-"),
+                prompt=colorize_prompt("* Alibaba Cloud Region ID"),
+                callback=DeployAlicloudCommand.region_callback,
             ),
         )
 
         # --aliyun-access-key
         self.params.insert(
-            len(self.params),
+            # before --region
+            self.param_index("region"),
             click.core.Option(
                 ("--aliyun-access-key",),
                 prompt=colorize_prompt(
@@ -140,7 +169,8 @@ class DeployAlicloudCommand(DeployCommand):
 
         # --aliyun-secret-key
         self.params.insert(
-            len(self.params),
+            # before --region
+            self.param_index("region"),
             click.core.Option(
                 ("--aliyun-secret-key",),
                 prompt=colorize_prompt("* Alibaba Cloud Secret Key"),
