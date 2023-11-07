@@ -32,7 +32,7 @@ def aws_configure_cli(
 
     aws_access_key_id = meta["params"]["aws_access_key_id"]
     aws_secret_access_key = meta["params"]["aws_secret_access_key"]
-    # region = meta["params"]["region"]
+    region = meta["params"]["region"]
 
     shell_command(
         f"aws configure set aws_access_key_id '{aws_access_key_id}'",
@@ -43,6 +43,13 @@ def aws_configure_cli(
 
     shell_command(
         f"aws configure set aws_secret_access_key '{aws_secret_access_key}'",
+        verbose=verbose,
+        exit_on_error=True,
+        capture_output=True,
+    )
+
+    shell_command(
+        f"aws configure set region '{region}'",
         verbose=verbose,
         exit_on_error=True,
         capture_output=True,
