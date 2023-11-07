@@ -35,28 +35,29 @@ class DeployAlicloudCommand(DeployCommand):
 
     # supported AliCloud instance types for DRIVE Sim/Isaac Sim
     # @see https://www.alibabacloud.com/help/en/ecs/user-guide/overview-of-instance-families
-    ALICLOUD_OVKIT_INSTANCE_TYPES = [
-        "ecs.gn7e-c16g1.4xlarge",  # 1x A100-80G, 16 vCPUs, 125 GB RAM
-        "ecs.gn7e-c16g1.16xlarge",  # 4x A100-80G, 64 vCPUs, 500 GB RAM
-        "ecs.ebmgn7e.32xlarge",  # 8x A100-80G, 128 vCPUs, 1024 GB RAM
-        "ecs.gn7e-c16g1.32xlarge",  # 8x A100-80G, 128 vCPUs, 1000 GB RAM
-        "ecs.gn7i-c8g1.2xlarge",  # 1x A10, 8 vCPUs, 30 GB RAM
-        "ecs.gn7i-c16g1.4xlarge",  # 1x A10, 16 vCPUs, 60 GB RAM
-        "ecs.gn7i-c32g1.8xlarge",  # 1x A10, 32 vCPUs, 188 GB RAM
-        "ecs.gn7i-c48g1.12xlarge",  # 1x A10, 48 vCPUs, 310 GB RAM
-        "ecs.gn7i-c56g1.14xlarge",  # 1x A10, 56 vCPUs, 346 GB RAM
-        "ecs.gn7i-c32g1.16xlarge",  # 2x A10, 64 vCPUs, 376 GB RAM
-        "ecs.gn7i-c32g1.32xlarge",  # 4x A10, 128 vCPUs, 752 GB RAM
-        "ecs.ebmgn7i.32xlarge",  # 4x A10, 128 vCPUs, 768 GB RAM
-        "ecs.gn6i-c4g1.xlarge",  # 1x T4, 4 vCPUs, 15 GB RAM
-        "ecs.gn6i-c8g1.2xlarge",  # 1x T4, 8 vCPUs, 31 GB RAM
-        "ecs.gn6i-c16g1.4xlarge",  # 1x T4, 16 vCPUs, 62 GB RAM
-        "ecs.gn6i-c24g1.6xlarge",  # 1x T4, 24 vCPUs, 93 GB RAM
-        "ecs.gn6i-c40g1.10xlarge",  # 1x T4, 40 vCPUs, 155 GB RAM
-        "ecs.gn6i-c24g1.12xlarge",  # 2x T4, 48 vCPUs, 186 GB RAM
-        "ecs.gn6i-c24g1.24xlarge",  # 4x T4, 96 vCPUs, 372 GB RAM
-        "ecs.ebmgn6i.24xlarge	",  # 4x T4, 96 vCPUs, 384 GB RAM
-    ]
+
+    ALICLOUD_OVKIT_INSTANCE_TYPES = {
+        "ecs.gn7e-c16g1.4xlarge": "1x A100-80G, 16 vCPUs, 125 GB RAM",
+        "ecs.gn7e-c16g1.16xlarge": "4x A100-80G, 64 vCPUs, 500 GB RAM",
+        "ecs.ebmgn7e.32xlarge": "8x A100-80G, 128 vCPUs, 1024 GB RAM",
+        "ecs.gn7e-c16g1.32xlarge": "8x A100-80G, 128 vCPUs, 1000 GB RAM",
+        "ecs.gn7i-c8g1.2xlarge": "1x A10, 8 vCPUs, 30 GB RAM",
+        "ecs.gn7i-c16g1.4xlarge": "1x A10, 16 vCPUs, 60 GB RAM",
+        "ecs.gn7i-c32g1.8xlarge": "1x A10, 32 vCPUs, 188 GB RAM",
+        "ecs.gn7i-c48g1.12xlarge": "1x A10, 48 vCPUs, 310 GB RAM",
+        "ecs.gn7i-c56g1.14xlarge": "1x A10, 56 vCPUs, 346 GB RAM",
+        "ecs.gn7i-c32g1.16xlarge": "2x A10, 64 vCPUs, 376 GB RAM",
+        "ecs.gn7i-c32g1.32xlarge": "4x A10, 128 vCPUs, 752 GB RAM",
+        "ecs.ebmgn7i.32xlarge": "4x A10, 128 vCPUs, 768 GB RAM",
+        "ecs.gn6i-c4g1.xlarge": "1x T4, 4 vCPUs, 15 GB RAM",
+        "ecs.gn6i-c8g1.2xlarge": "1x T4, 8 vCPUs, 31 GB RAM",
+        "ecs.gn6i-c16g1.4xlarge": "1x T4, 16 vCPUs, 62 GB RAM",
+        "ecs.gn6i-c24g1.6xlarge": "1x T4, 24 vCPUs, 93 GB RAM",
+        "ecs.gn6i-c40g1.10xlarge": "1x T4, 40 vCPUs, 155 GB RAM",
+        "ecs.gn6i-c24g1.12xlarge": "2x T4, 48 vCPUs, 186 GB RAM",
+        "ecs.gn6i-c24g1.24xlarge": "4x T4, 96 vCPUs, 372 GB RAM",
+        "ecs.ebmgn6i.24xlarge": "4x T4, 96 vCPUs, 384 GB RAM",
+    }
 
     @staticmethod
     def ovkit_instance_type_callback(ctx, param, value):
@@ -69,7 +70,9 @@ class DeployAlicloudCommand(DeployCommand):
             raise click.BadParameter(
                 colorize_error(
                     f"Invalid instance type: {value}. Choose one of: "
-                    + ", ".join(DeployAlicloudCommand.ALICLOUD_OVKIT_INSTANCE_TYPES)
+                    + ", ".join(
+                        DeployAlicloudCommand.ALICLOUD_OVKIT_INSTANCE_TYPES.keys()
+                    )
                     + "."
                 )
             )
@@ -119,6 +122,11 @@ class DeployAlicloudCommand(DeployCommand):
             )
         )
 
+        # prepare table of supported instance types with descriptions
+        instance_types_table = ""
+        for instance_type, description in self.ALICLOUD_OVKIT_INSTANCE_TYPES.items():
+            instance_types_table += f"  {instance_type:<25} {description}\n"
+
         # --isaac-instance-type
         self.params.insert(
             # insert after --isaac option
@@ -126,15 +134,16 @@ class DeployAlicloudCommand(DeployCommand):
             click.core.Option(
                 ("--isaac-instance-type",),
                 prompt=colorize_prompt(
-                    "* Isaac Sim Instance Type "
-                    + "(see https://www.alibabacloud.com/help/en/ecs/user-guide/overview-of-instance-families "
-                    + "for availability and pricing. Instances with NVIDIA A100, A10 and T4 GPUs are supported)"
+                    "* Isaac Sim Instance Type. Supported types:\n\n"
+                    + instance_types_table
+                    + "\n See https://www.alibabacloud.com/help/en/ecs/user-guide/overview-of-instance-families "
+                    + "for availability and pricing.\n"
                 ),
                 show_default=True,
                 default=config["alicloud_default_isaac_instance_type"],
                 callback=DeployAlicloudCommand.ovkit_instance_type_callback,
                 help="Isaac Sim instance type. Currently supported: "
-                + ", ".join(self.ALICLOUD_OVKIT_INSTANCE_TYPES)
+                + ", ".join(self.ALICLOUD_OVKIT_INSTANCE_TYPES.keys())
                 + ".",
             ),
         )
