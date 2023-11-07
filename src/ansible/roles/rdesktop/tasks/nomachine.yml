@@ -16,10 +16,18 @@
 
 ---
 # @see https://downloads.nomachine.com/download/?id=2 for new versions
-- name: Install NX server
-  apt:
-    deb: https://download.nomachine.com/download/8.9/Linux/nomachine_8.9.1_1_amd64.deb
+
+- name: Download NoMachine server
+  get_url:
+    url: https://download.nomachine.com/download/8.9/Linux/nomachine_8.9.1_1_amd64.deb
+    dest: /tmp/nomachine.deb
+    mode: 0644
     timeout: 600 # 10 minutes
+
+- name: Install NoMachine server
+  apt:
+    deb: /tmp/nomachine.deb
+    state: present
 
 - name: Create NX config dir
   file: >
