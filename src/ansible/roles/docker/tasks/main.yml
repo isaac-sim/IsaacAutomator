@@ -24,6 +24,7 @@
     repo="deb https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
     state=present
     mode=644
+  timeout: 600 # 10 minutes
 
 - name: Install docker packages
   apt: name={{ item }}

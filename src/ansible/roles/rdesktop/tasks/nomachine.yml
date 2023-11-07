@@ -19,6 +19,7 @@
 - name: Install NX server
   apt:
     deb: https://download.nomachine.com/download/8.9/Linux/nomachine_8.9.1_1_amd64.deb
+    timeout: 600 # 10 minutes
 
 - name: Create NX config dir
   file: >
