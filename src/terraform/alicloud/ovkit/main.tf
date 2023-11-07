@@ -10,7 +10,7 @@ resource "alicloud_vswitch" "default" {
   vswitch_name = "${var.prefix}-vswitch"
   vpc_id       = var.vpc.id
   cidr_block   = cidrsubnet(var.vpc.cidr_block, 8, var.vswitch_netnum)
-  zone_id      = sort(data.alicloud_zones.instance_availability.ids)[0]
+  zone_id      = try(sort(data.alicloud_zones.instance_availability.ids)[0], "not-available")
 }
 
 # elastic ip
@@ -37,7 +37,7 @@ resource "alicloud_instance" "default" {
   key_name             = var.key_pair.key_pair_name
   vswitch_id           = alicloud_vswitch.default.id
   security_groups      = alicloud_security_group.default.*.id
-  availability_zone    = sort(data.alicloud_zones.instance_availability.ids)[0]
+  availability_zone    = try(sort(data.alicloud_zones.instance_availability.ids)[0], "not-available")
 
   # @see: https://www.alibabacloud.com/help/en/ecs/user-guide/essds
   system_disk_performance_level = "PL1"
