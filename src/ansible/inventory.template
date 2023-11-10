@@ -2,6 +2,7 @@
 
 [targets:vars]
 cloud="{cloud}"
+in_china={in_china}
 ssh_port={ssh_port}
 ansible_user="ubuntu"
 ngc_api_key="{ngc_api_key}"

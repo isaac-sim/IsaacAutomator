@@ -275,11 +275,11 @@ class DeployCommand(click.core.Command):
             ),
         )
 
-        # --china/--not-china
+        # --in-china/--not-in-china
         self.params.insert(
             len(self.params),
             click.core.Option(
-                ("--china/--not--china",),
+                ("--in-china/--not-in-china",),
                 prompt=False,
                 default=False,
                 show_default=True,
