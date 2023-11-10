@@ -48,8 +48,7 @@
     - ubuntu
   timeout: 60 # for each item
   when: ngc_api_key != "none"
-  tags:
-    - skip_in_image
+    - skip_in_ovami
 
 - name: Pull Isaac Sim image
   docker_image:
@@ -59,7 +58,7 @@
   ignore_errors: true
   when: ngc_api_key != "none"
   tags:
-    - skip_in_image
+    - skip_in_ovami
 
 - name: Start Isaac Sim
   shell: |
