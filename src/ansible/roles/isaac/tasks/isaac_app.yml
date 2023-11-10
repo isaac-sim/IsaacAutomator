@@ -60,6 +60,17 @@
   tags:
     - skip_in_ovami
 
+- name: Log out from nvcr.io
+  shell: docker logout nvcr.io
+  become_user: "{{ item }}"
+  with_items:
+    - root
+    - ubuntu
+  when: ngc_api_key != "none"
+  tags:
+    - never
+    - cleanup
+
 - name: Start Isaac Sim
   shell: |
     export DISPLAY=":0"
