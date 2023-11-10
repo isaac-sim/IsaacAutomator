@@ -89,18 +89,23 @@ class Deployer:
         Recreate command line
         """
 
-        # recreate command line
         command_line = sys.argv[0]
 
         for k, v in self.input_params.items():
+            k = k.replace("_", "-")
+
             if isinstance(v, bool):
                 if v:
-                    command_line += separator + "--" + k.replace("_", "-")
+                    command_line += separator + "--" + k
                 else:
-                    command_line += separator + "--no-" + k.replace("_", "-")
+                    not_prefix = "--no-"
 
+                    if k in ["in_china"]:
+                        not_prefix = "--not-"
+
+                    command_line += separator + not_prefix + k
             else:
-                command_line += separator + "--" + k.replace("_", "-") + " "
+                command_line += separator + "--" + k + " "
 
                 if isinstance(v, str):
                     command_line += "'" + shlex.quote(v) + "'"

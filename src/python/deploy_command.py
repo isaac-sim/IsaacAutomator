@@ -275,6 +275,18 @@ class DeployCommand(click.core.Command):
             ),
         )
 
+        # --china/--not-china
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--china/--not--china",),
+                prompt=False,
+                default=False,
+                show_default=True,
+                help="Is deployment in China? (Local mirrors will be used.)",
+            ),
+        )
+
         default_nucleus_admin_password = pwgen(10)
 
         # --omniverse-user
