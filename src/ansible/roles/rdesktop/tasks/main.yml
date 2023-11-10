@@ -27,6 +27,7 @@
     install_recommends=no
   with_items:
     - ubuntu-desktop
+    - python3-pip
 
 # install only if ubuntu 20
 - name: Prerequisites (2)
