@@ -104,6 +104,10 @@ class DeployAlicloudCommand(DeployCommand):
                     )
                 )
 
+        # set in_china parameter when region is in China
+        if value[:2] == "cn":
+            ctx.params["in_china"] = True
+
         return value
 
     def __init__(self, *args, **kwargs):

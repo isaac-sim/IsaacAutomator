@@ -142,7 +142,7 @@ class DeployCommand(click.core.Command):
             ),
         )
 
-        # --from-image/--from-scratch
+        # --from-image/--no-from-image
         self.params.insert(
             len(self.params),
             click.core.Option(
@@ -150,6 +150,18 @@ class DeployCommand(click.core.Command):
                 default=False,
                 show_default=True,
                 help="Deploy from pre-built image, from bare OS otherwise.",
+            ),
+        )
+
+        # --in-china/--not-china
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--in-china/--not-in-china",),
+                prompt=False,
+                default=False,
+                show_default=True,
+                help="Is deployment in China? (Local mirrors will be used.)",
             ),
         )
 
@@ -272,18 +284,6 @@ class DeployCommand(click.core.Command):
                 show_default=True,
                 help=f"Upload user data from \"{config['uploads_dir']}\" to cloud "
                 + f"instances (to \"{config['default_remote_uploads_dir']}\")?",
-            ),
-        )
-
-        # --in-china/--not-in-china
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--in-china/--not-in-china",),
-                prompt=False,
-                default=False,
-                show_default=True,
-                help="Is deployment in China? (Local mirrors will be used.)",
             ),
         )
 
