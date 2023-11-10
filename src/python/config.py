@@ -31,7 +31,7 @@ c["app_image_name"] = "isa"
 # defaults
 
 # --isaac-image
-c["default_isaac_image"] = "nvcr.io/nvidia/isaac-sim:2023.1.0"
+c["default_isaac_image"] = "nvcr.io/nvidia/isaac-sim:2023.1.0-hotfix.1"
 
 # --ssh-port
 c["default_ssh_port"] = 22
