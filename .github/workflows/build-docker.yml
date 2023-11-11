@@ -1,9 +1,9 @@
-name: Build Docker
+name: Build App Docker
 
 on: [push, pull_request]
 
 jobs:
-  build:
+  checkout:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,6 +17,11 @@ jobs:
           git clone https://github.com/${{ github.repository }} .
           git checkout ${{ github.sha }}
 
+  build:
+    needs: checkout
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Build docker image
         run: |
           docker build -t app-image .
