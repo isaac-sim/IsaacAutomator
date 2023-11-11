@@ -101,7 +101,7 @@ source "amazon-ebs" "isaac" {
 
     device_name = "/dev/sda1"
     encrypted   = false
-    volume_size = 31
+    volume_size = 64
   }
 
   tags = {
