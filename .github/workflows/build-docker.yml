@@ -3,7 +3,7 @@ name: Build App Docker
 on: [push, pull_request]
 
 jobs:
-  checkout:
+  build:
     runs-on: ubuntu-latest
 
     steps:
