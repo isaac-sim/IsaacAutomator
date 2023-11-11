@@ -17,11 +17,6 @@ jobs:
           git clone https://github.com/${{ github.repository }} .
           git checkout ${{ github.sha }}
 
-  build:
-    needs: checkout
-    runs-on: ubuntu-latest
-
-    steps:
       - name: Build docker image
         run: |
           cd ${{ github.workspace }}
