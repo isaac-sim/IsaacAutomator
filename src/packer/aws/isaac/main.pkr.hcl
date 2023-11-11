@@ -59,6 +59,10 @@ variable "aws_region" {
   default = "us-east-1"
 }
 
+variable "isaac_image" {
+  default = "nvcr.io/nvidia/isaac-sim:2023.1.0-hotfix.1"
+}
+
 data "amazon-ami" "isaac_instance_ami" {
   most_recent = true
   owners      = ["099720109477"] # Canonical
@@ -121,7 +125,7 @@ build {
     ]
     extra_arguments = [
       "--skip-tags", "${var.skip_tags}",
-      "--extra-vars", "cloud='aws' deployment_name='aws_image' ngc_api_key='${var.ngc_api_key} omniverse_user='''"
+      "--extra-vars", "cloud='aws' deployment_name='aws_image' ngc_api_key='${var.ngc_api_key}' omniverse_user='' isaac_image='${var.isaac_image}'"
     ]
   }
 }
