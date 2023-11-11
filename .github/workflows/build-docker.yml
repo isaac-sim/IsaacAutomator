@@ -16,3 +16,7 @@ jobs:
         run: |
           git clone https://github.com/${{ github.repository }} .
           git checkout ${{ github.sha }}
+
+      - name: Build docker image
+        run: |
+          docker build -t app-image .
