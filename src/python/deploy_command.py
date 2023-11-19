@@ -142,11 +142,11 @@ class DeployCommand(click.core.Command):
             ),
         )
 
-        # --from-image/--no-from-image
+        # --from-image/--not-from-image
         self.params.insert(
             len(self.params),
             click.core.Option(
-                ("--from-image/--no-from-image",),
+                ("--from-image/--not-from-image",),
                 default=False,
                 show_default=True,
                 help="Deploy from pre-built image, from bare OS otherwise.",

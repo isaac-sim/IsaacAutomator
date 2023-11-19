@@ -100,7 +100,7 @@ class Deployer:
                 else:
                     not_prefix = "--no-"
 
-                    if k in ["in-china"]:
+                    if k in ["in-china", "from-image"]:
                         not_prefix = "--not-"
 
                     command_line += separator + not_prefix + k
