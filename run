@@ -1,3 +1,11 @@
 #!/bin/bash
+
 SELF_DIR=$(realpath $(dirname ${BASH_SOURCE}))
-docker run -it --rm -v "${SELF_DIR}":/app isa "${*:-bash}"
+ARCH_FLAG=""
+TAG="isa"
+
+if [[ $(arch) == 'arm64' ]]; then
+  ARCH_FLAG="--platform linux/x86_64"
+fi
+
+docker run $ARCH_FLAG -it --rm -v "${SELF_DIR}":/app $TAG "${*:-bash}"
