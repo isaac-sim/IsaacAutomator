@@ -1,7 +1,6 @@
 #!/bin/bash
-set -x
-
 SELF_DIR=$(realpath $(dirname ${BASH_SOURCE}))
+TAG="isa"
 
 if [[ $(arch) == 'arm64' ]]; then
   docker build -t "${TAG}" --platform linux/x86_64 "${SELF_DIR}"
