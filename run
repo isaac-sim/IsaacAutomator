@@ -4,7 +4,10 @@ SELF_DIR="$(realpath "$(dirname "${BASH_SOURCE}")")"
 ARCH_FLAG=""
 TAG="isa"
 
-"${SELF_DIR}/build"
+# build image if it doesn't exist
+if [[ $(docker images -q "$TAG" 2> /dev/null) == '' ]]; then
+  "${SELF_DIR}/build"
+fi
 
 if [[ $(arch) == 'arm64' ]]; then
   ARCH_FLAG="--platform linux/x86_64"
