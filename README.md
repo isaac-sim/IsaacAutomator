@@ -20,8 +20,6 @@
   - [Uploading Data](#uploading-data)
   - [Downloading Data](#downloading-data)
   - [Destroying](#destroying)
-- [Known Issues](#known-issues)
-  - [Apple Silicon Support](#apple-silicon-support)
 
 This tool automates deployment of [Isaac Sim](https://developer.nvidia.com/isaac-sim) to public clouds.
 
@@ -267,19 +265,3 @@ To destroy a deployment, run the following command:
 You will be prompted to enter the deployment name to destroy.
 
 *Please note that information about the deployed cloud resources is stored in `state/` directory. Do not delete this directory ever.*
-
-## Known Issues
-
-### Apple Silicon Support
-
-Issue:
-
-Some packages in the application docker container are not compatible with ARM architecture of Apple Silicon (M1/M2/etc).
-
-Workaround:
-
-Build the ap container using Docker Desktop or standalone Docker installation with the `--platform linux/x86_64` flag like so:
-
-```sh
-docker build -t isa --platform linux/x86_64 .
-```
