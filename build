@@ -4,6 +4,7 @@ SELF_DIR="$(realpath "$(dirname "${BASH_SOURCE}")")"
 ARCH_FLAG=""
 TAG="isa"
 
+# detect architecture
 if [[ $(arch) == 'arm64' ]]; then
   ARCH_FLAG="--platform linux/x86_64"
 fi
