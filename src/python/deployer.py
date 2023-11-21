@@ -45,6 +45,11 @@ class Deployer:
         # save original params so we can recreate command line
         self.input_params = params.copy()
 
+        # convert "in_china"
+        self.params["in_china"] = {"yes": True, "no": False, "auto": False}[
+            self.params["in_china"]
+        ]
+
         # create state directory if it doesn't exist
         os.makedirs(self.config["state_dir"], exist_ok=True)
 
@@ -100,7 +105,7 @@ class Deployer:
                 else:
                     not_prefix = "--no-"
 
-                    if k in ["in-china", "from-image"]:
+                    if k in ["from-image"]:
                         not_prefix = "--not-"
 
                     command_line += separator + not_prefix + k

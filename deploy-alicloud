@@ -104,10 +104,6 @@ class DeployAlicloudCommand(DeployCommand):
                     )
                 )
 
-        # set in_china parameter when region is in China
-        if value[:2] == "cn":
-            ctx.params["in_china"] = True
-
         return value
 
     def __init__(self, *args, **kwargs):
@@ -203,6 +199,16 @@ class AlicloudDeployer(Deployer):
 
     def __init__(self, params, config):
         super().__init__(params, config)
+
+        # auto-detect if region of deployment is in China
+        if self.input_params["in_china"] == "auto" and params["region"][:2] == "cn":
+            if self.params["debug"]:
+                click.echo(
+                    colorize_info(
+                        "* Detected deployment in China, setting --in-china=yes."
+                    )
+                )
+            params["in_china"] = True
 
     def main(self):
         # ask what to do if deployment already exists

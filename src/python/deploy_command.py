@@ -153,13 +153,14 @@ class DeployCommand(click.core.Command):
             ),
         )
 
-        # --in-china/--not-china
+        # --in-china
         self.params.insert(
             len(self.params),
             click.core.Option(
-                ("--in-china/--not-in-china",),
+                ("--in-china",),
+                type=click.Choice(["auto", "yes", "no"]),
                 prompt=False,
-                default=False,
+                default="auto",
                 show_default=True,
                 help="Is deployment in China? (Local mirrors will be used.)",
             ),
