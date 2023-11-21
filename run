@@ -1,7 +1,6 @@
 #!/bin/bash
 
 SELF_DIR="$(realpath "$(dirname "${BASH_SOURCE}")")"
-ARCH_FLAG=""
 TAG="isa"
 
 # build image if it doesn't exist
@@ -9,9 +8,4 @@ if [[ $(docker images -q "$TAG" 2> /dev/null) == '' ]]; then
   "${SELF_DIR}/build"
 fi
 
-# detect architecture
-if [[ $(arch) == 'arm64' ]]; then
-  ARCH_FLAG="--platform linux/x86_64"
-fi
-
-docker run $ARCH_FLAG -it --rm -v "${SELF_DIR}":/app $TAG "${*:-bash}"
+docker run --platform linux/x86_64 -it --rm -v "${SELF_DIR}":/app $TAG "${*:-bash}"
