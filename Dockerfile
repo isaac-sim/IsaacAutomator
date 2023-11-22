@@ -39,6 +39,10 @@ RUN apt-get install -qy terraform
 # install packer
 RUN apt-get install -yq packer
 
+# init packer plugins
+RUN (cd /app/src/packer/azure/isaac && packer init .)
+RUN (cd /app/src/packer/aws/isaac && packer init .)
+
 # azure command line
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 

@@ -1,3 +1,16 @@
+packer {
+  required_plugins {
+    amazon = {
+      source  = "github.com/hashicorp/azure"
+      version = "~> 1"
+    }
+    ansible = {
+      source  = "github.com/hashicorp/ansible"
+      version = "~> 1"
+    }
+  }
+}
+
 # vars can be set either from environment or the command line
 
 variable "azure_subscription_id" {
@@ -105,7 +118,7 @@ build {
     groups        = ["isaac"]
     playbook_file = "/app/src/ansible/isaac.yml"
     ansible_env_vars = [
-       "ANSIBLE_CONFIG=/app/src/ansible/ansible.cfg"
+      "ANSIBLE_CONFIG=/app/src/ansible/ansible.cfg"
     ]
     extra_arguments = [
       "--skip-tags", "${var.skip_tags}",
