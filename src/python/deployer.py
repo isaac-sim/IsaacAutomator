@@ -45,6 +45,11 @@ class Deployer:
         # save original params so we can recreate command line
         self.input_params = params.copy()
 
+        # convert "in_china"
+        self.params["in_china"] = {"yes": True, "no": False, "auto": False}[
+            self.params["in_china"]
+        ]
+
         # create state directory if it doesn't exist
         os.makedirs(self.config["state_dir"], exist_ok=True)
 
@@ -89,18 +94,23 @@ class Deployer:
         Recreate command line
         """
 
-        # recreate command line
         command_line = sys.argv[0]
 
         for k, v in self.input_params.items():
+            k = k.replace("_", "-")
+
             if isinstance(v, bool):
                 if v:
-                    command_line += separator + "--" + k.replace("_", "-")
+                    command_line += separator + "--" + k
                 else:
-                    command_line += separator + "--no-" + k.replace("_", "-")
+                    not_prefix = "--no-"
 
+                    if k in ["from-image"]:
+                        not_prefix = "--not-"
+
+                    command_line += separator + not_prefix + k
             else:
-                command_line += separator + "--" + k.replace("_", "-") + " "
+                command_line += separator + "--" + k + " "
 
                 if isinstance(v, str):
                     command_line += "'" + shlex.quote(v) + "'"

@@ -1,3 +1,11 @@
 #!/bin/bash
-SELF_DIR=$(realpath $(dirname ${BASH_SOURCE}))
-docker run -it --rm -v "${SELF_DIR}":/app isa "${*:-bash}"
+
+SELF_DIR="$(realpath "$(dirname "${BASH_SOURCE}")")"
+TAG="isa"
+
+# build image if it doesn't exist
+if [[ $(docker images -q "$TAG" 2> /dev/null) == '' ]]; then
+  "${SELF_DIR}/build"
+fi
+
+docker run --platform linux/x86_64 -it --rm -v "${SELF_DIR}":/app $TAG "${*:-bash}"

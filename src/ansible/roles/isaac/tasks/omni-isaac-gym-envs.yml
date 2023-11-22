@@ -68,3 +68,5 @@
 - name: Build OmniIsaacGymEnvs
   shell: docker build -t omni-isaac-gym-envs -f "{{ omni_isaac_gym_envs_dir }}/omni-isaac-gym-envs.dockerfile" "{{ omni_isaac_gym_envs_dir }}"
   become_user: "{{ ansible_user }}"
+  tags:
+    - skip_in_ovami

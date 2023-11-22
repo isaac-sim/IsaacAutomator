@@ -17,14 +17,21 @@
 # endregion
 
 import os
+import sys
 
 import click
 
+from src.python.alicloud import alicloud_list_regions
 from src.python.config import c as config
 from src.python.debug import debug_break, debug_start  # noqa
 from src.python.deploy_command import DeployCommand
 from src.python.deployer import Deployer
-from src.python.utils import colorize_error, colorize_info, colorize_prompt
+from src.python.utils import (
+    colorize_error,
+    colorize_info,
+    colorize_prompt,
+    shell_command,
+)
 
 
 class DeployAlicloudCommand(DeployCommand):
@@ -34,28 +41,29 @@ class DeployAlicloudCommand(DeployCommand):
 
     # supported AliCloud instance types for DRIVE Sim/Isaac Sim
     # @see https://www.alibabacloud.com/help/en/ecs/user-guide/overview-of-instance-families
-    ALICLOUD_OVKIT_INSTANCE_TYPES = [
-        "ecs.gn7e-c16g1.4xlarge",  # 1x A100-80G, 16 vCPUs, 125 GB RAM
-        "ecs.gn7e-c16g1.16xlarge",  # 4x A100-80G, 64 vCPUs, 500 GB RAM
-        "ecs.ebmgn7e.32xlarge",  # 8x A100-80G, 128 vCPUs, 1024 GB RAM
-        "ecs.gn7e-c16g1.32xlarge",  # 8x A100-80G, 128 vCPUs, 1000 GB RAM
-        "ecs.gn7i-c8g1.2xlarge",  # 1x A10, 8 vCPUs, 30 GB RAM
-        "ecs.gn7i-c16g1.4xlarge",  # 1x A10, 16 vCPUs, 60 GB RAM
-        "ecs.gn7i-c32g1.8xlarge",  # 1x A10, 32 vCPUs, 188 GB RAM
-        "ecs.gn7i-c48g1.12xlarge",  # 1x A10, 48 vCPUs, 310 GB RAM
-        "ecs.gn7i-c56g1.14xlarge",  # 1x A10, 56 vCPUs, 346 GB RAM
-        "ecs.gn7i-c32g1.16xlarge",  # 2x A10, 64 vCPUs, 376 GB RAM
-        "ecs.gn7i-c32g1.32xlarge",  # 4x A10, 128 vCPUs, 752 GB RAM
-        "ecs.ebmgn7i.32xlarge",  # 4x A10, 128 vCPUs, 768 GB RAM
-        "ecs.gn6i-c4g1.xlarge",  # 1x T4, 4 vCPUs, 15 GB RAM
-        "ecs.gn6i-c8g1.2xlarge",  # 1x T4, 8 vCPUs, 31 GB RAM
-        "ecs.gn6i-c16g1.4xlarge",  # 1x T4, 16 vCPUs, 62 GB RAM
-        "ecs.gn6i-c24g1.6xlarge",  # 1x T4, 24 vCPUs, 93 GB RAM
-        "ecs.gn6i-c40g1.10xlarge",  # 1x T4, 40 vCPUs, 155 GB RAM
-        "ecs.gn6i-c24g1.12xlarge",  # 2x T4, 48 vCPUs, 186 GB RAM
-        "ecs.gn6i-c24g1.24xlarge",  # 4x T4, 96 vCPUs, 372 GB RAM
-        "ecs.ebmgn6i.24xlarge	",  # 4x T4, 96 vCPUs, 384 GB RAM
-    ]
+
+    ALICLOUD_OVKIT_INSTANCE_TYPES = {
+        "ecs.gn7e-c16g1.4xlarge": "1x A100-80G, 16 vCPUs, 125 GB RAM",
+        "ecs.gn7e-c16g1.16xlarge": "4x A100-80G, 64 vCPUs, 500 GB RAM",
+        "ecs.ebmgn7e.32xlarge": "8x A100-80G, 128 vCPUs, 1024 GB RAM",
+        "ecs.gn7e-c16g1.32xlarge": "8x A100-80G, 128 vCPUs, 1000 GB RAM",
+        "ecs.gn7i-c8g1.2xlarge": "1x A10, 8 vCPUs, 30 GB RAM",
+        "ecs.gn7i-c16g1.4xlarge": "1x A10, 16 vCPUs, 60 GB RAM",
+        "ecs.gn7i-c32g1.8xlarge": "1x A10, 32 vCPUs, 188 GB RAM",
+        "ecs.gn7i-c48g1.12xlarge": "1x A10, 48 vCPUs, 310 GB RAM",
+        "ecs.gn7i-c56g1.14xlarge": "1x A10, 56 vCPUs, 346 GB RAM",
+        "ecs.gn7i-c32g1.16xlarge": "2x A10, 64 vCPUs, 376 GB RAM",
+        "ecs.gn7i-c32g1.32xlarge": "4x A10, 128 vCPUs, 752 GB RAM",
+        "ecs.ebmgn7i.32xlarge": "4x A10, 128 vCPUs, 768 GB RAM",
+        "ecs.gn6i-c4g1.xlarge": "1x T4, 4 vCPUs, 15 GB RAM",
+        "ecs.gn6i-c8g1.2xlarge": "1x T4, 8 vCPUs, 31 GB RAM",
+        "ecs.gn6i-c16g1.4xlarge": "1x T4, 16 vCPUs, 62 GB RAM",
+        "ecs.gn6i-c24g1.6xlarge": "1x T4, 24 vCPUs, 93 GB RAM",
+        "ecs.gn6i-c40g1.10xlarge": "1x T4, 40 vCPUs, 155 GB RAM",
+        "ecs.gn6i-c24g1.12xlarge": "2x T4, 48 vCPUs, 186 GB RAM",
+        "ecs.gn6i-c24g1.24xlarge": "4x T4, 96 vCPUs, 372 GB RAM",
+        "ecs.ebmgn6i.24xlarge": "4x T4, 96 vCPUs, 384 GB RAM",
+    }
 
     @staticmethod
     def ovkit_instance_type_callback(ctx, param, value):
@@ -68,10 +76,39 @@ class DeployAlicloudCommand(DeployCommand):
             raise click.BadParameter(
                 colorize_error(
                     f"Invalid instance type: {value}. Choose one of: "
-                    + ", ".join(DeployAlicloudCommand.ALICLOUD_OVKIT_INSTANCE_TYPES)
+                    + ", ".join(
+                        DeployAlicloudCommand.ALICLOUD_OVKIT_INSTANCE_TYPES.keys()
+                    )
                     + "."
                 )
             )
+
+        return value
+
+    @staticmethod
+    def region_callback(ctx, param, value):
+        """
+        Called after parsing --region option
+        """
+
+        if value is None:
+            return value
+
+        value = value.lower().replace(" ", "-")
+
+        if "aliyun_access_key" in ctx.params and "aliyun_secret_key" in ctx.params:
+            valid_regions = alicloud_list_regions(
+                aliyun_access_key=ctx.params["aliyun_access_key"],
+                aliyun_secret_key=ctx.params["aliyun_secret_key"],
+            )
+            if value not in valid_regions:
+                raise click.BadParameter(
+                    colorize_error(
+                        f'Invalid region: "{value}". Choose one of: '
+                        + ", ".join(valid_regions)
+                        + "."
+                    )
+                )
 
         return value
 
@@ -91,6 +128,11 @@ class DeployAlicloudCommand(DeployCommand):
             )
         )
 
+        # prepare table of supported instance types with descriptions
+        instance_types_table = ""
+        for instance_type, description in self.ALICLOUD_OVKIT_INSTANCE_TYPES.items():
+            instance_types_table += f"  {instance_type:<25} {description}\n"
+
         # --isaac-instance-type
         self.params.insert(
             # insert after --isaac option
@@ -98,15 +140,16 @@ class DeployAlicloudCommand(DeployCommand):
             click.core.Option(
                 ("--isaac-instance-type",),
                 prompt=colorize_prompt(
-                    "* Isaac Sim Instance Type "
-                    + "(see https://www.alibabacloud.com/help/en/ecs/user-guide/overview-of-instance-families "
-                    + "for availability and pricing. Instances with NVIDIA A100, A10 and T4 GPUs are supported)"
+                    "* Isaac Sim Instance Type. Supported types:\n\n"
+                    + instance_types_table
+                    + "\n See https://www.alibabacloud.com/help/en/ecs/user-guide/overview-of-instance-families "
+                    + "for availability and pricing.\n"
                 ),
                 show_default=True,
                 default=config["alicloud_default_isaac_instance_type"],
                 callback=DeployAlicloudCommand.ovkit_instance_type_callback,
                 help="Isaac Sim instance type. Currently supported: "
-                + ", ".join(self.ALICLOUD_OVKIT_INSTANCE_TYPES)
+                + ", ".join(self.ALICLOUD_OVKIT_INSTANCE_TYPES.keys())
                 + ".",
             ),
         )
@@ -119,14 +162,15 @@ class DeployAlicloudCommand(DeployCommand):
                 ("--region",),
                 show_default=True,
                 default=config["alicloud_default_region"],
-                prompt=colorize_prompt("* Alibaba Cloud Region"),
-                callback=lambda ctx, param, value: value.lower().replace(" ", "-"),
+                prompt=colorize_prompt("* Alibaba Cloud Region ID"),
+                callback=DeployAlicloudCommand.region_callback,
             ),
         )
 
         # --aliyun-access-key
         self.params.insert(
-            len(self.params),
+            # before --region
+            self.param_index("region"),
             click.core.Option(
                 ("--aliyun-access-key",),
                 prompt=colorize_prompt(
@@ -140,7 +184,8 @@ class DeployAlicloudCommand(DeployCommand):
 
         # --aliyun-secret-key
         self.params.insert(
-            len(self.params),
+            # before --region
+            self.param_index("region"),
             click.core.Option(
                 ("--aliyun-secret-key",),
                 prompt=colorize_prompt("* Alibaba Cloud Secret Key"),
@@ -160,6 +205,16 @@ class AlicloudDeployer(Deployer):
 
     def __init__(self, params, config):
         super().__init__(params, config)
+
+        # auto-detect if region of deployment is in China
+        if self.input_params["in_china"] == "auto" and params["region"][:2] == "cn":
+            if self.params["debug"]:
+                click.echo(
+                    colorize_info(
+                        "* Detected deployment in China, setting --in-china=yes."
+                    )
+                )
+            params["in_china"] = True
 
     def main(self):
         # ask what to do if deployment already exists
@@ -210,4 +265,9 @@ def main(**params):
 
 
 if __name__ == "__main__":
-    main()  # noqa
+    if os.path.exists("/.dockerenv"):
+        # we're in docker, run command
+        main()
+    else:
+        # we're outside, start docker container first
+        shell_command(f"./run '{' '.join(sys.argv)}'", verbose=True)

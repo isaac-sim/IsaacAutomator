@@ -87,3 +87,30 @@ def alicloud_get_instance_status(vm_id, verbose=False):
         .strip()
     )
     return status
+
+
+def alicloud_list_regions(
+    aliyun_access_key,
+    aliyun_secret_key,
+    verbose=False,
+):
+    """
+    List regions
+    """
+    res = (
+        shell_command(
+            f"aliyun --access-key-id {aliyun_access_key}"
+            + f" --access-key-secret {aliyun_secret_key}"
+            + " --region cn-beijing ecs DescribeRegions"
+            + " | jq -r '.Regions.Region[].RegionId'",
+            capture_output=True,
+            exit_on_error=True,
+            verbose=verbose,
+        )
+        .stdout.decode()
+        .strip()
+    )
+
+    valid_regions = res.split("\n")
+
+    return valid_regions

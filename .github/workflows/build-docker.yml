@@ -1,0 +1,29 @@
+name: Build App Docker
+
+on:
+  push:
+    paths:
+      - "Dockerfile"
+  pull_request:
+    paths:
+      - "Dockerfile"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Git
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+
+      - name: Checkout code
+        run: |
+          git clone https://github.com/${{ github.repository }} .
+          git checkout ${{ github.sha }}
+
+      - name: Build docker image
+        run: |
+          cd ${{ github.workspace }}
+          docker build -t app-image .

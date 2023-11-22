@@ -27,6 +27,7 @@
   hosts: ovami
   gather_facts: true
   vars:
+    in_china: False
     application_name: ovami
     prompt_ansi_color: 34 # bright blue
     nvidia_driver_package: nvidia-driver-525-server

@@ -142,14 +142,27 @@ class DeployCommand(click.core.Command):
             ),
         )
 
-        # --from-image/--from-scratch
+        # --from-image/--not-from-image
         self.params.insert(
             len(self.params),
             click.core.Option(
-                ("--from-image/--no-from-image",),
+                ("--from-image/--not-from-image",),
                 default=False,
                 show_default=True,
                 help="Deploy from pre-built image, from bare OS otherwise.",
+            ),
+        )
+
+        # --in-china
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--in-china",),
+                type=click.Choice(["auto", "yes", "no"]),
+                prompt=False,
+                default="auto",
+                show_default=True,
+                help="Is deployment in China? (Local mirrors will be used.)",
             ),
         )
 

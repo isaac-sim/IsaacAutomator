@@ -34,15 +34,16 @@ module "vpc" {
 }
 
 module "isaac" {
-  source          = "./isaac"
-  prefix          = "${var.prefix}.${var.deployment_name}.isaac"
-  count           = var.isaac_enabled ? 1 : 0
-  keypair_id      = module.common.aws_key_pair_id
-  instance_type   = var.isaac_instance_type
-  from_image      = var.from_image
-  region          = var.region
-  ssh_port        = var.ssh_port
-  deployment_name = var.deployment_name
+  source            = "./isaac"
+  prefix            = "${var.prefix}.${var.deployment_name}.isaac"
+  count             = var.isaac_enabled ? 1 : 0
+  keypair_id        = module.common.aws_key_pair_id
+  instance_type     = var.isaac_instance_type
+  from_image        = var.from_image
+  region            = var.region
+  ssh_port          = var.ssh_port
+  deployment_name   = var.deployment_name
+  prebuilt_ami_name = "${var.prefix}.packer.isaac_image.*"
 
   iam_instance_profile = null
 

@@ -32,6 +32,7 @@
   with_items:
     - docker-ce
     - docker-ce-cli
+    - docker-compose
 
 - name: Create docker group
   group: name=docker
@@ -45,10 +46,3 @@
 
 - name: Reset connection so docker group is picked up
   meta: reset_connection
-
-- name: Install docker-compose
-  get_url:
-    url="https://github.com/docker/compose/releases/download/v2.15.1/docker-compose-{{ ansible_system }}-{{ ansible_userspace_architecture }}"
-    dest=/usr/local/bin/docker-compose
-    force=no
-    mode=755
