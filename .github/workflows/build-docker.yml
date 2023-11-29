@@ -22,19 +22,19 @@ jobs:
 
       - name: Checkout code
         run: |
-          git clone https://github.com/${{ tolower(github.repository) }} .
+          git clone https://github.com/${{ toLower(github.repository) }} .
           git checkout ${{ github.sha }}
 
       - name: Build docker image
         run: |
           cd ${{ github.workspace }}
           echo "FROM ubuntu:latest" > Dockerfile
-          docker build -t ghcr.io/${{ tolower(github.repository) }}/app-image:latest .
+          docker build -t ghcr.io/${{ toLower(github.repository) }}/app-image:latest .
 
       - name: Login to GH registry
         run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ tolower(github.repository)_owner }} --password-stdin
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ toLower(github.repository)_owner }} --password-stdin
 
       - name: Push Docker image
         run: |
-          docker push ghcr.io/${{ tolower(github.repository) }}/app-image:latest
+          docker push ghcr.io/${{ toLower(github.repository) }}/app-image:latest
