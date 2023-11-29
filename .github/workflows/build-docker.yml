@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Convert repository name to lower case
-        id: repo-name-lower
+        id: LowCaseRepoName
         run: echo "::set-output name=repo::$(echo ${{ github.repository }} | awk '{print tolower($0)}')"
 
       - name: Setup Git
@@ -32,8 +32,7 @@ jobs:
       - name: Build docker image
         run: |
           cd ${{ github.workspace }}
-          echo "FROM ubuntu:latest" > Dockerfile
-          docker build -t ghcr.io/"${{ steps.repo-name-lower.outputs.repo }}"/app-image:latest .
+          docker build -t ghcr.io/"${{ steps.LowCaseRepoName.outputs.repo }}"/app-image:latest .
 
       - name: Login to GH registry
         run: |
@@ -41,4 +40,4 @@ jobs:
 
       - name: Push Docker image
         run: |
-          docker push ghcr.io/"${{ steps.repo-name-lower.outputs.repo }}"/app-image:latest
+          docker push ghcr.io/"${{ steps.LowCaseRepoName.outputs.repo }}"/app-image:latest
