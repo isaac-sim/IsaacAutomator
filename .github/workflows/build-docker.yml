@@ -8,6 +8,7 @@ on:
   pull_request:
     paths:
       - "Dockerfile"
+      - ".github/workflows/build-docker.yml"
 
 jobs:
   build:
@@ -21,19 +22,19 @@ jobs:
 
       - name: Checkout code
         run: |
-          git clone https://github.com/${{ github.repository }} .
+          git clone https://github.com/${{ tolower(github.repository) }} .
           git checkout ${{ github.sha }}
 
       - name: Build docker image
         run: |
           cd ${{ github.workspace }}
           echo "FROM ubuntu:latest" > Dockerfile
-          docker build -t ghcr.io/${{ github.repository }}/app-image:latest .
+          docker build -t ghcr.io/${{ tolower(github.repository) }}/app-image:latest .
 
       - name: Login to GH registry
         run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ tolower(github.repository)_owner }} --password-stdin
 
       - name: Push Docker image
         run: |
-          docker push ghcr.io/${{ github.repository }}/app-image:latest
+          docker push ghcr.io/${{ tolower(github.repository) }}/app-image:latest
