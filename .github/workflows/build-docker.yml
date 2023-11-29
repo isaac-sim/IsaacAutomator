@@ -37,7 +37,7 @@ jobs:
 
       - name: Login to GH registry
         run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ toLower(github.repository)_owner }} --password-stdin
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
       - name: Push Docker image
         run: |
