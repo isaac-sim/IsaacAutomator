@@ -4,15 +4,17 @@ on:
   push:
     paths:
       - "Dockerfile"
-  pull_request:
-    paths:
-      - "Dockerfile"
+      - ".github/workflows/build-docker.yml"
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Convert repository name to lower case
+        id: LowCaseRepoName
+        run: echo "REPO=$(echo ${{ github.repository }} | awk '{print tolower($0)}')" >> $GITHUB_ENV
+
       - name: Setup Git
         run: |
           git config --global user.name 'github-actions'
@@ -26,4 +28,12 @@ jobs:
       - name: Build docker image
         run: |
           cd ${{ github.workspace }}
-          docker build -t app-image .
+          docker build -t ghcr.io/$REPO/app-image:latest .
+
+      - name: Login to GH registry
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+
+      - name: Push Docker image
+        run: |
+          docker push ghcr.io/$REPO/app-image:latest
