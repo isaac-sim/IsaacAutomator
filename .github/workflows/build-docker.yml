@@ -5,10 +5,6 @@ on:
     paths:
       - "Dockerfile"
       - ".github/workflows/build-docker.yml"
-  pull_request:
-    paths:
-      - "Dockerfile"
-      - ".github/workflows/build-docker.yml"
 
 jobs:
   build:
@@ -27,7 +23,7 @@ jobs:
       - name: Checkout code
         run: |
           git clone https://github.com/${{ github.repository }} .
-          git checkout ${{ github.ref }}
+          git checkout ${{ github.sha }}
 
       - name: Build docker image
         run: |
