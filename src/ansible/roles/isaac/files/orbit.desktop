@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Terminal=true
+Exec=/home/ubuntu/Desktop/orbit.sh
+Name=Orbit
+Icon=/home/ubuntu/Pictures/isaacsim-icon-shell.png

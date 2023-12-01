@@ -34,6 +34,10 @@
 - name: Omni Isaac Gym Envs
   import_tasks: omni_isaac_gym_envs.yml
 
+# https://isaac-orbit.github.io/orbit/index.html
+- name: Orbit
+  import_tasks: orbit.yml
+
 - name: Restart NX server
   meta: noop
   notify: nx_restart
