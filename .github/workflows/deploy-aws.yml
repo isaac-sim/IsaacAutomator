@@ -1,0 +1,17 @@
+name: Test Deployment to AWS
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        default: "dev"
+
+jobs:
+  deploy:
+    runs-on: ghcr.io/nvidia-omniverse/isaacsim-automator/app-image:latest
+    steps:
+      - name: Test
+        run: |
+          echo "Hello World"
