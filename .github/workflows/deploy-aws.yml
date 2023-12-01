@@ -1,12 +1,9 @@
 name: Test Deployment to AWS
 
 on:
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: "Environment to deploy to"
-        required: true
-        default: "dev"
+  push:
+    paths:
+      - ".github/workflows/deploy-aws.yml"
 
 jobs:
   deploy:
