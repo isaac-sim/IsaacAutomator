@@ -27,7 +27,7 @@ jobs:
       - name: Checkout code
         run: |
           git clone https://github.com/${{ github.repository }} .
-          git checkout ${{ github.sha }}
+          git checkout ${{ github.ref }}
 
       - name: Build docker image
         run: |
