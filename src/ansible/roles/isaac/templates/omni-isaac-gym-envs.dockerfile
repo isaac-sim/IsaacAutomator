@@ -21,6 +21,7 @@ RUN echo 'trusted-host = mirrors.aliyun.com' >> $HOME/.pip/pip.conf
 # https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs#installation
 WORKDIR /
 RUN git clone https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs.git
+RUN (cd OmniIsaacGymEnvs && git checkout {{ omni_isaac_gym_envs_git_checkpoint }})
 RUN (cd OmniIsaacGymEnvs && ${PYTHON_PATH} -m pip install -e .)
 WORKDIR /OmniIsaacGymEnvs/omniisaacgymenvs
 

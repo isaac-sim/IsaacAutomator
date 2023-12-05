@@ -2,15 +2,7 @@ FROM "{{ isaac_image }}"
 
 # prereqs: apt packages
 RUN apt-get update && apt-get install -qy \
-  git wget nano ncurses-term
-
-# prereqs: miniconda
-# https://docs.conda.io/projects/miniconda/en/latest/
-RUN mkdir -p ~/miniconda3
-RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
-RUN bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
-RUN rm -rf ~/miniconda3/miniconda.sh
-RUN ~/miniconda3/bin/conda init bash
+  git nano cmake build-essential ncurses-term
 
 # if in china, add local pip mirrors
 {% if in_china %}
@@ -30,11 +22,14 @@ ENV ISAACSIM_PATH="/isaac-sim"
 ENV ISAACSIM_PYTHON_EXE="${ISAACSIM_PATH}/python.sh"
 
 RUN git clone https://github.com/NVIDIA-Omniverse/Orbit.git .
+RUN git checkout {{ orbit_git_checkpoint }}
 RUN ln -s ${ISAACSIM_PATH} _isaac_sim
 RUN echo "alias orbit=${ORBIT_PATH}/orbit.sh" >> ${HOME}/.bashrc
 
-RUN . ~/.bashrc && ./orbit.sh --conda
-RUN . ~/.bashrc && conda activate orbit
+RUN ./orbit.sh --install
+RUN ./orbit.sh --extra
+
+RUN ${ISAACSIM_PYTHON_EXE} -c "import omni.isaac.orbit; print('Orbit configuration is now complete.')"
 
 # link output dir to /results
 # RUN mkdir /results ; ln -s /results ${ORBIT_PATH}/runs

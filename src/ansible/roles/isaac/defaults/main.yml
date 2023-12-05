@@ -20,11 +20,13 @@ isaac_image:
 
 isaac_cache_dir: /home/{{ ansible_user }}/isaac
 
-# directory for installing OmniIsaacGymEnvs assets
+# OmniIsaacGymEnvs
 omni_isaac_gym_envs_dir: /opt/omni-isaac-gym-envs
+omni_isaac_gym_envs_git_checkpoint: main
 
-# directory for installing Orbit assets
+# Orbit
 orbit_dir: /opt/orbit
+orbit_git_checkpoint: devel
 
 # "none" skips login/pull
 ngc_api_key:
