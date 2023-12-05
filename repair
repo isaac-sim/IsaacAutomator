@@ -1,0 +1,102 @@
+#!/usr/bin/env python3
+
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+
+import os
+import sys
+
+import click
+
+from src.python.config import c as config
+from src.python.utils import (
+    colorize_error,
+    colorize_info,
+    deployments,
+    format_cloud_name,
+    read_tf_output,
+    shell_command,
+)
+
+
+@click.command()
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    show_default=True,
+)
+@click.argument(
+    "deployment_name",
+    required=True,
+    type=click.Choice(deployments()),
+)
+@click.option(
+    "--terraform/--no-terraform",
+    "-t/-T",
+    default=True,
+    show_default=True,
+    help="Run Teraform?",
+)
+@click.option(
+    "--ansible/--no-ansible",
+    "-a/-A",
+    default=True,
+    show_default=True,
+    help="Run ansible?",
+)
+def main(
+    debug: bool,
+    deployment_name: str,
+    terraform: bool,
+    ansible: bool,
+):
+    cloud = read_tf_output(deployment_name, "cloud", verbose=debug)
+
+    click.echo(
+        colorize_info(
+            f"* Repairing deployment '{deployment_name}' @ {format_cloud_name(cloud)}..."
+        )
+    )
+
+    # run terraform
+    if terraform:
+        click.echo(colorize_info("* Re-running terraform..."))
+        shell_command(
+            f"terraform init -upgrade -no-color -input=false {' > /dev/null' if not debug else ''}",
+            cwd=f"{config['terraform_dir']}/{cloud}",
+            verbose=debug,
+        )
+        shell_command(
+            "terraform apply -auto-approve "
+            + f"-state={config['state_dir']}/{deployment_name}/.tfstate "
+            + f"-var-file={config['state_dir']}/{deployment_name}/.tfvars",
+            cwd=f"{config['terraform_dir']}/{cloud}",
+            verbose=debug,
+        )
+
+    if ansible:
+        # run ansible
+        click.echo(colorize_error("ERROR: Repairing Ansible is not implemented yet."))
+
+
+if __name__ == "__main__":
+    if os.path.exists("/.dockerenv"):
+        # we're in docker, run command
+        main()
+    else:
+        # we're outside, start docker container first
+        shell_command(f"./run '{' '.join(sys.argv)}'", verbose=True)
