@@ -249,8 +249,6 @@ You can stop and re-start instances to save on cloud costs. To do so, run the fo
 ./start <deployment-name>
 ```
 
-Currently, stop-start is only supported for Azure deployments, other clouds will be added soon.
-
 ### Uploading Data
 
 You can upload user data from `uploads/` folder (in the project root) to the deployment by running the following command:
