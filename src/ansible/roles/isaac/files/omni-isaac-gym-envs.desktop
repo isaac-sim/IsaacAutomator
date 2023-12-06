@@ -2,5 +2,5 @@
 Type=Application
 Terminal=true
 Exec=/home/ubuntu/Desktop/omni-isaac-gym-envs.sh
-Name=Omni Isaac Gym
+Name=Omni Isaac Gym Envs
 Icon=/home/ubuntu/Pictures/isaacsim-icon-shell.png
