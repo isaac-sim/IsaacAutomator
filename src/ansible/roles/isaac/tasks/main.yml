@@ -33,10 +33,12 @@
 #  https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs
 - name: Omni Isaac Gym Envs
   import_tasks: omni_isaac_gym_envs.yml
+  when: omni_isaac_gym_envs_git_checkpoint != 'no'
 
 # https://isaac-orbit.github.io/orbit/index.html
 - name: Orbit
   import_tasks: orbit.yml
+  when: orbit_git_checkpoint != 'no'
   tags: __orbit
 
 - name: Restart NX server
