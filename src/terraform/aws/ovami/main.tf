@@ -18,7 +18,7 @@ data "aws_ec2_instance_type_offerings" "zones" {
 resource "aws_subnet" "subnet" {
   # get a /24 block from vpc cidr
   cidr_block              = cidrsubnet(var.vpc.cidr_block, 8, 5)
-  availability_zone       = sort(data.aws_ec2_instance_type_offerings.zones.locations)[0]
+  availability_zone       = try(sort(data.aws_ec2_instance_type_offerings.zones.locations)[0], "not-available")
   vpc_id                  = var.vpc.id
   map_public_ip_on_launch = true
 
