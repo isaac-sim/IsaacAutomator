@@ -28,6 +28,7 @@ from src.python.utils import (
     colorize_info,
     deployments,
     format_cloud_name,
+    read_meta,
     read_tf_output,
     shell_command,
 )
@@ -64,6 +65,7 @@ def main(
     terraform: bool,
     ansible: bool,
 ):
+    meta = read_meta(deployment_name, debug)
     cloud = read_tf_output(deployment_name, "cloud", verbose=debug)
 
     click.echo(
@@ -74,7 +76,7 @@ def main(
 
     # run terraform
     if terraform:
-        click.echo(colorize_info("* Re-running terraform..."))
+        click.echo(colorize_info("* Re-running Terraform..."))
         shell_command(
             f"terraform init -upgrade -no-color -input=false {' > /dev/null' if not debug else ''}",
             cwd=f"{config['terraform_dir']}/{cloud}",
@@ -89,8 +91,15 @@ def main(
         )
 
     if ansible:
-        # run ansible
-        click.echo(colorize_error("ERROR: Repairing Ansible is not implemented yet."))
+        click.echo(colorize_info("* Re-running Ansible..."))
+        for app in ["isaac", "ovami"]:
+            if meta["params"][app]:
+                shell_command(
+                    f"ansible-playbook -i {config['state_dir']}/{deployment_name}/.inventory "
+                    + f"{app}.yml {'-vv' if debug else ''}",
+                    cwd=f"{config['ansible_dir']}",
+                    verbose=debug,
+                )
 
 
 if __name__ == "__main__":
