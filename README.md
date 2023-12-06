@@ -231,7 +231,7 @@ To run Isaac Orbit click "Isaac Orbit" icon on the desktop or run the following 
 ~/Desktop/isaac-orbit.sh
 ```
 
-Tip: To install a specific git reference of Isaac Orbit, provide valid git reference from <https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs> as a value of `--orbit` parameter to the deployment command. For example, to install `devel` branch on an AWS instance, run the following command:
+Tip: To install a specific git reference of Isaac Orbit, provide valid git reference from <https://github.com/NVIDIA-Omniverse/Orbit> as a value of `--orbit` parameter to the deployment command. For example, to install `devel` branch on an AWS instance, run the following command:
 
 ```sh
 ./deploy-aws --orbit devel
