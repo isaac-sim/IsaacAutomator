@@ -90,6 +90,7 @@ def main(
             verbose=debug,
         )
 
+    # run ansible
     if ansible:
         click.echo(colorize_info("* Re-running Ansible..."))
         for app in ["isaac", "ovami"]:
