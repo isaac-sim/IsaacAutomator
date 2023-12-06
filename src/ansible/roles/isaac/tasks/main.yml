@@ -37,6 +37,7 @@
 # https://isaac-orbit.github.io/orbit/index.html
 - name: Orbit
   import_tasks: orbit.yml
+  tags: __orbit
 
 - name: Restart NX server
   meta: noop
