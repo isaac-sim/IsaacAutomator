@@ -20,6 +20,7 @@
   - [Pausing and Resuming](#pausing-and-resuming)
   - [Uploading Data](#uploading-data)
   - [Downloading Data](#downloading-data)
+  - [Repairing](#repairing)
   - [Destroying](#destroying)
 
 This tool automates deployment of [Isaac Sim](https://developer.nvidia.com/isaac-sim) to public clouds.
@@ -275,6 +276,19 @@ You can download user data to `results/` folder (in the project root) from deplo
 ```
 
 Data will be downloaded from `/home/ubuntu/results` directory by default. You can change this by passing `--remote-dir` argument to the command. Run `./download --help` to see more options.
+
+### Repairing
+
+If for some reason the deployment cloud resouces or software configuration get corrupted, you can attempt to repair the deployment by running the following command:
+
+```sh
+# run both terraform and ansible
+./repair <deployment-name>
+# just run terraform to try fixing the cloud resources
+./repair <deployment-name> --no-ansible
+# just run ansible to try fixing the software configuration
+./repair <deployment-name> --no-terraform
+```
 
 ### Destroying
 
