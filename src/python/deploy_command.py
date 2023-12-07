@@ -246,7 +246,7 @@ class DeployCommand(click.core.Command):
         # --oige
         help = (
             "Install Omni Isaac Gym Envs? Valid values: 'no', "
-            + "or <git ref in github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs>."
+            + "or <git ref in github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs>"
         )
         self.params.insert(
             len(self.params),
@@ -263,7 +263,7 @@ class DeployCommand(click.core.Command):
         # --orbit
         help = (
             "[EXPERIMENTAL] Install Isaac Sim Orbit? Valid values: 'no', "
-            + "or <git ref in github.com/NVIDIA-Omniverse/orbit>."
+            + "or <git ref in github.com/NVIDIA-Omniverse/orbit>"
         )
         self.params.insert(
             len(self.params),
