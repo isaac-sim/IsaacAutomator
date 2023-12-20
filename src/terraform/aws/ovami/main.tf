@@ -6,10 +6,6 @@ data "aws_ec2_instance_type_offerings" "zones" {
     name   = "instance-type"
     values = [var.instance_type]
   }
-  filter {
-    name   = "location"
-    values = ["${var.region}*"]
-  }
   location_type = "availability-zone"
 }
 
