@@ -39,6 +39,11 @@ c[
 # aws/alicloud driver
 c["generic_driver_apt_package"] = "nvidia-driver-535-server"
 
+# default remote dirs
+c["default_remote_uploads_dir"] = "/home/ubuntu/uploads"
+c["default_remote_results_dir"] = "/home/ubuntu/results"
+c["default_remote_workspace_dir"] = "/home/ubuntu/workspace"
+
 # defaults
 
 # --isaac-image

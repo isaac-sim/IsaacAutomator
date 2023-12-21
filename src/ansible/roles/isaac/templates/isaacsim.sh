@@ -11,6 +11,8 @@ CMD="/isaac-sim/kit/kit \
 DISPLAY=":0"
 CONTAINER_NAME="isaacsim"
 OUT_DIR="{{ results_dir }}"
+UPLOADS_DIR="{{ uploads_dir }}"
+WORKSPACE_DIR="{{ workspace_dir }}"
 OMNI_USER="{{ omniverse_user }}"
 OMNI_PASS="{{ omniverse_password }}"
 DOCKER_IMAGE="{{ isaac_image }}"
@@ -81,6 +83,14 @@ while [ $# -gt 0 ]; do
       OUT_DIR="${1#*=}"
       ;;
 
+    --uploads_dir=*)
+      UPLOADS_DIR="${1#*=}"
+      ;;
+
+    --workspace_dir=*)
+      WORKSPACE_DIR="${1#*=}"
+      ;;
+
     --display=*)
       DISPLAY="${1#*=}"
       ;;
@@ -102,8 +112,10 @@ done
 [ -d "${CACHE_DIR}" ] && chmod 0777 "${CACHE_DIR}"
 mkdir -pv "${CACHE_DIR}/ov" "${CACHE_DIR}/pip" "${CACHE_DIR}/glcache" "${CACHE_DIR}/computecache" "${CACHE_DIR}/logs" "${CACHE_DIR}/config" "${CACHE_DIR}/data" "${CACHE_DIR}/documents" 2>/dev/null
 
-# create output dir if it doesn't exist
-[ ! -d "${OUT_DIR}" ] && mkdir -pv "${OUT_DIR}"
+# create output/uploads/workspace dirs if it doesn't exist
+for d in "${OUT_DIR}" "${UPLOADS_DIR}" "${WORKSPACE_DIR}"; do
+  [ ! -d "${d}" ] && mkdir -pv "${d}"
+done
 
 # kill any existing container
 docker kill $CONTAINER_NAME 2>/dev/null
@@ -129,6 +141,8 @@ docker run \
   -v "${CACHE_DIR}/docs":/root/Documents:rw \
   \
   -v "${OUT_DIR}":/results \
+  -v "${UPLOADS_DIR}":/uploads \
+  -v "${WORKSPACE_DIR}":/workspace \
   \
   -v "/tmp/.X11-unix:/tmp/.X11-unix" \
   -v "${XAUTHORITY_LOCATION}:/root/.Xauthority" \

@@ -33,6 +33,8 @@ ngc_api_key:
 
 # directory to output results to
 results_dir: /home/{{ ansible_user }}/results
+workspace_dir: /home/{{ ansible_user }}/results
+uploads_dir: /home/{{ ansible_user }}/uploads
 
 omniverse_user:
 omniverse_password:
