@@ -31,6 +31,15 @@
   shell: code --install-extension ms-vscode-remote.vscode-remote-extensionpack
   become_user: "{{ ansible_user }}"
 
+# make sure desktop directory exists
+- name: Make sure desktop directory exists
+  file:
+    path: /home/{{ ansible_user }}/Desktop
+    state: directory
+    mode: 0755
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
 # create a desktop shortcut for visual studio code
 - name: Create desktop shortcut for Visual Studio Code
   copy:
