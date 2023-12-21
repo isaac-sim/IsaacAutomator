@@ -17,6 +17,7 @@
     - [Shell in Isaac Sim Container](#shell-in-isaac-sim-container)
     - [Omniverse Isaac Gym Environments](#omniverse-isaac-gym-environments)
     - [Isaac Orbit](#isaac-orbit)
+  - [Mapped Folders](#mapped-folders)
   - [Pausing and Resuming](#pausing-and-resuming)
   - [Uploading Data](#uploading-data)
   - [Downloading Data](#downloading-data)
@@ -236,6 +237,14 @@ Tip: To install a specific git reference of Isaac Orbit, provide valid git refer
 ```sh
 ./deploy-aws --orbit devel
 ```
+
+### Mapped Folders
+
+The following folders are mapped to the running Isaac Sim container by default (container paths may be different for specific applications):
+
+- `/home/ubuntu/uploads` (host) --> `/uploads` (container) - user data uploaded to the deployment with `./upload` command or automatically from local `uploads/` folder
+- `/home/ubuntu/results` (host) --> `/results` (container) - results of the applications run on the deployment, can be downloaded from the deployed machine with `./download` command
+- `/home/ubuntu/workspace` (host) --> `/workspace` (container) - workspace folder, can be used to exchange data between the host and the container.
 
 ### Pausing and Resuming
 

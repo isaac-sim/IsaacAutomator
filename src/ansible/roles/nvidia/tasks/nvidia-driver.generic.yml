@@ -29,7 +29,7 @@
     update_cache=yes
   with_items:
     - xserver-xorg
-    - "{{ config['generic_driver_apt_package'] }}"
+    - "{{ generic_driver_apt_package }}"
 
 - name: NVIDIA GPU Driver / Enable persistent mode
   shell: nvidia-smi -pm ENABLED

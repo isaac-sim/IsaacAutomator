@@ -31,8 +31,10 @@ RUN ./orbit.sh --extra
 
 RUN ${ISAACSIM_PYTHON_EXE} -c "import omni.isaac.orbit; print('Orbit configuration is now complete.')"
 
-# link output dir to /results
-# RUN mkdir /results ; ln -s /results ${ORBIT_PATH}/runs
+# link mapped folders to orbit path
+RUN mkdir /results ; ln -s /results ${ORBIT_PATH}/
+RUN mkdir /uploads ; ln -s /uploads ${ORBIT_PATH}/
+RUN mkdir /workspace ; ln -s /workspace ${ORBIT_PATH}/
 
 # customoize bash prompt
 RUN echo "export PS1='\[\033[01;33m\][Orbit]\[\033[00m\]:\w\$ '" >>  $HOME/.bashrc
