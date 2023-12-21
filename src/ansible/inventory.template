@@ -2,6 +2,7 @@
 
 [targets:vars]
 cloud="{cloud}"
+config={config}
 in_china={in_china}
 ssh_port={ssh_port}
 ansible_user="ubuntu"

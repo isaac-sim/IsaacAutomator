@@ -34,7 +34,7 @@
 # download driver
 - name: GCP / Download GRID driver
   get_url:
-    url: https://storage.googleapis.com/nvidia-drivers-us-public/GRID/vGPU15.2/NVIDIA-Linux-x86_64-525.105.17-grid.run
+    url: "{{ config['gcp_driver_url'] }}"
     dest: /tmp/nvidia_driver.run
     mode: 0755
 

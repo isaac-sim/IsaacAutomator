@@ -30,6 +30,9 @@ c["terraform_dir"] = "/app/src/terraform"
 # app image name
 c["app_image_name"] = "isa"
 
+# aws/alicloud driver
+c["generic_driver_apt_package"] = "nvidia-driver-525-server"
+
 # defaults
 
 # --isaac-image
