@@ -37,7 +37,7 @@ c[
 ] = "https://storage.googleapis.com/nvidia-drivers-us-public/GRID/vGPU16.2/NVIDIA-Linux-x86_64-535.129.03-grid.run"
 
 # aws/alicloud driver
-c["generic_driver_apt_package"] = "nvidia-driver-525-server"
+c["generic_driver_apt_package"] = "nvidia-driver-535-server"
 
 # defaults
 
