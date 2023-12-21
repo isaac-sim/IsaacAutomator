@@ -42,7 +42,7 @@ c["generic_driver_apt_package"] = "nvidia-driver-525-server"
 # defaults
 
 # --isaac-image
-c["default_isaac_image"] = "nvcr.io/nvidia/isaac-sim:2023.1.0-hotfix.1"
+c["default_isaac_image"] = "nvcr.io/nvidia/isaac-sim:2023.1.1"
 
 # --ssh-port
 c["default_ssh_port"] = 22
