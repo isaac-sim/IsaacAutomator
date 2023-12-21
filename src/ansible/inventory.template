@@ -2,7 +2,6 @@
 
 [targets:vars]
 cloud="{cloud}"
-config={config}
 in_china={in_china}
 ssh_port={ssh_port}
 ansible_user="ubuntu"
@@ -13,11 +12,13 @@ orbit_git_checkpoint="{orbit}"
 omniverse_user="{omniverse_user}"
 deployment_name="{deployment_name}"
 omniverse_password="{omniverse_password}"
+gcp_driver_url="{config[gcp_driver_url]}"
 omni_isaac_gym_envs_git_checkpoint="{oige}"
 system_user_password="{system_user_password}"
 uploads_dir="{config[default_remote_uploads_dir]}"
 results_dir="{config[default_remote_results_dir]}"
 workspace_dir="{config[default_remote_workspace_dir]}"
+generic_driver_apt_package="{config[generic_driver_apt_package]}"
 ansible_ssh_private_key_file="{config[state_dir]}/{deployment_name}/key.pem"
 
 [targets:children]
