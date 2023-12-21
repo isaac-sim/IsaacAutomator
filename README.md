@@ -15,10 +15,13 @@
   - [Running Applications](#running-applications)
     - [Isaac Sim](#isaac-sim)
     - [Shell in Isaac Sim Container](#shell-in-isaac-sim-container)
-    - [Omniverse Isaac Gym](#omniverse-isaac-gym)
+    - [Omniverse Isaac Gym Environments](#omniverse-isaac-gym-environments)
+    - [Isaac Orbit](#isaac-orbit)
+  - [Mapped Folders](#mapped-folders)
   - [Pausing and Resuming](#pausing-and-resuming)
   - [Uploading Data](#uploading-data)
   - [Downloading Data](#downloading-data)
+  - [Repairing](#repairing)
   - [Destroying](#destroying)
 
 This tool automates deployment of [Isaac Sim](https://developer.nvidia.com/isaac-sim) to public clouds.
@@ -199,17 +202,49 @@ To get a shell inside Isaac Sim container, click "Isaac Sim Shell" icon on the d
 ~/Desktop/isaacsim-shell.sh
 ```
 
-#### Omniverse Isaac Gym
+#### Omniverse Isaac Gym Environments
 
-[Omniverse Isaac Gym Reinforcement Learning Environments for Isaac Sim](https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs) ("Omniverse Isaac Gym") is pre-installed on the deployed Isaac instances.
+[Omniverse Isaac Gym Reinforcement Learning Environments for Isaac Sim](https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs) ("Omni Isaac Gym Envs") can be pre-installed on the deployed Isaac instances.
 
-To run Omniverse Isaac Gym click "Omni Isaac Gym" icon on the desktop or run the following command in the terminal:
+To run Omniverse Isaac Gym Environments click "Omni Isaac Gym Envs" icon on the desktop or run the following command in the terminal:
 
 ```sh
 ~/Desktop/omni-isaac-gym-envs.sh
 ```
 
 Default output directory (`/OmniIsaacGymEnvs/omniisaacgymenvs/runs`) in the OmniIsaacGymEnvs contaner will be linked to the default results directory (`/home/ubuntu/results`) on the deployed instance. You can download the contents of this directory to your local machine using `./download <deployment_name>` command.
+
+Tip: To install a specific git reference of OmniIsaacGymEnvs, provide valid reference from <https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs> as a value of `--oige` parameter to the deployment command. For example, to install `devel` branch on an AWS instance, run the following command:
+
+```sh
+./deploy-aws --oige devel
+```
+
+#### Isaac Orbit
+
+*Isaac Orbit is still experimental and intended for preview purposes only.*
+
+[Isaac Orbit](https://isaac-orbit.github.io/orbit/index.html) can be pre-installed on the deployed Isaac instances.
+
+To run Isaac Orbit click "Isaac Orbit" icon on the desktop or run the following command in the terminal:
+
+```sh
+~/Desktop/isaac-orbit.sh
+```
+
+Tip: To install a specific git reference of Isaac Orbit, provide valid git reference from <https://github.com/NVIDIA-Omniverse/Orbit> as a value of `--orbit` parameter to the deployment command. For example, to install `devel` branch on an AWS instance, run the following command:
+
+```sh
+./deploy-aws --orbit devel
+```
+
+### Mapped Folders
+
+The following folders are mapped to the running Isaac Sim container by default (container paths may be different for specific applications):
+
+- `/home/ubuntu/uploads` (host) --> `/uploads` (container) - user data uploaded to the deployment with `./upload` command or automatically from local `uploads/` folder
+- `/home/ubuntu/results` (host) --> `/results` (container) - results of the applications run on the deployment, can be downloaded from the deployed machine with `./download` command
+- `/home/ubuntu/workspace` (host) --> `/workspace` (container) - workspace folder, can be used to exchange data between the host and the container.
 
 ### Pausing and Resuming
 
@@ -222,8 +257,6 @@ You can stop and re-start instances to save on cloud costs. To do so, run the fo
 ./stop <deployment-name>
 ./start <deployment-name>
 ```
-
-Currently, stop-start is only supported for Azure deployments, other clouds will be added soon.
 
 ### Uploading Data
 
@@ -250,6 +283,19 @@ You can download user data to `results/` folder (in the project root) from deplo
 ```
 
 Data will be downloaded from `/home/ubuntu/results` directory by default. You can change this by passing `--remote-dir` argument to the command. Run `./download --help` to see more options.
+
+### Repairing
+
+If for some reason the deployment cloud resouces or software configuration get corrupted, you can attempt to repair the deployment by running the following command:
+
+```sh
+# run both terraform and ansible
+./repair <deployment-name>
+# just run terraform to try fixing the cloud resources
+./repair <deployment-name> --no-ansible
+# just run ansible to try fixing the software configuration
+./repair <deployment-name> --no-terraform
+```
 
 ### Destroying
 

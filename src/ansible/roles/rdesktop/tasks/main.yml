@@ -49,6 +49,12 @@
 - name: Misc utils
   import_tasks: utils.yml
 
+# install visual studio code
+- name: Visual Studio Code
+  import_tasks: vscode.yml
+  tags:
+    - __vscode
+
 # VNC
 - name: VNC server
   import_tasks: vnc.yml

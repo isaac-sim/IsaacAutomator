@@ -30,10 +30,24 @@ c["terraform_dir"] = "/app/src/terraform"
 # app image name
 c["app_image_name"] = "isa"
 
+# gcp driver
+# @see https://cloud.google.com/compute/docs/gpus/grid-drivers-table
+c[
+    "gcp_driver_url"
+] = "https://storage.googleapis.com/nvidia-drivers-us-public/GRID/vGPU16.2/NVIDIA-Linux-x86_64-535.129.03-grid.run"
+
+# aws/alicloud driver
+c["generic_driver_apt_package"] = "nvidia-driver-535-server"
+
+# default remote dirs
+c["default_remote_uploads_dir"] = "/home/ubuntu/uploads"
+c["default_remote_results_dir"] = "/home/ubuntu/results"
+c["default_remote_workspace_dir"] = "/home/ubuntu/workspace"
+
 # defaults
 
 # --isaac-image
-c["default_isaac_image"] = "nvcr.io/nvidia/isaac-sim:2023.1.0-hotfix.1"
+c["default_isaac_image"] = "nvcr.io/nvidia/isaac-sim:2023.1.1"
 
 # --ssh-port
 c["default_ssh_port"] = 22
@@ -64,3 +78,9 @@ c["alicloud_default_region"] = "us-east-1"
 
 # --prefix for the created cloud resources
 c["default_prefix"] = "isa"
+
+# --oige
+c["default_oige_git_checkpoint"] = "main"
+
+# --orbit
+c["default_orbit_git_checkpoint"] = "devel"

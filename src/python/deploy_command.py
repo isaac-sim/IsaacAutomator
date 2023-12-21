@@ -104,6 +104,28 @@ class DeployCommand(click.core.Command):
 
         return value
 
+    @staticmethod
+    def oige_callback(ctx, param, value):
+        """
+        Called after parsing --oige option
+        """
+
+        if "" == value:
+            return config["default_oige_git_checkpoint"]
+
+        return value
+
+    @staticmethod
+    def orbit_callback(ctx, param, value):
+        """
+        Called after parsing --orbit option
+        """
+
+        if "" == value:
+            return config["default_orbit_git_checkpoint"]
+
+        return value
+
     def param_index(self, param_name):
         """
         Return index of parameter with given name.
@@ -218,6 +240,40 @@ class DeployCommand(click.core.Command):
                 show_default=True,
                 callback=DeployCommand.ngc_image_callback,
                 help="Isaac Sim docker image to use.",
+            ),
+        )
+
+        # --oige
+        help = (
+            "Install Omni Isaac Gym Envs? Valid values: 'no', "
+            + "or <git ref in github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs>"
+        )
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--oige",),
+                help=help,
+                default="main",
+                show_default=True,
+                prompt=colorize_prompt("* " + help),
+                callback=DeployCommand.oige_callback,
+            ),
+        )
+
+        # --orbit
+        help = (
+            "[EXPERIMENTAL] Install Isaac Sim Orbit? Valid values: 'no', "
+            + "or <git ref in github.com/NVIDIA-Omniverse/orbit>"
+        )
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--orbit",),
+                help=help,
+                default="no",
+                show_default=True,
+                prompt=colorize_prompt("* " + help),
+                callback=DeployCommand.orbit_callback,
             ),
         )
 

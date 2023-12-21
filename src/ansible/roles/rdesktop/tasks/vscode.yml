@@ -1,0 +1,62 @@
+# region copyright
+# Copyright 2023 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+- name: Prerequisites
+  apt:
+    name: snapd
+    state: latest
+
+# install visual studio code
+- name: Install Visual Studio Code
+  snap:
+    name: code
+    state: present
+
+# install remote development extension pack
+- name: Install Remote Development extension pack
+  shell: code --install-extension ms-vscode-remote.vscode-remote-extensionpack
+  become_user: "{{ ansible_user }}"
+
+# create a desktop shortcut for visual studio code
+- name: Create desktop shortcut for Visual Studio Code
+  copy:
+    dest: /home/{{ ansible_user }}/Desktop/vscode.desktop
+    mode: 0755
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    content: |
+      [Desktop Entry]
+      Version=1.0
+      Type=Application
+      Name=Visual Studio Code
+      GenericName=Text Editor
+      Comment=Edit text files
+      Exec=/snap/bin/code --no-sandbox --unity-launch %F
+      Icon=/snap/code/current/meta/gui/vscode.png
+      StartupWMClass=Code
+      StartupNotify=true
+      Terminal=false
+      Categories=Utility;TextEditor;Development;IDE;
+      MimeType=text/plain;inode/directory;
+      Actions=new-empty-window;
+      Keywords=vscode;
+  become_user: "{{ ansible_user }}"
+
+- name: Allow execution of desktop icon for Orbit
+  shell: gio set "/home/{{ ansible_user }}/Desktop/{{ item }}" metadata::trusted true
+  become_user: "{{ ansible_user }}"
+  with_items:
+    - vscode.desktop
