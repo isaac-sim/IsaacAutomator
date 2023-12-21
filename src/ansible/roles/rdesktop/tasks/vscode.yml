@@ -24,6 +24,7 @@
   snap:
     name: code
     state: present
+    classic: yes
 
 # install remote development extension pack
 - name: Install Remote Development extension pack
