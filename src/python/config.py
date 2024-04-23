@@ -32,9 +32,9 @@ c["app_image_name"] = "isa"
 
 # gcp driver
 # @see https://cloud.google.com/compute/docs/gpus/grid-drivers-table
-c[
-    "gcp_driver_url"
-] = "https://storage.googleapis.com/nvidia-drivers-us-public/GRID/vGPU16.2/NVIDIA-Linux-x86_64-535.129.03-grid.run"
+c["gcp_driver_url"] = (
+    "https://storage.googleapis.com/nvidia-drivers-us-public/GRID/vGPU16.2/NVIDIA-Linux-x86_64-535.129.03-grid.run"
+)
 
 # aws/alicloud driver
 c["generic_driver_apt_package"] = "nvidia-driver-535-server"
@@ -83,4 +83,4 @@ c["default_prefix"] = "isa"
 c["default_oige_git_checkpoint"] = "main"
 
 # --orbit
-c["default_orbit_git_checkpoint"] = "devel"
+c["default_orbit_git_checkpoint"] = "v0.3.0"
