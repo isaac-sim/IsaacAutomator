@@ -58,7 +58,7 @@ There are two ways to run the automator commands:
 # enter the automator container
 ./run
 # inside container:
-./someconnad
+./somecommand
 ```
 
 2. Simply prepend the command with `./run` like so:
