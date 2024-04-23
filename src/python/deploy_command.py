@@ -270,7 +270,7 @@ class DeployCommand(click.core.Command):
             click.core.Option(
                 ("--orbit",),
                 help=help,
-                default="no",
+                default=config["default_orbit_git_checkpoint"],
                 show_default=True,
                 prompt=colorize_prompt("* " + help),
                 callback=DeployCommand.orbit_callback,
