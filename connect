@@ -65,10 +65,6 @@ def deployments_callback(ctx, param, value):
     type=click.Choice(APP_NAMES),
     help="Application",
 )
-@click.argument(
-    "app",
-    required=False,
-)
 def main(
     app: str,
     debug: bool,
