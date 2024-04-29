@@ -53,7 +53,7 @@ module "isaac" {
   }
 }
 
-module "metropolis-qs" {
+module "mqs" {
   source          = "./mqs"
   prefix          = "${var.prefix}.${var.deployment_name}.mqs"
   count           = var.mqs_enabled ? 1 : 0

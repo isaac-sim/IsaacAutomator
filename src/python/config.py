@@ -28,7 +28,7 @@ c["ansible_dir"] = "/app/src/ansible"
 c["terraform_dir"] = "/app/src/terraform"
 
 # app image name
-c["app_image_name"] = "metropolis-qs"
+c["app_image_name"] = "mqs"
 
 # gcp driver
 # @see https://cloud.google.com/compute/docs/gpus/grid-drivers-table
@@ -77,7 +77,7 @@ c["gcp_default_isaac_gpu_count"] = 1
 c["alicloud_default_region"] = "us-east-1"
 
 # --prefix for the created cloud resources
-c["default_prefix"] = "metropolis-qs"
+c["default_prefix"] = "mqs"
 
 # --oige
 c["default_oige_git_checkpoint"] = "main"

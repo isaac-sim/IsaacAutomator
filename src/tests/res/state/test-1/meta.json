@@ -1,8 +1,8 @@
 {
-    "command": "src/tests/deployer.test.py --no-debug --prefix 'metropolis-qs --no-from-image --deployment-name 'test-1' --existing 'ask' --region 'us-east-1' --isaac --isaac-instance-type 'g5.2xlarge' --isaac-image 'nvcr.io/nvidia/isaac-sim:2022.2.0' --ngc-api-key '__ngc_api_key__' --ngc-api-key-check --vnc-password '__vnc_password__' --omniverse-user 'ovuser' --omniverse-password '__omniverse_password__' --ssh-port 22 --upload --aws-access-key-id '__aws_access_key_id__' --aws-secret-access-key '__aws_secret_access_key__'",
+    "command": "src/tests/deployer.test.py --no-debug --prefix 'mqs --no-from-image --deployment-name 'test-1' --existing 'ask' --region 'us-east-1' --isaac --isaac-instance-type 'g5.2xlarge' --isaac-image 'nvcr.io/nvidia/isaac-sim:2022.2.0' --ngc-api-key '__ngc_api_key__' --ngc-api-key-check --vnc-password '__vnc_password__' --omniverse-user 'ovuser' --omniverse-password '__omniverse_password__' --ssh-port 22 --upload --aws-access-key-id '__aws_access_key_id__' --aws-secret-access-key '__aws_secret_access_key__'",
     "input_params": {
         "debug": false,
-        "prefix": "metropolis-qs",
+        "prefix": "mqs",
         "from_image": false,
         "deployment_name": "test-1",
         "existing": "ask",
@@ -22,7 +22,7 @@
     },
     "params": {
         "debug": false,
-        "prefix": "metropolis-qs",
+        "prefix": "mqs",
         "from_image": false,
         "deployment_name": "test-1",
         "existing": "ask",
@@ -48,7 +48,7 @@
         "tests_dir": "/app/src/tests",
         "ansible_dir": "/app/src/ansible",
         "terraform_dir": "/app/src/terraform",
-        "app_image_name": "metropolis-qs",
+        "app_image_name": "mqs",
         "default_isaac_image": "nvcr.io/nvidia/isaac-sim:2023.1.0",
         "default_ssh_port": 22,
         "azure_default_from_image": false,
@@ -60,6 +60,6 @@
         "azure_default_isaac_instance_type": "2",
         "gcp_default_isaac_instance_type": "g2-standard-8",
         "gcp_default_isaac_gpu_count": 1,
-        "default_prefix": "metropolis-qs"
+        "default_prefix": "mqs"
     }
 }
