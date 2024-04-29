@@ -61,7 +61,7 @@ def deployments_callback(ctx, param, value):
 )
 @click.option(
     "--app",
-    default="isaac",
+    default="mqs",
     type=click.Choice(APP_NAMES),
     help="Application",
 )
