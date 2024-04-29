@@ -24,6 +24,7 @@ ansible_ssh_private_key_file="{config[state_dir]}/{deployment_name}/key.pem"
 [targets:children]
 isaac
 ovami
+mqs
 
 [isaac]
 {isaac_ip}
@@ -31,3 +32,5 @@ ovami
 [ovami]
 {ovami_ip}
 
+[mqs]
+{mqs_ip}

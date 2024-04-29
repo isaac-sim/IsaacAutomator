@@ -86,10 +86,10 @@ RUN ./aws/install
 COPY . /app
 
 # customoize bash prompt
-RUN echo "export PS1='\[\033[01;36m\][Isaac Sim Automator \${VERSION}]\[\033[00m\]:\w\$ '" >>  /root/.bashrc
+RUN echo "export PS1='\[\033[01;35m\][Metropolis Quick Start \${VERSION}]\[\033[00m\]:\w\$ '" >>  /root/.bashrc
 
 WORKDIR /app
 
 ENTRYPOINT [ "/bin/sh", "-c" ]
 
-ENV VERSION="v2.2.2"
+ENV VERSION="v3.0.0-a"

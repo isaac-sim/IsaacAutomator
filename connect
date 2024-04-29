@@ -32,7 +32,7 @@ from src.python.utils import (
     shell_command,
 )
 
-APP_NAMES = ["isaac"]
+APP_NAMES = ["isaac", "mqs"]
 
 
 # callback to validate deployment name
@@ -65,15 +65,12 @@ def deployments_callback(ctx, param, value):
     type=click.Choice(APP_NAMES),
     help="Application",
 )
-@click.argument(
-    "app",
-    required=False,
-)
 def main(
     app: str,
     debug: bool,
     deployment_name: str,
 ):
+    print(app)
     vm_ip = read_tf_output(deployment_name, f"{app}_ip", verbose=debug)
 
     if vm_ip in ["NA", ""]:

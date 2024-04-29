@@ -235,20 +235,22 @@ class Deployer:
         # default values common for all clouds
         tfvars.update(
             {
-                "isaac_enabled": self.params["isaac"]
-                if "isaac" in self.params
-                else False,
+                "isaac_enabled": (
+                    self.params["isaac"] if "isaac" in self.params else False
+                ),
                 #
-                "isaac_instance_type": self.params["isaac_instance_type"]
-                if "isaac_instance_type" in self.params
-                else "none",
+                "isaac_instance_type": (
+                    self.params["isaac_instance_type"]
+                    if "isaac_instance_type" in self.params
+                    else "none"
+                ),
                 #
                 "prefix": self.params["prefix"],
                 "ssh_port": self.params["ssh_port"],
                 #
-                "from_image": self.params["from_image"]
-                if "from_image" in self.params
-                else False,
+                "from_image": (
+                    self.params["from_image"] if "from_image" in self.params else False
+                ),
                 #
                 "deployment_name": self.params["deployment_name"],
             }
@@ -339,6 +341,7 @@ class Deployer:
         for k in [
             "isaac_ip",
             "ovami_ip",
+            "mqs_ip",
             "cloud",
         ]:
             if k not in self.params or ansible_vars[k] is None:
@@ -438,6 +441,10 @@ class Deployer:
         if "ovami" in self.params and self.params["ovami"]:
             click.echo(colorize_info("* Running Ansible for OV AMI..."))
             self.run_ansible(playbook_name="ovami", cwd=f"{self.config['ansible_dir']}")
+
+        if "mqs" in self.params and self.params["mqs"]:
+            click.echo(colorize_info("* Running Ansible for Metropolis Quick Start..."))
+            self.run_ansible(playbook_name="mqs", cwd=f"{self.config['ansible_dir']}")
 
     def tf_output(self, key: str, default: str = ""):
         """

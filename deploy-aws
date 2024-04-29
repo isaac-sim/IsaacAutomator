@@ -266,6 +266,8 @@ class AWSDeployer(Deployer):
                 {
                     "region": self.params["region"],
                     "ovami_enabled": self.params["ovami"],
+                    "mqs_enabled": self.params["mqs"],
+                    "mqs_instance_type": self.params["mqs_instance_type"],
                     "aws_access_key_id": self.params["aws_access_key_id"],
                     "aws_secret_access_key": self.params["aws_secret_access_key"],
                 }
