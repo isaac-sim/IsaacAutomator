@@ -473,6 +473,10 @@ class Deployer:
             click.echo(colorize_info("* Running Ansible for OV AMI..."))
             self.run_ansible(playbook_name="ovami", cwd=f"{self.config['ansible_dir']}")
 
+        if "mqs" in self.params and self.params["mqs"]:
+            click.echo(colorize_info("* Running Ansible for Metropolis Quick Start..."))
+            self.run_ansible(playbook_name="mqs", cwd=f"{self.config['ansible_dir']}")
+
     def run_autorun_ansible(self):
         # run ansible for isaac
         if "isaac" in self.params and self.params["isaac"]:
