@@ -43,7 +43,23 @@ class DeployCommand(click.core.Command):
         # disable isaac instance type selection if isaac is disabled
         if value is False:
             for p in ctx.command.params:
-                if p.name.startswith("isaac"):
+                if (
+                    p.name.startswith("isaac")
+                    or p.name.startswith("oige")
+                    or p.name.startswith("orbit")
+                ):
+                    p.prompt = None
+        return value
+
+    @staticmethod
+    def mqs_callback(ctx, param, value):
+        """
+        Called after --mqs option is parsed
+        """
+        # disable mqs instance type selection if mqs is disabled
+        if value is False:
+            for p in ctx.command.params:
+                if p.name.startswith("mqs"):
                     p.prompt = None
         return value
 
@@ -228,6 +244,18 @@ class DeployCommand(click.core.Command):
                 prompt=colorize_prompt("* Deploy Isaac Sim?"),
                 callback=DeployCommand.isaac_callback,
                 help="Deploy Isaac Sim (BETA)?",
+            ),
+        )
+
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--mqs/--no-mqs",),
+                default=True,
+                show_default="yes",
+                prompt=colorize_prompt("* Deploy Metropolis Quick Start?"),
+                callback=DeployCommand.mqs_callback,
+                help="Deploy Metropolis Quick Start?",
             ),
         )
 

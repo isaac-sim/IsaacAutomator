@@ -70,6 +70,9 @@ c["azure_default_isaac_instance_type"] = "2"
 c["gcp_default_isaac_instance_type"] = "g2-standard-8"
 c["alicloud_default_isaac_instance_type"] = "ecs.gn7i-c16g1.4xlarge"
 
+# --mqs-instance-type
+c["aws_default_mqs_instance_type"] = "g5.2xlarge"
+
 # --isaac-gpu-count
 c["gcp_default_isaac_gpu_count"] = 1
 
