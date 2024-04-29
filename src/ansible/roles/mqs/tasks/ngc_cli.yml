@@ -19,3 +19,5 @@
     line: "export PATH=$PATH:/opt/ngc-cli"
     create: yes
     state: present
+# configure ngc cli
+#### TODO ####

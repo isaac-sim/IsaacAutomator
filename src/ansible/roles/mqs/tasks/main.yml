@@ -20,3 +20,7 @@
 - name: Install NGC CLI
   import_tasks: ngc_cli.yml
   tags: _ngc_cli
+
+- name: Install Metropolis Apps
+  import_tasks: metropolis_apps.yml
+  tags: _metropolis_apps
