@@ -1,6 +1,6 @@
 #!/bin/bash
 
 SELF_DIR="$(realpath "$(dirname "${BASH_SOURCE}")")"
-TAG="metropolis-quickstarter"
+TAG="metropolis-qs"
 
 docker build --platform linux/x86_64 -t "${TAG}" "${SELF_DIR}"

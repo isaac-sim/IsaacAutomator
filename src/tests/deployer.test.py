@@ -16,7 +16,7 @@ class Test_Deployer(unittest.TestCase):
         self.deployer = Deployer(
             params={
                 "debug": False,
-                "prefix": "isa",
+                "prefix": "metropolis-qs",
                 "from_image": False,
                 "deployment_name": "test-1",
                 "existing": "ask",

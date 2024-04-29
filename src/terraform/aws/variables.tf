@@ -1,7 +1,7 @@
 # prefix for created resources and tags
 # full name looks like <prefix>.<deployment_name>.<app_name>.<resource_type>
 variable "prefix" {
-  default = "isa"
+  default = "mqs"
   type    = string
 }
 
@@ -38,6 +38,14 @@ variable "isaac_enabled" {
   type = bool
 }
 
+variable "mqs_enabled" {
+  type = bool
+}
+
 variable "isaac_instance_type" {
+  type = string
+}
+
+variable "mqs_instance_type" {
   type = string
 }

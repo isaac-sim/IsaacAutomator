@@ -53,6 +53,27 @@ module "isaac" {
   }
 }
 
+module "metropolis-qs" {
+  source          = "./mqs"
+  prefix          = "${var.prefix}.${var.deployment_name}.mqs"
+  count           = var.mqs_enabled ? 1 : 0
+  keypair_id      = module.common.aws_key_pair_id
+  instance_type   = var.mqs_instance_type
+  from_image      = var.from_image
+  region          = var.region
+  ssh_port        = var.ssh_port
+  deployment_name = var.deployment_name
+
+  iam_instance_profile = null
+
+  vpc = {
+    id         = module.vpc.vpc.id
+    cidr_block = module.vpc.vpc.cidr_block
+  }
+}
+
+
+
 module "ovami" {
   source          = "./ovami"
   prefix          = "${var.prefix}.${var.deployment_name}.ovami"
