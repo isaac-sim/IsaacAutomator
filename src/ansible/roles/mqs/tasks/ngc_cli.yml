@@ -1,0 +1,21 @@
+# download ngc cli
+- name: Download NGC CLI
+  get_url:
+    url: https://ngc.nvidia.com/downloads/ngccli_cat_linux.zip
+    dest: "/tmp/ngccli_cat_linux.zip"
+    force: yes
+
+# extract ngc cli
+- name: Extract NGC CLI
+  unarchive:
+    src: "/tmp/ngccli_cat_linux.zip"
+    dest: "/opt"
+    remote_src: yes
+
+# add path to ngc cli to bashrc
+- name: Add NGC CLI to PATH
+  lineinfile:
+    path: "/home/{{ ansible_user }}/.bashrc"
+    line: "export PATH=$PATH:/opt/ngc-cli"
+    create: yes
+    state: present

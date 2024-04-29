@@ -16,3 +16,7 @@
 
 - name: Wallpaper
   import_tasks: wallpaper.yml
+
+- name: Install NGC CLI
+  import_tasks: ngc_cli.yml
+  tags: _ngc_cli
