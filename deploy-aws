@@ -101,6 +101,37 @@ class DeployAWSCommand(DeployCommand):
         "g6.48xlarge",
     ]
 
+    AWS_MQS_INSTANCE_TYPES = [
+        # A100 - https://aws.amazon.com/ec2/instance-types/p4/
+        "p4d.24xlarge",
+        "p4de.24xlarge",
+        # A10G - https://aws.amazon.com/ec2/instance-types/g5/
+        "g5.2xlarge",
+        "g5.4xlarge",
+        "g5.8xlarge",
+        "g5.16xlarge",
+        "g5.12xlarge",
+        "g5.24xlarge",
+        "g5.48xlarge",
+        # T4 - https://aws.amazon.com/ec2/instance-types/g4/
+        "g4dn.2xlarge",
+        "g4dn.4xlarge",
+        "g4dn.8xlarge",
+        "g4dn.16xlarge",
+        "g4dn.12xlarge",
+        "g4dn.metal",
+        # L40 - https://aws.amazon.com/ec2/instance-types/g6
+        "g6.2xlarge",
+        "g6.4xlarge",
+        "g6.8xlarge",
+        "g6.16xlarge",
+        "gr6.4xlarge",
+        "gr6.8xlarge",
+        "g6.12xlarge",
+        "g6.24xlarge",
+        "g6.48xlarge",
+    ]
+
     @staticmethod
     def ovkit_instance_type_callback(ctx, param, value):
         """
