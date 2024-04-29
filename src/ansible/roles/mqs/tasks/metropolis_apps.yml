@@ -1,0 +1,16 @@
+- name: Create dir for Metropolis Apps
+  file:
+    path: "{{ metropolis_apps_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+  tags: _metropolis_apps_download
+
+- name: Download Metropolis Apps
+  shell: /opt/ngc-cli/ngc registry resource download-version {{ item }}
+  args:
+    chdir: "{{ metropolis_apps_dir }}"
+  with_items:
+    - "{{ metropolis_apps_ngc_path }}"
+    - "{{ metropolis_apps_data_ngc_path }}"
+  become_user: "{{ ansible_user }}"
+  tags: _metropolis_apps_download

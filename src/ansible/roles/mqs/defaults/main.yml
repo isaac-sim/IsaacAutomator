@@ -16,5 +16,8 @@
 
 deployment_name:
 
-# "none" skips login/pull
 ngc_api_key:
+
+metropolis_apps_dir: "/opt/metropolis-apps"
+metropolis_apps_ngc_path: "nfgnkvuikvjm/mdx-v2-0/metropolis-apps-standalone-deployment:v2.1-04262024"
+metropolis_apps_data_ngc_path: "nfgnkvuikvjm/mdx-v2-0/metropolis-apps-sample-input-data:v2.1-04252024"

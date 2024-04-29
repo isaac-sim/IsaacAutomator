@@ -19,5 +19,13 @@
     line: "export PATH=$PATH:/opt/ngc-cli"
     create: yes
     state: present
-# configure ngc cli
-#### TODO ####
+
+# configure ngc cli (upload template file)
+- name: Configure NGC CLI
+  template:
+    src: "ngc_cli.conf"
+    dest: "/home/{{ ansible_user }}/.ngc/config"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0600
+  tags: _ngc_cli_config
