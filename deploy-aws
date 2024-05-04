@@ -74,13 +74,6 @@ class DeployAWSCommand(DeployCommand):
         "p4d.24xlarge",
         "p4de.24xlarge",
         # A10G - https://aws.amazon.com/ec2/instance-types/g5/
-        "g5.2xlarge",
-        "g5.4xlarge",
-        "g5.8xlarge",
-        "g5.16xlarge",
-        "g5.12xlarge",
-        "g5.24xlarge",
-        "g5.48xlarge",
         # T4 - https://aws.amazon.com/ec2/instance-types/g4/
         "g4dn.2xlarge",
         "g4dn.4xlarge",
@@ -88,7 +81,15 @@ class DeployAWSCommand(DeployCommand):
         "g4dn.16xlarge",
         "g4dn.12xlarge",
         "g4dn.metal",
-        # L40 - https://aws.amazon.com/ec2/instance-types/g6
+        # A10G - https://aws.amazon.com/ec2/instance-types/g5/
+        "g5.2xlarge",
+        "g5.4xlarge",
+        "g5.8xlarge",
+        "g5.16xlarge",
+        "g5.12xlarge",
+        "g5.24xlarge",
+        "g5.48xlarge",
+        # L4 - https://aws.amazon.com/ec2/instance-types/g6
         "g6.2xlarge",
         "g6.4xlarge",
         "g6.8xlarge",
@@ -165,6 +166,8 @@ class DeployAWSCommand(DeployCommand):
                 ("--isaac-instance-type",),
                 prompt=colorize_prompt(
                     "* Isaac Sim Instance Type "
+                    + "(https://docs.aws.amazon.com/dlami/latest/devguide/gpu.html, "
+                    + "G5, G4dn and G6 instances are supported)"
                     + "(https://docs.aws.amazon.com/dlami/latest/devguide/gpu.html, "
                     + "G5, G4dn and G6 instances are supported)"
                 ),
