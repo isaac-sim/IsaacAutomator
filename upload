@@ -109,14 +109,14 @@ def main(
         # make sure remote directory exists
         shell_command(
             f"ssh -i {ssh_key_file} -o StrictHostKeyChecking=no ubuntu@{ip}"
-            + f" \"[ ! -d '{remote_dir}' ] && sudo mkdir -p '{remote_dir}'\"",
+            + f" \"[ ! -d '{remote_dir}' ] && mkdir -p '{remote_dir}'\"",
             verbose=debug,
             exit_on_error=False,
             capture_output=False,
         )
 
         rsync_command = (
-            "rsync -avz --progress --rsync-path 'sudo rsync'"
+            "rsync -avz --progress --rsync-path 'rsync'"
             + (" --delete" if delete else "")
             + f" -e 'ssh -i {ssh_key_file} -o StrictHostKeyChecking=no'"
             + f' "{uploads_dir}/" ubuntu@{ip}:"{remote_dir}"'
