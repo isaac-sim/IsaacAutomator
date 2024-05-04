@@ -17,6 +17,7 @@
     - [Shell in Isaac Sim Container](#shell-in-isaac-sim-container)
     - [Omniverse Isaac Gym Environments](#omniverse-isaac-gym-environments)
     - [Isaac Orbit](#isaac-orbit)
+  - [Autorun Script](#autorun-script)
   - [Mapped Folders](#mapped-folders)
   - [Pausing and Resuming](#pausing-and-resuming)
   - [Uploading Data](#uploading-data)
@@ -237,6 +238,16 @@ Tip: To install a specific git reference of Isaac Orbit, provide valid git refer
 ```sh
 ./deploy-aws --orbit devel
 ```
+
+### Autorun Script
+
+By default, Isaac Sim will be started when the cloud VM is deployed.
+
+If you want to launch a custom application or script on startup, you can modify the `uploads/autorun.sh` script (on your local machine). It will either be uploaded to the cloud VM automatically or you can upload it manually using the `./upload` command.
+
+Every time the cloud VM is deployed or started from a stopped state, the `autorun.sh` script will be executed.
+
+This functionality can be useful for running batch jobs, generating data on startup or preparing the environment for the user.
 
 ### Mapped Folders
 
