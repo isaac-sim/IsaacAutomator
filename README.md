@@ -243,7 +243,7 @@ Tip: To install a specific git reference of Isaac Orbit, provide valid git refer
 
 By default, Isaac Sim will be started when the cloud VM is deployed.
 
-If you want to launch a custom application or script on startup, you can modify the `uploads/autorun.sh` script (on your local machine). It will either be uploaded to the cloud VM automatically or you can upload it manually using the `./upload` command.
+If you want to launch a custom application or script on startup, you can modify the [`uploads/autorun.sh`](uploads/autorun.sh) script (on your local machine). It will either be uploaded to the cloud VM automatically or you can upload it manually using the `./upload` command.
 
 Every time the cloud VM is deployed or started from a stopped state, the `autorun.sh` script will be executed.
 
