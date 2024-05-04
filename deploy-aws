@@ -42,6 +42,14 @@ class DeployAWSCommand(DeployCommand):
     # supported AWS instance types for DRIVE Sim/Isaac Sim
     # @see https://aws.amazon.com/ec2/instance-types/g5/
     AWS_OVKIT_INSTANCE_TYPES = [
+        # T4 - https://aws.amazon.com/ec2/instance-types/g4/
+        "g4dn.2xlarge",
+        "g4dn.4xlarge",
+        "g4dn.8xlarge",
+        "g4dn.16xlarge",
+        "g4dn.12xlarge",
+        "g4dn.metal",
+        # A10G - https://aws.amazon.com/ec2/instance-types/g5/
         "g5.2xlarge",
         "g5.4xlarge",
         "g5.8xlarge",
@@ -49,6 +57,16 @@ class DeployAWSCommand(DeployCommand):
         "g5.12xlarge",
         "g5.24xlarge",
         "g5.48xlarge",
+        # L4 - https://aws.amazon.com/ec2/instance-types/g6
+        "g6.2xlarge",
+        "g6.4xlarge",
+        "g6.8xlarge",
+        "g6.16xlarge",
+        "gr6.4xlarge",
+        "gr6.8xlarge",
+        "g6.12xlarge",
+        "g6.24xlarge",
+        "g6.48xlarge",
     ]
 
     AWS_MQS_INSTANCE_TYPES = [
@@ -90,13 +108,7 @@ class DeployAWSCommand(DeployCommand):
 
         # warn of "g5.xlarge" being too small
         if "g5.xlarge" == value:
-            raise click.BadParameter(
-                colorize_error(
-                    "g5.xlarge is not supported. "
-                    + "Please specify at least g5.2xlarge. "
-                    + "See https://aws.amazon.com/ec2/instance-types/g5/ for other options."
-                )
-            )
+            raise click.BadParameter(colorize_error("g5.xlarge is not supported. "))
 
         # warn of other unsupported types
         if value not in DeployAWSCommand.AWS_OVKIT_INSTANCE_TYPES:
@@ -153,7 +165,8 @@ class DeployAWSCommand(DeployCommand):
                 ("--isaac-instance-type",),
                 prompt=colorize_prompt(
                     "* Isaac Sim Instance Type "
-                    + "(see https://aws.amazon.com/ec2/instance-types/g5/ for available types and pricing)"
+                    + "(https://docs.aws.amazon.com/dlami/latest/devguide/gpu.html, "
+                    + "G5, G4dn and G6 instances are supported)"
                 ),
                 show_default=True,
                 default=config["aws_default_isaac_instance_type"],
