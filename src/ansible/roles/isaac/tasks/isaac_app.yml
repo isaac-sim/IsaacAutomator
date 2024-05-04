@@ -72,10 +72,21 @@
     - never
     - cleanup
 
-- name: Start Isaac Sim
+- name: Start Application
   shell: |
     export DISPLAY=":0"
-    gnome-terminal -- bash -c "./isaacsim.sh; exec bash"
+
+    if [ -f /home/{{ ansible_user }}/uploads/autorun.sh ]; then
+      # if autorun file is uploaded, run it
+      CMD="/home/{{ ansible_user }}/uploads/autorun.sh"
+      chmod +x "$CMD"
+    else
+      # otherwise, run Isaac Sim with default options
+      CMD="/home/{{ ansible_user }}/uploads/isaacsim.sh"
+    fi
+
+    # run in a terminal on desktop
+    gnome-terminal -- bash -c "$CMD; exec bash"
   args:
     chdir: /home/{{ ansible_user }}/Desktop
   become_user: "{{ ansible_user }}"
@@ -83,3 +94,4 @@
   tags:
     - skip_in_image
     - on_stop_start
+    - _autorun
