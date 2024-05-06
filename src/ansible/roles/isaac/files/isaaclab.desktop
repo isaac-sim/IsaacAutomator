@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Terminal=true
+Exec=/home/ubuntu/Desktop/isaaclab.sh
+Name=Isaac Orbit
+Icon=/home/ubuntu/Pictures/isaacsim-icon-shell.png

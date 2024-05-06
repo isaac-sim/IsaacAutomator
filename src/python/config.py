@@ -47,7 +47,8 @@ c["default_remote_workspace_dir"] = "/home/ubuntu/workspace"
 # defaults
 
 # --isaac-image
-c["default_isaac_image"] = "nvcr.io/nvidia/isaac-sim:2023.1.1"
+# TODO replace with public image once available
+c["default_isaac_image"] = "nvcr.io/nvidian/isaac-sim:latest-4.0"
 
 # --ssh-port
 c["default_ssh_port"] = 22
@@ -84,3 +85,6 @@ c["default_oige_git_checkpoint"] = "no"
 
 # --orbit
 c["default_orbit_git_checkpoint"] = "no"
+
+# --lab
+c["default_isaaclab_git_checkpoint"] = "isaac-lab"

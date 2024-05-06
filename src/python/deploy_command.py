@@ -277,6 +277,22 @@ class DeployCommand(click.core.Command):
             ),
         )
 
+        # --lab
+        help = (
+            "Install Isaac Sim Lab? Valid values: 'no', "
+            + "or <git ref in github.com/isaac-sim/IsaacLab>"
+        )
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--isaaclab",),
+                help=help,
+                default=config["default_isaaclab_git_checkpoint"],
+                show_default=True,
+                prompt=colorize_prompt("* " + help),
+            ),
+        )
+
         self.params.insert(
             len(self.params),
             click.core.Option(

@@ -1,0 +1,73 @@
+# region copyright
+# Copyright 2023-2024 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+- name: Create directory for Isaac Lab
+  file:
+    path: "{{ lab_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0755
+
+- name: Upload Isaac Lab setup files [1]
+  template: src={{ item }}
+    dest="{{ orbit_dir }}/{{ item }}"
+    mode=755
+    owner=ubuntu
+    group=ubuntu
+  with_items:
+    - lab.dockerfile
+  tags: __lab_dockerfile
+
+- name: Upload Orbit setup files [2]
+  template: src="{{ item }}"
+    dest="/home/{{ ansible_user }}/Desktop"
+    mode=755
+    owner=ubuntu
+    group=ubuntu
+  with_items:
+    - isaaclab.sh
+
+- name: Desktop icon for Isaac Lab
+  copy:
+    src: "{{ item }}"
+    dest: "/home/{{ ansible_user }}/Desktop/{{ item }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0644
+  with_items:
+    - isaaclab.desktop
+
+- name: Allow execution of desktop icon for Isaac Lab
+  shell: gio set "/home/{{ ansible_user }}/Desktop/{{ item }}" metadata::trusted true
+  become_user: "{{ ansible_user }}"
+  with_items:
+    - isaaclab.desktop
+
+- name: Set permissions for Isaac Lab desktop icon
+  file:
+    path: "/home/{{ ansible_user }}/Desktop/{{ item }}"
+    mode: 0755
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  with_items:
+    - isaaclab.desktop
+
+- name: Build Isaac Lab
+  shell: docker build -t isaaclab -f "{{ orbit_dir }}/isaaclab.dockerfile" "{{ lab_dir }}"
+  become_user: "{{ ansible_user }}"
+  tags:
+    - skip_in_ovami
