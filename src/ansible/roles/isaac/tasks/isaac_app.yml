@@ -94,4 +94,4 @@
   tags:
     - skip_in_image
     - on_stop_start
-    - _autorun
+    - autorun

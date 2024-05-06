@@ -238,7 +238,15 @@ class Deployer:
                 "isaac_enabled": (
                     self.params["isaac"] if "isaac" in self.params else False
                 ),
+                "isaac_enabled": (
+                    self.params["isaac"] if "isaac" in self.params else False
+                ),
                 #
+                "isaac_instance_type": (
+                    self.params["isaac_instance_type"]
+                    if "isaac_instance_type" in self.params
+                    else "none"
+                ),
                 "isaac_instance_type": (
                     self.params["isaac_instance_type"]
                     if "isaac_instance_type" in self.params
@@ -248,6 +256,9 @@ class Deployer:
                 "prefix": self.params["prefix"],
                 "ssh_port": self.params["ssh_port"],
                 #
+                "from_image": (
+                    self.params["from_image"] if "from_image" in self.params else False
+                ),
                 "from_image": (
                     self.params["from_image"] if "from_image" in self.params else False
                 ),
@@ -415,7 +426,13 @@ class Deployer:
             verbose=debug,
         )
 
-    def run_ansible(self, playbook_name: str, cwd: str):
+    def run_ansible(
+        self,
+        playbook_name: str,
+        cwd: str,
+        tags: [str] = [],
+        skip_tags: [str] = [],
+    ):
         """
         Run Ansible playbook via shell command
         """
@@ -423,9 +440,19 @@ class Deployer:
         debug = self.params["debug"]
         deployment_name = self.params["deployment_name"]
 
+        if len(tags) > 0:
+            tags = ",".join([f'--tags "{tag}"' for tag in tags])
+        else:
+            tags = ""
+
+        if len(skip_tags) > 0:
+            skip_tags = ",".join([f'--skip-tags "{tag}"' for tag in skip_tags])
+        else:
+            skip_tags = ""
+
         shell_command(
             f"ansible-playbook -i {self.config['state_dir']}/{deployment_name}/.inventory "
-            + f"{playbook_name}.yml {'-vv' if self.params['debug'] else ''}",
+            + f"{playbook_name}.yml {tags} {skip_tags} {'-vv' if self.params['debug'] else ''}",
             cwd=cwd,
             verbose=debug,
         )
@@ -434,13 +461,27 @@ class Deployer:
         # run ansible for isaac
         if "isaac" in self.params and self.params["isaac"]:
             click.echo(colorize_info("* Running Ansible for Isaac Sim..."))
-            self.run_ansible(playbook_name="isaac", cwd=f"{self.config['ansible_dir']}")
+            self.run_ansible(
+                playbook_name="isaac",
+                cwd=f"{self.config['ansible_dir']}",
+                skip_tags=["autorun"],  # autorun should be executed after the upload
+            )
 
         # run ansible for ovami
         # todo: move to ./deploy-aws
         if "ovami" in self.params and self.params["ovami"]:
             click.echo(colorize_info("* Running Ansible for OV AMI..."))
             self.run_ansible(playbook_name="ovami", cwd=f"{self.config['ansible_dir']}")
+
+    def run_autorun_ansible(self):
+        # run ansible for isaac
+        if "isaac" in self.params and self.params["isaac"]:
+            click.echo(colorize_info("* Running autorun Ansible for Isaac Sim..."))
+            self.run_ansible(
+                playbook_name="isaac",
+                cwd=f"{self.config['ansible_dir']}",
+                tags=["autorun"],
+            )
 
         if "mqs" in self.params and self.params["mqs"]:
             click.echo(colorize_info("* Running Ansible for Metropolis Quick Start..."))
