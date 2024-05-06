@@ -460,6 +460,16 @@ class Deployer:
             click.echo(colorize_info("* Running Ansible for OV AMI..."))
             self.run_ansible(playbook_name="ovami", cwd=f"{self.config['ansible_dir']}")
 
+    def run_autorun_ansible(self):
+        # run ansible for isaac
+        if "isaac" in self.params and self.params["isaac"]:
+            click.echo(colorize_info("* Running autorun Ansible for Isaac Sim..."))
+            self.run_ansible(
+                playbook_name="isaac",
+                cwd=f"{self.config['ansible_dir']}",
+                tags=["autorun"],
+            )
+
     def tf_output(self, key: str, default: str = ""):
         """
         Read Terraform output.

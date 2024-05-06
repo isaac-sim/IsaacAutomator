@@ -217,6 +217,9 @@ class AzureDeployer(Deployer):
         if self.params["upload"]:
             self.upload_user_data()
 
+        # run autorun
+        self.run_autorun_ansible()
+
         # connection info for the user
         self.output_deployment_info()
 
