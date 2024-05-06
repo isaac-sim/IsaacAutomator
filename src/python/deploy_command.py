@@ -253,7 +253,7 @@ class DeployCommand(click.core.Command):
             click.core.Option(
                 ("--oige",),
                 help=help,
-                default="main",
+                default=config["default_oige_git_checkpoint"],
                 show_default=True,
                 prompt=colorize_prompt("* " + help),
                 callback=DeployCommand.oige_callback,
