@@ -80,7 +80,7 @@ c["alicloud_default_region"] = "us-east-1"
 c["default_prefix"] = "isa"
 
 # --oige
-c["default_oige_git_checkpoint"] = "main"
+c["default_oige_git_checkpoint"] = "no"
 
 # --orbit
-c["default_orbit_git_checkpoint"] = "v0.3.0"
+c["default_orbit_git_checkpoint"] = "no"
