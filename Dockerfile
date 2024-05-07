@@ -93,3 +93,4 @@ WORKDIR /app
 ENTRYPOINT [ "/bin/sh", "-c" ]
 
 ENV VERSION="v2.3.0"
+

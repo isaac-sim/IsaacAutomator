@@ -255,6 +255,9 @@ class AWSDeployer(Deployer):
         if self.params["upload"]:
             self.upload_user_data()
 
+        # run autorun
+        self.run_autorun_ansible()
+
         # print info for the user
         self._output_deployment_info()
 
