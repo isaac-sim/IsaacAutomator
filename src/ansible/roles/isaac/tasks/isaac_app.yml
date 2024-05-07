@@ -90,7 +90,6 @@
       echo "Waiting for the display to become available..."
       sleep 1
     done
-
     # run in a terminal on desktop
     gnome-terminal -- bash -c "$CMD; exec bash"
   args:
