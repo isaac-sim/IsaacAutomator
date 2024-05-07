@@ -46,7 +46,7 @@
 
 - name: Isaac Lab
   import_tasks: isaaclab.yml
-  when: lab_git_checkpoint != 'no'
+  when: isaaclab_git_checkpoint != 'no'
   tags: __isaaclab
 
 - name: Restart NX server

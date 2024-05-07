@@ -16,7 +16,7 @@
 
 - name: Create directory for Isaac Lab
   file:
-    path: "{{ lab_dir }}"
+    path: "{{ isaaclab_dir }}"
     state: directory
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
@@ -24,15 +24,15 @@
 
 - name: Upload Isaac Lab setup files [1]
   template: src={{ item }}
-    dest="{{ orbit_dir }}/{{ item }}"
+    dest="{{ isaaclab_dir }}/{{ item }}"
     mode=755
     owner=ubuntu
     group=ubuntu
   with_items:
-    - lab.dockerfile
+    - isaaclab.dockerfile
   tags: __lab_dockerfile
 
-- name: Upload Orbit setup files [2]
+- name: Upload Isaac Lab setup files [2]
   template: src="{{ item }}"
     dest="/home/{{ ansible_user }}/Desktop"
     mode=755
@@ -66,8 +66,20 @@
   with_items:
     - isaaclab.desktop
 
+- name: "[DEV] Copy {{ uploads_dir }}/isaaclab.pem -> {{ isaaclab_dir }}"
+  copy:
+    src: "{{ uploads_dir }}/isaaclab.pem"
+    dest: "{{ isaaclab_dir }}/isaaclab.pem"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0600
+    remote_src: yes
+  tags:
+    - __dev
+    - __lab_copy_pem
+
 - name: Build Isaac Lab
-  shell: docker build -t isaaclab -f "{{ orbit_dir }}/isaaclab.dockerfile" "{{ lab_dir }}"
+  shell: docker build -t isaaclab -f "{{ isaaclab_dir }}/isaaclab.dockerfile" "{{ isaaclab_dir }}"
   become_user: "{{ ansible_user }}"
   tags:
     - skip_in_ovami

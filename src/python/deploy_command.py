@@ -277,7 +277,7 @@ class DeployCommand(click.core.Command):
             ),
         )
 
-        # --lab
+        # --isaaclab
         help = (
             "Install Isaac Sim Lab? Valid values: 'no', "
             + "or <git ref in github.com/isaac-sim/IsaacLab>"
