@@ -14,3 +14,23 @@
     - "{{ metropolis_apps_data_ngc_path }}"
   become_user: "{{ ansible_user }}"
   tags: _metropolis_apps_download
+
+# extract the downloaded files
+- name: Extract Metropolis Apps [1]
+  shell: |
+    cd "{{ metropolis_apps_dir }}"
+    cd metropolis-apps-standalone*
+    tar -xvf metropolis-apps-standalone*.tar.gz
+    mv standalone-deployment "{{ metropolis_apps_dir }}/"
+    sudo chown -R "{{ ansible_user }}":"{{ ansible_user }}" "{{ metropolis_apps_dir }}/standalone-deployment"
+  tags: _mqs_extract
+
+# extract the downloaded files
+- name: Extract Metropolis Apps [2]
+  shell: |
+    cd "{{ metropolis_apps_dir }}"
+    cd metropolis-apps-sample-input-data*
+    tar -xvf metropolis-apps-data*.tar.gz
+    mv metropolis-apps-data "{{ metropolis_apps_dir }}/"
+    sudo chown -R "{{ ansible_user }}":"{{ ansible_user }}" "{{ metropolis_apps_dir }}/metropolis-apps-data"
+  tags: _mqs_extract
