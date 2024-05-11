@@ -49,6 +49,7 @@ from src.python.utils import (
 
 APP_NAMES = [
     "isaac",
+    "mqs",
 ]
 
 
