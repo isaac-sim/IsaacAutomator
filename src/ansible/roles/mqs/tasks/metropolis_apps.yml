@@ -34,3 +34,25 @@
     mv metropolis-apps-data "{{ metropolis_apps_dir }}/"
     sudo chown -R "{{ ansible_user }}":"{{ ansible_user }}" "{{ metropolis_apps_dir }}/metropolis-apps-data"
   tags: _mqs_extract
+#
+# Occupancy Analytics
+# https://developer.nvidia.com/docs/mdx/dev-guide/text/MDX_People_Analytics_App.html#deploy
+
+# edit the metropolis apps init file
+- name: Edit Metropolis Apps env file
+  ini_file:
+    dest: "{{ metropolis_apps_dir }}/standalone-deployment/docker-compose/foundational/.env"
+    section: ""
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+  with_items:
+    - {
+        option: "MDX_SAMPLE_APPS_DIR",
+        value: '"{{ metropolis_apps_dir }}/standalone-deployment/docker-compose"',
+      }
+    - {
+        option: "MDX_DATA_DIR",
+        value: '"{{ metropolis_apps_dir }}/metropolis-apps-data"',
+      }
+    - { option: "HOST_IP", value: '"0.0.0.0"' }
+  tags: _mqs_occupancy_env
