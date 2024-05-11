@@ -65,7 +65,7 @@
       Keywords=vscode;
   become_user: "{{ ansible_user }}"
 
-- name: Allow execution of desktop icon for Orbit
+- name: Allow execution of desktop icon for Visual Studio Code
   shell: gio set "/home/{{ ansible_user }}/Desktop/{{ item }}" metadata::trusted true
   become_user: "{{ ansible_user }}"
   with_items:
