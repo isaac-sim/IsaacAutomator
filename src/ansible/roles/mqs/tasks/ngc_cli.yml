@@ -20,6 +20,16 @@
     create: yes
     state: present
 
+# make sure /home/ubuntu/.ngc exists
+- name: Create NGC CLI config directory
+  file:
+    path: "/home/{{ ansible_user }}/.ngc"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0755
+  tags: _ngc_cli_config
+
 # configure ngc cli (upload template file)
 - name: Configure NGC CLI
   template:
