@@ -3,7 +3,7 @@
 # default parameter values
 
 # isaac sim startup command
-CMD="/isaac-sim/kit/kit \
+CMD="bash uploads/pass-creds-to-container.sh ;apt-get update && apt-get install -y ffmpeg; /isaac-sim/kit/kit \
       /isaac-sim/apps/omni.isaac.sim.kit \
       --ext-folder /isaac-sim/apps \
       --allow-root"
@@ -142,6 +142,7 @@ docker run \
   \
   -v "${OUT_DIR}":/results \
   -v "${UPLOADS_DIR}":/uploads \
+  -v "${UPLOADS_DIR}/credentials:/root/.aws/credentials" \  
   -v "${WORKSPACE_DIR}":/workspace \
   \
   -v "/tmp/.X11-unix:/tmp/.X11-unix" \
