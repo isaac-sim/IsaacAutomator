@@ -3,7 +3,8 @@
 # default parameter values
 
 # isaac sim startup command
-CMD="/isaac-sim/apps/omni.isaac.sim.kit \
+CMD="/isaac-sim/kit/kit \
+     /isaac-sim/apps/omni.isaac.sim.kit \
       --ext-folder /isaac-sim/apps \
       --allow-root"
 
