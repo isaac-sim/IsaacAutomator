@@ -111,6 +111,11 @@ If yoou have completed the above steps or already have your permissions and cred
 ./run
 # inside container:
 ./deploy-aws
+
+## To run with user filled values ##
+# Please make sure fill details inside file "sdg-deploy.txt"
+
+cat sdg-deploy.txt | xargs ./deploy-aws
 ```
 
 Tip: Run `./deploy-aws --help` to see more options.
