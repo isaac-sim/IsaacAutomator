@@ -104,13 +104,19 @@ for example:
   You will need _AWS Access Key_ and _AWS Secret Key_ for an existing account. You can obtain those in <a href="https://console.aws.amazon.com/iamv2/home#/home">Identity and Access Management (IAM) Section</a> in the AWS console.
 </details>
 
-If yoou have completed the above steps or already have your permissions and credentials set up, run the following command in the project root directory:
+If you have completed the above steps or already have your permissions and credentials set up, run the following command in the project root directory:
 
 ```sh
 # enter the automator container
 ./run
 # inside container:
 ./deploy-aws
+
+## To run with user filled values ##
+# Please make sure fill details inside file "sdg-deploy.txt"
+## update file under folder "uploads/" "credentials" with aws access and secret key to be passed to IsaacSIM container for the new data upload to S3 
+
+cat sdg-deploy.txt | xargs ./deploy-aws
 ```
 
 Tip: Run `./deploy-aws --help` to see more options.

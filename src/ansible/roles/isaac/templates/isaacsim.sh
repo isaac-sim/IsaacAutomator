@@ -142,6 +142,7 @@ docker run \
   \
   -v "${OUT_DIR}":/results \
   -v "${UPLOADS_DIR}":/uploads \
+  -v "${UPLOADS_DIR}/credentials:/root/.aws/credentials" \  
   -v "${WORKSPACE_DIR}":/workspace \
   \
   -v "/tmp/.X11-unix:/tmp/.X11-unix" \
