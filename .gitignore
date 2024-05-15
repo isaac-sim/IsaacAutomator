@@ -16,5 +16,4 @@ __pycache__
 **/*_cache
 
 results/*
-uploads/*
 .DS_Store
