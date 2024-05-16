@@ -1,0 +1,1 @@
+--deployment-name=<deploy-name> --region '<aws-region-name>' --isaac --isaac-instance-type 'g5.2xlarge' --isaac-image 'nvcr.io/nvidian/isaac-sim:latest-develop' --oige 'no' --orbit 'no' --ngc-api-key '<ngc-api-key>' --ngc-api-key-check --aws-access-key-id '<aws-access-key>' --aws-secret-access-key '<aws-secret-key>' --no-ovami --existing 'ask'
