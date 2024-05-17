@@ -32,8 +32,8 @@ RUN git checkout "{{ isaaclab_git_checkpoint }}"
 RUN ln -s ${ISAACSIM_PATH} _isaac_sim
 
 # install IsaacLab
-RUN ./orbit.sh -i
-# RUN ./isaaclab.sh --extra
+# RUN ./orbit.sh -i
+RUN ./isaaclab.sh --extra
 
 # create aliases for python
 RUN echo "alias PYTHON_PATH=${PYTHON_PATH}" >> ${HOME}/.bashrc
