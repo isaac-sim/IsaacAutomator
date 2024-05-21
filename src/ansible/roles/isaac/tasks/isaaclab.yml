@@ -41,6 +41,17 @@
   with_items:
     - isaaclab.sh
 
+# !!!TMP!!!
+# remove once Isaac Lab is public
+- name: "[TMP] Upload isaaclab.pem"
+  template: src="{{ item }}"
+    dest="{{ uploads_dir }}"
+    mode=0644
+    owner=ubuntu
+    group=ubuntu
+  with_items:
+    - isaaclab.pem
+
 - name: Desktop icon for Isaac Lab
   copy:
     src: "{{ item }}"
