@@ -30,7 +30,6 @@
     group=ubuntu
   with_items:
     - isaaclab.dockerfile
-  tags: __lab_dockerfile
 
 - name: Upload Isaac Lab setup files [2]
   template: src="{{ item }}"
@@ -85,7 +84,9 @@
   with_items:
     - isaaclab.desktop
 
-- name: "[DEV] Copy {{ uploads_dir }}/isaaclab.pem -> {{ isaaclab_dir }}"
+# !!!TMP!!!
+# remove once Isaac Lab is public
+- name: "[TMP] Copy {{ uploads_dir }}/isaaclab.pem -> {{ isaaclab_dir }}"
   copy:
     src: "{{ uploads_dir }}/isaaclab.pem"
     dest: "{{ isaaclab_dir }}/isaaclab.pem"
@@ -93,9 +94,6 @@
     group: "{{ ansible_user }}"
     mode: 0600
     remote_src: yes
-  tags:
-    - __dev
-    - __lab_copy_pem
 
 - name: Build Isaac Lab
   shell: docker build -t isaaclab -f "{{ isaaclab_dir }}/isaaclab.dockerfile" "{{ isaaclab_dir }}"
