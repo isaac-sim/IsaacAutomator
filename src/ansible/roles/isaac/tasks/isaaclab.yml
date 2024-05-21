@@ -43,9 +43,17 @@
 
 # !!!TMP!!!
 # remove once Isaac Lab is public
+- name: "[TMP] Make sure {{ uploads_dir }} exists"
+  file:
+    path: "{{ uploads_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0755
+#
 - name: "[TMP] Upload isaaclab.pem"
-  template: src="{{ item }}"
-    dest="{{ uploads_dir }}"
+  copy: src="{{ item }}"
+    dest="{{ uploads_dir }}/{{ item }}"
     mode=0644
     owner=ubuntu
     group=ubuntu
