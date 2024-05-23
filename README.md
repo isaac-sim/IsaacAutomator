@@ -17,12 +17,14 @@ This tool automates deployment of [Metropolis Quick Start](https://developer.nvi
     - [AWS](#aws)
   - [Connecting to Deployed Instances](#connecting-to-deployed-instances)
   - [Running Applications](#running-applications)
-    - [MQS](#mqs)
+    - [Install Location](#install-location)
+    - [Aliases](#aliases)
   - [Pausing and Resuming](#pausing-and-resuming)
   - [Uploading Data](#uploading-data)
   - [Downloading Data](#downloading-data)
   - [Repairing](#repairing)
   - [Destroying](#destroying)
+
 
 ## Installation
 
@@ -127,9 +129,37 @@ Tip: You can use `./connect <deployment-name>` helper command to connect to the 
 
 To use installed applications, connect to the deployed instance using noVNC or NoMachine. You can find the connection instructions at the end of the deployment command output. Additionally, this info is saved in `state/<deployment-name>/info.txt` file.
 
-#### MQS
+#### Install Location
 
-TODO
+Applications are installed in `/opt/metropolis-apps/standalone-deployment` directory. You can navigate to this directory and run the applications according to the instructions in the Metropolis Quick Start documentation (https://developer.nvidia.com/metropolis-microservices-members-only).
+
+#### Aliases
+
+The following aliases are available for starting and stopping the applications:
+
+```sh
+# Multi-Target Multi-Camera App (MTMC):
+start-mtmc-e2e
+start-mtmc-playback
+stop-mtmc-e2e
+stop-mtmc-playback
+
+# Real-Time Location System App (RTLS):
+start-rtls-e2e
+start-rtls-playback
+stop-rtls-e2e
+stop-rtls-playback
+
+# Occupancy Analytics App (OA):
+start-oa-e2e
+start-oa-playback
+stop-oa-e2e
+stop-oa-playback
+
+# Occupancy Heatmap App (OH):
+start-oh
+stop-oh
+```
 
 ### Pausing and Resuming
 
