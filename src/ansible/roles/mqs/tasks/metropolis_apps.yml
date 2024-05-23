@@ -56,3 +56,94 @@
       }
     - { option: "HOST_IP", value: '"0.0.0.0"' }
   tags: _mqs_occupancy_env
+
+# add aliases to start apps
+- name: Alias to start MTMC (start-mtmc-e2e, start-mtmc-playback)
+  lineinfile:
+    path: "/home/{{ ansible_user }}/.bashrc"
+    line: "alias start-mtmc-{{ item }}='(cd {{ metropolis_apps_dir }}/standalone-deployment/docker-compose && docker compose -f foundational/mdx-foundational.yml -f mtmc-app/mdx-mtmc-app.yml --profile {{ item }} up -d --pull always --build --force-recreate)'"
+    create: yes
+    state: present
+  become_user: "{{ ansible_user }}"
+  with_items:
+    - e2e
+    - playback
+  tags: __mdx_aliases
+
+- name: Alias to stop MTMC (stop-mtmc-e2e, stop-mtmc-playback)
+  lineinfile:
+    path: "/home/{{ ansible_user }}/.bashrc"
+    line: "alias stop-mtmc-{{ item }}='(cd {{ metropolis_apps_dir }}/standalone-deployment/docker-compose && docker compose -f foundational/mdx-foundational.yml -f mtmc-app/mdx-mtmc-app.yml --profile {{ item }} down)'"
+    create: yes
+    state: present
+  become_user: "{{ ansible_user }}"
+  with_items:
+    - e2e
+    - playback
+  tags: __mdx_aliases
+
+- name: Alias to start RTLS (start-rtlc-e2e, start-rtlc-playback)
+  lineinfile:
+    path: "/home/{{ ansible_user }}/.bashrc"
+    line: "alias start-rtlc-{{ item }}='(cd {{ metropolis_apps_dir }}/standalone-deployment/docker-compose &&  docker compose -f foundational/mdx-foundational.yml -f rtls-app/mdx-rtls-app.yml --profile {{ item }} up -d --pull always --build --force-recreate)'"
+    create: yes
+    state: present
+  with_items:
+    - e2e
+    - playback
+  become_user: "{{ ansible_user }}"
+  tags: __mdx_aliases
+
+- name: Alias to stop RTLS (stop-rtlc-e2e, stop-rtlc-playback)
+  lineinfile:
+    path: "/home/{{ ansible_user }}/.bashrc"
+    line: "alias stop-rtlc-{{ item }}='(cd {{ metropolis_apps_dir }}/standalone-deployment/docker-compose && docker compose -f foundational/mdx-foundational.yml -f rtls-app/mdx-rtls-app.yml --profile {{ item }} down)'"
+    create: yes
+    state: present
+  with_items:
+    - e2e
+    - playback
+  become_user: "{{ ansible_user }}"
+  tags: __mdx_aliases
+
+- name: Aliases to start Occupancy Analytics E2E Apps (OA) (start-oa-e2e, start-oa-playback)
+  lineinfile:
+    path: "/home/{{ ansible_user }}/.bashrc"
+    line: "alias start-oa-{{ item }}='(cd {{ metropolis_apps_dir }}/standalone-deployment/docker-compose && docker compose -f foundational/mdx-foundational.yml -f people-analytics-app/mdx-people-analytics-app.yml --profile e2e up -d --pull always --build --force-recreate)'"
+    create: yes
+    state: present
+  with_items:
+    - e2e
+    - playback
+  become_user: "{{ ansible_user }}"
+  tags: __mdx_aliases
+
+- name: Aliases to stop Occupancy Analytics Apps (OA) (stop-oa-e2e, stop-oa-playback)
+  lineinfile:
+    path: "/home/{{ ansible_user }}/.bashrc"
+    line: "alias stop-oa-{{ item }}='(cd {{ metropolis_apps_dir }}/standalone-deployment/docker-compose && docker compose -f foundational/mdx-foundational.yml -f people-analytics-app/mdx-people-analytics-app.yml --profile {{ item }} down'"
+    create: yes
+    state: present
+  become_user: "{{ ansible_user }}"
+  with_items:
+    - e2e
+    - playback
+  tags: __mdx_aliases
+
+- name: Alias to start Occupancy Heatmap App (OA) (start-oh)
+  lineinfile:
+    path: "/home/{{ ansible_user }}/.bashrc"
+    line: "alias start-oh='(cd {{ metropolis_apps_dir }}/standalone-deployment/docker-compose && docker compose -f ./heatmap-app/mdx-heatmap-app.yml --env-file ./foundational/.env up -d --pull always --build --force-recreate)'"
+    create: yes
+    state: present
+  become_user: "{{ ansible_user }}"
+  tags: __mdx_aliases
+
+- name: Alias to stop Occupancy Heatmap App (OA) (stop-oh)
+  lineinfile:
+    path: "/home/{{ ansible_user }}/.bashrc"
+    line: "alias start-oh='(cd {{ metropolis_apps_dir }}/standalone-deployment/docker-compose && docker compose -f ./heatmap-app/mdx-heatmap-app.yml --env-file ./foundational/.env down)'"
+    create: yes
+    state: present
+  become_user: "{{ ansible_user }}"
+  tags: __mdx_aliases
