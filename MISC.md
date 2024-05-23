@@ -10,6 +10,15 @@ At the moment, the Metropolis Quick Start is only available for AWS
 1. Obtain an NGC API Key at https://ngc.nvidia.com/setup/api-key
 
 
+## Deploying Metropolis Quick Start
+
+```
+./run
+./deploy-aws
+```
+
+Then answer questions as prompted.
+
 ## Links
 
 - https://developer.nvidia.com/docs/mdx/dev-guide/text/MDX_Multi_Camera_Tracking_App.html

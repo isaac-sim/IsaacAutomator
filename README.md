@@ -1,24 +1,16 @@
-# Isaac Sim Automator
+# MQS Automator - Metropolis Quick Start Apps in the Cloud
 
 - [Installation](#installation)
+  - [Prerequisites](#prerequisites)
   - [Installing Docker](#installing-docker)
-  - [Obtaining NGC API Key](#obtaining-ngc-api-key)
   - [Building the Container](#building-the-container)
 - [Usage](#usage)
   - [Tip: Running the Automator Commands](#tip-running-the-automator-commands)
-  - [Deploying Isaac Sim](#deploying-isaac-sim)
+  - [Deploying MQS](#deploying-mqs)
     - [AWS](#aws)
-    - [GCP](#gcp)
-    - [Azure](#azure)
-    - [Alibaba Cloud](#alibaba-cloud)
   - [Connecting to Deployed Instances](#connecting-to-deployed-instances)
   - [Running Applications](#running-applications)
-    - [Isaac Sim](#isaac-sim)
-    - [Shell in Isaac Sim Container](#shell-in-isaac-sim-container)
-    - [Omniverse Isaac Gym Environments](#omniverse-isaac-gym-environments)
-    - [Isaac Orbit](#isaac-orbit)
-  - [Autorun Script](#autorun-script)
-  - [Mapped Folders](#mapped-folders)
+    - [MQS](#mqs)
   - [Pausing and Resuming](#pausing-and-resuming)
   - [Uploading Data](#uploading-data)
   - [Downloading Data](#downloading-data)
@@ -29,13 +21,14 @@ This tool automates deployment of [Isaac Sim](https://developer.nvidia.com/isaac
 
 ## Installation
 
+### Prerequisites
+
+1. Register at https://developer.nvidia.com/metropolis-microservices-early-access-form
+1. Obtain an NGC API Key at https://ngc.nvidia.com/setup/api-key
+
 ### Installing Docker
 
 `docker` should be present on your system. Visit <https://docs.docker.com/engine/install/> for installation instructions.
-
-### Obtaining NGC API Key
-
-**NGC API Key** allows you to download docker images from <https://ngc.nvidia.com/>. Please prepare one or obtain it at <https://ngc.nvidia.com/setup/api-key>.
 
 ### Building the Container
 
@@ -75,7 +68,7 @@ for example:
 ./run ./destroy my-deployment
 ```
 
-### Deploying Isaac Sim
+### Deploying MQS
 
 #### AWS
 
@@ -111,64 +104,6 @@ If yoou have completed the above steps or already have your permissions and cred
 
 Tip: Run `./deploy-aws --help` to see more options.
 
-#### GCP
-
-```sh
-# enter the automator container
-./run
-# inside container:
-./deploy-gcp
-```
-
-Tip: Run `./deploy-gcp --help` to see more options.
-
-#### Azure
-
-If You Have Single Subscription:
-
-```sh
-# enter the automator container
-./run
-# inside container:
-./deploy-azure
-```
-
-If You Have Multiple Subscriptions:
-
-```sh
- # enter the automator container
-./run
-
-# inside container:
-az login # login
-az account show --output table # list subscriptions
-az account set --subscription "<subscription_name>"
-./deploy-azure --no-login
-```
-
-Tip: Run `./deploy-azure --help` to see more options.
-
-#### Alibaba Cloud
-
-<details>
-  <a name="#alicloud-access-creds"></a>
-  <summary>Getting Access Credentials</summary>
-  You will need <i>Access Key</i> and <i>Secret Key</i> for an existing AliCloud account. You can obtain those in <a href="https://usercenter.console.aliyun.com/#/manage/ak">AccessKey Management</a> section in the Alibaba Cloud console.
-</details>
-
-Once you have prepared the access credentials, run the following command in the project root directory:
-
-```sh
-# enter the automator container
-./run
-# inside container:
-./deploy-alicloud
-```
-
-Tip: Run `./deploy-alicloud --help` to see more options.
-
-GPU-accelerated instances with NVIDIA A100, A10 and T4 GPUs are supported. You can find the complete list of instance types, availability and pricing at <https://www.alibabacloud.com/help/en/ecs/user-guide/gpu-accelerated-compute-optimized-and-vgpu-accelerated-instance-families-1>. Please note that vGPU instances are not supported.
-
 ### Connecting to Deployed Instances
 
 Deployed Isaac Sim instances can be accessed via:
@@ -187,75 +122,9 @@ Tip: You can use `./connect <deployment-name>` helper command to connect to the 
 
 To use installed applications, connect to the deployed instance using noVNC or NoMachine. You can find the connection instructions at the end of the deployment command output. Additionally, this info is saved in `state/<deployment-name>/info.txt` file.
 
-#### Isaac Sim
+#### MQS
 
-Isaac Sim will be automatically started when cloud VM is deployed. Alternatively you can click "Isaac Sim" icon on the desktop or run the following command in the terminal on the deployed instance or launch it from the terminal as follows:
-
-```sh
-~/Desktop/isaacsim.sh
-```
-
-#### Shell in Isaac Sim Container
-
-To get a shell inside Isaac Sim container, click "Isaac Sim Shell" icon on the desktop. Alternatively you can run the following command in the terminal on the deployed instance:
-
-```sh
-~/Desktop/isaacsim-shell.sh
-```
-
-#### Omniverse Isaac Gym Environments
-
-[Omniverse Isaac Gym Reinforcement Learning Environments for Isaac Sim](https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs) ("Omni Isaac Gym Envs") can be pre-installed on the deployed Isaac instances.
-
-To run Omniverse Isaac Gym Environments click "Omni Isaac Gym Envs" icon on the desktop or run the following command in the terminal:
-
-```sh
-~/Desktop/omni-isaac-gym-envs.sh
-```
-
-Default output directory (`/OmniIsaacGymEnvs/omniisaacgymenvs/runs`) in the OmniIsaacGymEnvs contaner will be linked to the default results directory (`/home/ubuntu/results`) on the deployed instance. You can download the contents of this directory to your local machine using `./download <deployment_name>` command.
-
-Tip: To install a specific git reference of OmniIsaacGymEnvs, provide valid reference from <https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs> as a value of `--oige` parameter to the deployment command. For example, to install `devel` branch on an AWS instance, run the following command:
-
-```sh
-./deploy-aws --oige devel
-```
-
-#### Isaac Orbit
-
-*Isaac Orbit is still experimental and intended for preview purposes only.*
-
-[Isaac Orbit](https://isaac-orbit.github.io/orbit/index.html) can be pre-installed on the deployed Isaac instances.
-
-To run Isaac Orbit click "Isaac Orbit" icon on the desktop or run the following command in the terminal:
-
-```sh
-~/Desktop/isaac-orbit.sh
-```
-
-Tip: To install a specific git reference of Isaac Orbit, provide valid git reference from <https://github.com/NVIDIA-Omniverse/Orbit> as a value of `--orbit` parameter to the deployment command. For example, to install `devel` branch on an AWS instance, run the following command:
-
-```sh
-./deploy-aws --orbit devel
-```
-
-### Autorun Script
-
-By default, Isaac Sim will be started when the cloud VM is deployed.
-
-If you want to launch a custom application or script on startup, you can modify the [`uploads/autorun.sh`](uploads/autorun.sh) script (on your local machine). It will either be uploaded to the cloud VM automatically or you can upload it manually using the `./upload` command.
-
-Every time the cloud VM is deployed or started from a stopped state, the `autorun.sh` script will be executed.
-
-This functionality can be useful for running batch jobs, generating data on startup or preparing the environment for the user.
-
-### Mapped Folders
-
-The following folders are mapped to the running Isaac Sim container by default (container paths may be different for specific applications):
-
-- `/home/ubuntu/uploads` (host) --> `/uploads` (container) - user data uploaded to the deployment with `./upload` command or automatically from local `uploads/` folder
-- `/home/ubuntu/results` (host) --> `/results` (container) - results of the applications run on the deployment, can be downloaded from the deployed machine with `./download` command
-- `/home/ubuntu/workspace` (host) --> `/workspace` (container) - workspace folder, can be used to exchange data between the host and the container.
+TODO
 
 ### Pausing and Resuming
 
