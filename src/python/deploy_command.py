@@ -239,9 +239,8 @@ class DeployCommand(click.core.Command):
             len(self.params),
             click.core.Option(
                 ("--isaac/--no-isaac",),
-                default=True,
+                default=False,
                 show_default="yes",
-                prompt=colorize_prompt("* Deploy Isaac Sim?"),
                 callback=DeployCommand.isaac_callback,
                 help="Deploy Isaac Sim (BETA)?",
             ),
