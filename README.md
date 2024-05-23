@@ -1,5 +1,7 @@
 # MQS Automator - Metropolis Quick Start Apps in the Cloud
 
+This tool automates deployment of [Metropolis Quick Start](https://developer.nvidia.com/metropolis-microservices-early-access-form) applications to the cloud.
+
 - Multi-Target Multi-Camera App (MTMC) (https://docs.nvidia.com/mms/text/MDX_Multi_Camera_Tracking_App.html)
 - Real-Time Location System App (RTLS) (https://docs.nvidia.com/mms/text/MDX_Real_Time_Location_System_App.html)
 - Occupancy Analytics App (OA) (https://docs.nvidia.com/mms/text/MDX_People_Analytics_App.html)
@@ -21,8 +23,6 @@
   - [Downloading Data](#downloading-data)
   - [Repairing](#repairing)
   - [Destroying](#destroying)
-
-This tool automates deployment of [Isaac Sim](https://developer.nvidia.com/isaac-sim) to public clouds.
 
 ## Installation
 
