@@ -21,4 +21,4 @@
     update_cache=yes
     install_recommends=no
   with_items:
-    - eog # EOG image viewer (https://help.gnome.org/users/eog/stable/)
+    - firefox
