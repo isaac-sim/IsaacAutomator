@@ -33,6 +33,7 @@
     tar -xvf metropolis-apps-data*.tar.gz
     mv metropolis-apps-data "{{ metropolis_apps_dir }}/"
     sudo chown -R "{{ ansible_user }}":"{{ ansible_user }}" "{{ metropolis_apps_dir }}/metropolis-apps-data"
+    sudo chmod -R 777 "{{ metropolis_apps_dir }}/metropolis-apps-data"
   tags: _mqs_extract
 #
 # Occupancy Analytics
@@ -54,7 +55,7 @@
         option: "MDX_DATA_DIR",
         value: '"{{ metropolis_apps_dir }}/metropolis-apps-data"',
       }
-    - { option: "HOST_IP", value: '"0.0.0.0"' }
+    - { option: "HOST_IP", value: '"127.0.0.1"' }
   tags: _mqs_occupancy_env
 
 # add aliases to start apps
