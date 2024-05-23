@@ -1,5 +1,10 @@
 # MQS Automator - Metropolis Quick Start Apps in the Cloud
 
+- Multi-Target Multi-Camera App (MTMC) (https://docs.nvidia.com/mms/text/MDX_Multi_Camera_Tracking_App.html)
+- Real-Time Location System App (RTLS) (https://docs.nvidia.com/mms/text/MDX_Real_Time_Location_System_App.html)
+- Occupancy Analytics App (OA) (https://docs.nvidia.com/mms/text/MDX_People_Analytics_App.html)
+- Occupancy Heatmap App (OH) (https://docs.nvidia.com/mms/text/MDX_People_Heatmap_App.html)
+
 - [Installation](#installation)
   - [Prerequisites](#prerequisites)
   - [Installing Docker](#installing-docker)
