@@ -16,10 +16,11 @@
 
 - name: Wallpaper
   import_tasks: wallpaper.yml
+  tags: __wallpaper
 
-- name: Install NGC CLI
-  import_tasks: ngc_cli.yml
-  tags: _ngc_cli
+- name: Install NGC CLI, login into NGC registry
+  import_tasks: ngc.yml
+  tags: _ngc
 
 - name: Install Metropolis Apps
   import_tasks: metropolis_apps.yml

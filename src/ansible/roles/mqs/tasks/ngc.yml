@@ -39,3 +39,15 @@
     group: "{{ ansible_user }}"
     mode: 0600
   tags: _ngc_cli_config
+
+- name: Log into nvcr.io
+  shell: until docker login -u "\$oauthtoken" --password "{{ ngc_api_key }}" nvcr.io; do sleep 10; done
+  ignore_errors: true
+  become_user: "{{ item }}"
+  with_items:
+    - root
+    - ubuntu
+  timeout: 60 # for each item
+  when: ngc_api_key != "none"
+  tags:
+    - __ngc_login
