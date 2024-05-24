@@ -30,6 +30,9 @@
 - name: Isaac App
   import_tasks: isaac_app.yml
 
+- name: Autorun
+  import_tasks: autorun.yml
+
 #  https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs
 - name: Omni Isaac Gym Envs
   import_tasks: omni_isaac_gym_envs.yml
