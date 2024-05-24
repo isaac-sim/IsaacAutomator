@@ -14,22 +14,15 @@
 # limitations under the License.
 # endregion
 
-- name: Check if autorun script exists
-  stat:
-    path: /app/uploads/autorun.sh
-  register: autorun_script
-  tags:
-    - __autorun_upload
-
 - name: Upload autorun script
   copy:
     src: /app/uploads/autorun.sh
     dest: /home/{{ ansible_user }}/uploads/autorun.sh
     mode: 0755
   become_user: "{{ ansible_user }}"
-  when: autorun_script.stat.exists
+  ignore_errors: true
   tags:
-    - __autorun_upload
+    - __autorun
 
 - name: Start Application
   shell: |
@@ -58,4 +51,4 @@
   tags:
     - skip_in_image
     - on_stop_start
-    - autorun
+    - __autorun
