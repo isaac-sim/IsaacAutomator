@@ -23,6 +23,8 @@ from pathlib import Path
 
 import click
 
+from src.python.debug import debug_break  # noqa
+from src.python.ngc import check_ngc_access
 from src.python.utils import (
     colorize_error,
     colorize_info,
@@ -31,8 +33,6 @@ from src.python.utils import (
     read_meta,
     shell_command,
 )
-from src.python.debug import debug_break  # noqa
-from src.python.ngc import check_ngc_access
 
 
 class Deployer:
@@ -452,7 +452,6 @@ class Deployer:
             self.run_ansible(
                 playbook_name="isaac",
                 cwd=f"{self.config['ansible_dir']}",
-                skip_tags=["autorun"],  # autorun should be executed after the upload
             )
 
         # run ansible for ovami
@@ -460,16 +459,6 @@ class Deployer:
         if "ovami" in self.params and self.params["ovami"]:
             click.echo(colorize_info("* Running Ansible for OV AMI..."))
             self.run_ansible(playbook_name="ovami", cwd=f"{self.config['ansible_dir']}")
-
-    def run_autorun_ansible(self):
-        # run ansible for isaac
-        if "isaac" in self.params and self.params["isaac"]:
-            click.echo(colorize_info("* Running autorun Ansible for Isaac Sim..."))
-            self.run_ansible(
-                playbook_name="isaac",
-                cwd=f"{self.config['ansible_dir']}",
-                tags=["autorun"],
-            )
 
     def tf_output(self, key: str, default: str = ""):
         """
