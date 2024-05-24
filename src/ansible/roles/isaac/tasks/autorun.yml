@@ -1,0 +1,54 @@
+# region copyright
+# Copyright 2023-2024 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+- name: Upload autorun script
+  copy:
+    src: /app/uploads/autorun.sh
+    dest: /home/{{ ansible_user }}/uploads/autorun.sh
+    mode: 0755
+  become_user: "{{ ansible_user }}"
+  ignore_errors: true
+  tags:
+    - __autorun
+
+- name: Start Application
+  shell: |
+    if [ -f /home/{{ ansible_user }}/uploads/autorun.sh ]; then
+      # if autorun script is present, run it
+      CMD="/home/{{ ansible_user }}/uploads/autorun.sh"
+    else
+      # otherwise, run Isaac Sim with default options
+      CMD="/home/{{ ansible_user }}/Desktop/isaacsim.sh"
+    fi
+
+    chmod +x "$CMD"
+    export DISPLAY=:0
+
+    # wait for display to become available
+    while ! xset q > /dev/null 2>&1 ; do
+      echo "Waiting for the display to become available..."
+      sleep 1
+    done
+    # run in a terminal on desktop
+    gnome-terminal -- bash -c "$CMD; exec bash"
+  args:
+    chdir: /home/{{ ansible_user }}/Desktop
+  become_user: "{{ ansible_user }}"
+  when: ngc_api_key != "none"
+  tags:
+    - skip_in_image
+    - on_stop_start
+    - __autorun
