@@ -14,10 +14,20 @@
 # limitations under the License.
 # endregion
 
+- name: Make sure uploads directory exists
+  file:
+    path: "{{ uploads_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0755
+  tags:
+    - __autorun
+
 - name: Upload autorun script
   copy:
-    src: /app/uploads/autorun.sh
-    dest: /home/{{ ansible_user }}/uploads/autorun.sh
+    src: "/app/uploads/autorun.sh"
+    dest: "{{ uploads_dir }}/autorun.sh"
     mode: 0755
   become_user: "{{ ansible_user }}"
   ignore_errors: true
@@ -26,9 +36,9 @@
 
 - name: Start Application
   shell: |
-    if [ -f /home/{{ ansible_user }}/uploads/autorun.sh ]; then
+    if [ -f {{ uploads_dir }}/autorun.sh ]; then
       # if autorun script is present, run it
-      CMD="/home/{{ ansible_user }}/uploads/autorun.sh"
+      CMD="{{ uploads_dir }}/autorun.sh"
     else
       # otherwise, run Isaac Sim with default options
       CMD="/home/{{ ansible_user }}/Desktop/isaacsim.sh"
