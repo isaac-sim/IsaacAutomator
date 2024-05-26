@@ -449,24 +449,6 @@ class Deployer:
         # run ansible for isaac
         if "isaac" in self.params and self.params["isaac"]:
 
-            # !!!TMP!!!
-            # copy uploads/isaaclab.pem to src/ansible/roles/isaac/files/isaaclab.pem
-            # this is a temporary solution until Isaac Lab is private
-            src = f"{self.config['uploads_dir']}/isaaclab.pem"
-            dst = f"{self.config['ansible_dir']}/roles/isaac/files/isaaclab.pem"
-            if os.path.exists(src):
-                os.makedirs(os.path.dirname(dst), exist_ok=True)
-                os.system(f"cp {src} {dst}")
-            else:
-                raise (
-                    Exception(
-                        colorize_error(
-                            f"* Warning: File '{src}' not found."
-                            + " You will need it to check out the private Isaac Lab repo."
-                        )
-                    )
-                )
-
             click.echo(colorize_info("* Running Ansible for Isaac Sim..."))
             self.run_ansible(
                 playbook_name="isaac",

@@ -41,23 +41,14 @@
     - isaaclab.sh
 
 # !!!TMP!!!
-# remove once Isaac Lab is public
-- name: "[TMP] Make sure {{ uploads_dir }} exists"
-  file:
-    path: "{{ uploads_dir }}"
-    state: directory
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    mode: 0755
-#
 - name: "[TMP] Upload isaaclab.pem"
-  copy: src="{{ item }}"
-    dest="{{ uploads_dir }}/{{ item }}"
-    mode=0644
+  copy: src="/app/uploads/isaaclab.pem"
+    dest="{{ isaaclab_dir }}/isaaclab.pem"
+    mode=0600
     owner=ubuntu
     group=ubuntu
-  with_items:
-    - isaaclab.pem
+  tags:
+    - __upload_isaaclab_pem
 
 - name: Desktop icon for Isaac Lab
   copy:
@@ -83,17 +74,6 @@
     group: "{{ ansible_user }}"
   with_items:
     - isaaclab.desktop
-
-# !!!TMP!!!
-# remove once Isaac Lab is public
-- name: "[TMP] Copy {{ uploads_dir }}/isaaclab.pem -> {{ isaaclab_dir }}"
-  copy:
-    src: "{{ uploads_dir }}/isaaclab.pem"
-    dest: "{{ isaaclab_dir }}/isaaclab.pem"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    mode: 0600
-    remote_src: yes
 
 - name: Build Isaac Lab
   shell: docker build -t isaaclab -f "{{ isaaclab_dir }}/isaaclab.dockerfile" "{{ isaaclab_dir }}"
