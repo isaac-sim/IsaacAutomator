@@ -69,6 +69,6 @@
   lineinfile:
     path: /etc/nvidia/gridd.conf
     regexp: "^FeatureType=(.*)$"
-    line: 'FeatureType=\2'
+    line: "FeatureType=2"
     state: present
     backrefs: yes
