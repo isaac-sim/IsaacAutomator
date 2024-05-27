@@ -40,13 +40,13 @@ resource "azurerm_linux_virtual_machine" "vm_from_scratch" {
   }
 
   # list all:
-  # az vm image list --all --publisher Canonical --offer ubuntu-server --sku 20_04-lts | jq -c '.[] | select(.sku=="20_04-lts")'
+  # az vm image list --all --publisher Canonical --offer ubuntu-server --sku 22_04-lts | jq -c '.[] | select(.sku=="22_04-lts")'
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "0001-com-ubuntu-server-focal"
-    sku       = "20_04-lts-gen2"
-    version   = "20.04.202301100"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts"
+    version   = "22.04.202405140"
   }
 
   computer_name                   = "isaac"
