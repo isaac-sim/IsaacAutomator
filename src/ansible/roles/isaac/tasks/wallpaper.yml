@@ -31,5 +31,8 @@
     mode: 0644
 
 - name: Set wallpaper
-  shell: gsettings set org.gnome.desktop.background picture-uri file:///home/{{ ansible_user }}/Pictures/wallpaper.png
+  shell: gsettings set org.gnome.desktop.background {{ item }} file:///home/{{ ansible_user }}/Pictures/wallpaper.png
   become_user: "{{ ansible_user }}"
+  with_items:
+    - pictuure-uri
+    - picture-uri-dark
