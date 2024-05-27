@@ -34,5 +34,5 @@
   shell: gsettings set org.gnome.desktop.background {{ item }} file:///home/{{ ansible_user }}/Pictures/wallpaper.png
   become_user: "{{ ansible_user }}"
   with_items:
-    - pictuure-uri
+    - picture-uri
     - picture-uri-dark
