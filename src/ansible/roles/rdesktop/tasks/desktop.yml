@@ -72,11 +72,14 @@
 
 # make terminal semi-transparent
 - name: Make terminal semi-transparent
-  shell: "{{ item }}"
+  shell: gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$(gsettings get org.gnome.Terminal.ProfilesList default|tr -d \')/ {{ item.setting }} {{ item.value }}
   become_user: "{{ ansible_user }}"
   with_items:
-    - gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$(gsettings get org.gnome.Terminal.ProfilesList default|tr -d \')/ background-transparency-percent 12
-    - gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$(gsettings get org.gnome.Terminal.ProfilesList default|tr -d \')/ use-transparent-background true
+    - { setting: "background-transparency-percent", value: "10" }
+    - { setting: "use-transparent-background", value: "true" }
+    - { setting: "background-color", value: '"rgb(23,20,33)"' }
+    - { setting: "foreground-color", value: '"rgb(208,207,204)"' }
+    - { setting: "use-theme-colors", value: "false" }
 
 # disable new ubuntu version prompt
 
