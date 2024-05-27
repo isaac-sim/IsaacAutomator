@@ -10,10 +10,12 @@ The result is a fully configured remote-desktop cloud workstation, which can be 
   - [Installing Docker](#installing-docker)
   - [Obtaining NGC API Key](#obtaining-ngc-api-key)
   - [Building the Container](#building-the-container)
-- [Usage](#usage)
-  - [Running the Automator Commands](#running-the-automator-commands)
     - [Linux/MacOS](#linuxmacos)
     - [Windows](#windows)
+- [Usage](#usage)
+  - [Running the Automator Commands](#running-the-automator-commands)
+    - [Linux/MacOS](#linuxmacos-1)
+    - [Windows](#windows-1)
   - [Deploying Isaac Sim](#deploying-isaac-sim)
     - [AWS](#aws)
     - [GCP](#gcp)
@@ -49,13 +51,13 @@ This tool automates deployment of [Isaac Sim](https://developer.nvidia.com/isaac
 
 Please enter the following command in the project root directory to build the container:
 
-On Linux/MacOS:
+#### Linux/MacOS
 
 ```sh
 ./build
 ```
 
-On Windows:
+#### Windows
 
 ```sh
 docker build --platform linux/x86_64 -t isa .
