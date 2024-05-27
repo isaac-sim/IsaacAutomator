@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
 Terminal=true
-Exec=/home/ubuntu/Desktop/isaacsim.sh
+Exec={{ launch_scripts_dir }}/isaacsim.sh
 Name=Isaac Sim
 Icon=/home/ubuntu/Pictures/isaacsim-icon.png

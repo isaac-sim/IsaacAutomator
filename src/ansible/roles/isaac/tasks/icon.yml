@@ -25,7 +25,7 @@
     - /home/{{ ansible_user }}/Pictures
     - /home/{{ ansible_user }}/Desktop
 
-- name: Upload icon
+- name: Upload icon images
   copy:
     src: "{{ item }}"
     dest: /home/{{ ansible_user }}/Pictures/isaacsim-{{ item }}
@@ -37,7 +37,7 @@
     - icon-shell.png
 
 - name: Create desktop icon
-  copy:
+  template:
     src: "{{ item }}"
     dest: /home/{{ ansible_user }}/Desktop/{{ item }}
     owner: "{{ ansible_user }}"

@@ -7,4 +7,4 @@ docker build -t orbit -f "{{ orbit_dir }}/orbit.dockerfile" "{{ orbit_dir }}"
 
 clear
 
-/home/{{ ansible_user }}/Desktop/isaacsim.sh --docker_image="orbit" --cmd="bash"
+"{{ launch_scripts_dir }}/isaacsim.sh" --docker_image="orbit" --cmd="bash"

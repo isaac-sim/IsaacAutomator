@@ -43,3 +43,5 @@ uploads_dir: /home/{{ ansible_user }}/uploads
 omniverse_user:
 omniverse_password:
 nucleus_uri:
+
+launch_scripts_dir: /home/{{ ansible_user }}

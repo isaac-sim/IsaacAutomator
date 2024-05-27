@@ -41,7 +41,7 @@
       CMD="{{ uploads_dir }}/autorun.sh"
     else
       # otherwise, run Isaac Sim with default options
-      CMD="/home/{{ ansible_user }}/Desktop/isaacsim.sh"
+      CMD="{{ launch_scripts_dir }}/isaacsim.sh"
     fi
 
     chmod +x "$CMD"
@@ -55,7 +55,7 @@
     # run in a terminal on desktop
     gnome-terminal -- bash -c "$CMD; exec bash"
   args:
-    chdir: /home/{{ ansible_user }}/Desktop
+    chdir: "{{ launch_scripts_dir}}"
   become_user: "{{ ansible_user }}"
   when: ngc_api_key != "none"
   tags:

@@ -2,9 +2,9 @@
 
 # build and launch https://github.com/isaac-sim/IsaacLab
 
-# build docker image for Orbit
+# build docker image for Isaac Lab
 docker build -t isaaclab -f "{{ isaaclab_dir }}/isaaclab.dockerfile" "{{ isaaclab_dir }}"
 
 clear
 
-/home/{{ ansible_user }}/Desktop/isaacsim.sh --docker_image="isaaclab" --cmd="bash"
+"{{ launch_scripts_dir }}/isaacsim.sh" --docker_image="isaaclab" --cmd="bash"

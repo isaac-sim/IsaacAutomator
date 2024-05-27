@@ -229,7 +229,7 @@ To use installed applications, connect to the deployed instance using noVNC or N
 Isaac Sim will be automatically started when cloud VM is deployed. Alternatively you can click "Isaac Sim" icon on the desktop or run the following command in the terminal on the deployed instance or launch it from the terminal as follows:
 
 ```sh
-~/Desktop/isaacsim.sh
+~/isaacsim.sh
 ```
 
 #### Shell in Isaac Sim Container
@@ -237,7 +237,7 @@ Isaac Sim will be automatically started when cloud VM is deployed. Alternatively
 To get a shell inside Isaac Sim container, click "Isaac Sim Shell" icon on the desktop. Alternatively you can run the following command in the terminal on the deployed instance:
 
 ```sh
-~/Desktop/isaacsim-shell.sh
+~/isaacsim-shell.sh
 ```
 
 #### Omniverse Isaac Gym Environments
@@ -247,7 +247,7 @@ To get a shell inside Isaac Sim container, click "Isaac Sim Shell" icon on the d
 To run Omniverse Isaac Gym Environments click "Omni Isaac Gym Envs" icon on the desktop or run the following command in the terminal:
 
 ```sh
-~/Desktop/omni-isaac-gym-envs.sh
+~/omni-isaac-gym-envs.sh
 ```
 
 Default output directory (`/OmniIsaacGymEnvs/omniisaacgymenvs/runs`) in the OmniIsaacGymEnvs contaner will be linked to the default results directory (`/home/ubuntu/results`) on the deployed instance. You can download the contents of this directory to your local machine using `./download <deployment_name>` command.
@@ -267,7 +267,7 @@ Tip: To install a specific git reference of OmniIsaacGymEnvs, provide valid refe
 To run Isaac Orbit click "Isaac Orbit" icon on the desktop or run the following command in the terminal:
 
 ```sh
-~/Desktop/isaac-orbit.sh
+~/isaac-orbit.sh
 ```
 
 Tip: To install a specific git reference of Isaac Orbit, provide valid git reference from <https://github.com/NVIDIA-Omniverse/Orbit> as a value of `--orbit` parameter to the deployment command. For example, to install `devel` branch on an AWS instance, run the following command:

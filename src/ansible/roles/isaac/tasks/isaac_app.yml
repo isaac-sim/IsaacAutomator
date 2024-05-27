@@ -22,16 +22,16 @@
     group: "{{ ansible_user }}"
     mode: 0777
 
-- name: Launch scripts [1]
+- name: Make sure {{ launch_scripts_dir }} exists
   file:
-    path: /home/ubuntu/Desktop
+    path: "{{ launch_scripts_dir}}"
     state: directory
     owner: ubuntu
     group: ubuntu
 
 - name: Launch scripts [2]
   template: src={{ item }}
-    dest=/home/ubuntu/Desktop/{{ item }}
+    dest="{{ launch_scripts_dir }}/{{ item }}"
     mode=755
     owner=ubuntu
     group=ubuntu

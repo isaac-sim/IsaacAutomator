@@ -33,7 +33,7 @@
 
 - name: Upload OmniIsaacGymEnvs setup files [2]
   template: src="{{ item }}"
-    dest="/home/{{ ansible_user }}/Desktop"
+    dest="{{ launch_scripts_dir }}/{{ item }}"
     mode=755
     owner=ubuntu
     group=ubuntu
@@ -41,7 +41,7 @@
     - omni-isaac-gym-envs.sh
 
 - name: Desktop icon for OmniIsaacGymEnvs
-  copy:
+  template:
     src: "{{ item }}"
     dest: "/home/{{ ansible_user }}/Desktop/{{ item }}"
     owner: "{{ ansible_user }}"
