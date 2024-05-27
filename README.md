@@ -11,7 +11,9 @@ The result is a fully configured remote-desktop cloud workstation, which can be 
   - [Obtaining NGC API Key](#obtaining-ngc-api-key)
   - [Building the Container](#building-the-container)
 - [Usage](#usage)
-  - [Tip: Running the Automator Commands](#tip-running-the-automator-commands)
+  - [Running the Automator Commands](#running-the-automator-commands)
+    - [Linux/MacOS](#linuxmacos)
+    - [Windows](#windows)
   - [Deploying Isaac Sim](#deploying-isaac-sim)
     - [AWS](#aws)
     - [GCP](#gcp)
@@ -47,17 +49,27 @@ This tool automates deployment of [Isaac Sim](https://developer.nvidia.com/isaac
 
 Please enter the following command in the project root directory to build the container:
 
+On Linux/MacOS:
+
 ```sh
 ./build
+```
+
+On Windows:
+
+```sh
+docker build --platform linux/x86_64 -t isa .
 ```
 
 This will build the Isaac Sim Automator container and tag it as `isa`.
 
 ## Usage
 
-### Tip: Running the Automator Commands
+### Running the Automator Commands
 
-There are two ways to run the automator commands:
+#### Linux/MacOS
+
+On Linux and MacOS there are two ways to run the automator commands:
 
 1. First enter the automator container and then run the command inside the container:
 
@@ -79,6 +91,23 @@ for example:
 ```sh
 ./run ./deploy-aws
 ./run ./destroy my-deployment
+```
+
+#### Windows
+
+On Windows, you can run the automator commands by entering the container first and then running the command inside the container like so:
+
+(enter the automator container)
+
+```sh
+# enter the automator container
+docker run --platform linux/x86_64 -it --rm -v "$(pwd)":/app isa bash
+```
+
+(run the command inside the container)
+
+```sh
+./somecommand
 ```
 
 ### Deploying Isaac Sim
