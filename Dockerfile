@@ -20,7 +20,9 @@ RUN apt-get update && apt-get install -qy \
     curl \
     wget \
     gpg \
-    jq
+    jq \
+    vim \
+    nano
 
 # hashicorp sources
 RUN wget -O- https://apt.releases.hashicorp.com/gpg | \
