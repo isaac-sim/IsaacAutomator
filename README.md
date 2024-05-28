@@ -103,7 +103,7 @@ On Windows, you can run the automator commands by entering the container first a
 
 ```sh
 # enter the automator container
-docker run --platform linux/x86_64 -it --rm -v "$(pwd)":/app isa bash
+docker run --platform linux/x86_64 -it --rm -v "${PWD}:/app" isa bash
 ```
 
 (run the command inside the container)
