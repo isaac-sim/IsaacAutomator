@@ -92,4 +92,4 @@ WORKDIR /app
 
 ENTRYPOINT [ "/bin/sh", "-c" ]
 
-ENV VERSION="isaaclab-qa-2"
+ENV VERSION="v3.0.0-dev"
