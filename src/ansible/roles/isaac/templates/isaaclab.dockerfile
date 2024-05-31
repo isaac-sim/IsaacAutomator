@@ -26,6 +26,7 @@ RUN mkdir /root/.ssh && ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
 # [DEV] (remove private key usage)
 # clone isaaclab repo
 ADD isaaclab.pem /root/
+RUN chmod 0600 /root/isaaclab.pem
 RUN ssh-agent bash -c 'ssh-add /root/isaaclab.pem; git clone git@github.com:isaac-sim/IsaacLab.git .'
 RUN git checkout "{{ isaaclab_git_checkpoint }}"
 
