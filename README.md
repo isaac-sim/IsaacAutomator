@@ -102,7 +102,6 @@ On Windows, you can run the automator commands by entering the container first a
 (enter the automator container)
 
 ```sh
-# enter the automator container
 docker run --platform linux/x86_64 -it --rm -v .:/app isa bash
 ```
 
