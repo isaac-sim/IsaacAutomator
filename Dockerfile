@@ -92,4 +92,7 @@ WORKDIR /app
 
 ENTRYPOINT [ "/bin/sh", "-c" ]
 
+# for some reason, the ansible.cfg file is not being picked up on Windows
+ENV ANSIBLE_CONFIG="/app/src/ansible/ansible.cfg"
+
 ENV VERSION="v3.0.0-dev"
