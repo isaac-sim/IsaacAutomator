@@ -1,10 +1,10 @@
-![Isaac Sim Automator](src/banner.png)
+![Isaac Automator](src/banner.png)
 
-# Isaac Sim Automator
+# Isaac Automator
 
-Isaac Sim Automator allows a quick deployment of Isaac Sim and Isaac Sim-based applications (like Orbit and Omniverse Isaac Gym Environments) in the public clouds (AWS, GCP, Azure, and Alibaba Cloud are currently supported).
+Isaac Automator allows a quick deployment of Isaac Sim and Isaac Sim-based applications (like Orbit and Omniverse Isaac Gym Environments) in the public clouds (AWS, GCP, Azure, and Alibaba Cloud are currently supported).
 
-The result is a fully configured remote-desktop cloud workstation, which can be used for development and testing of the robotic applications within minutes and on a budget. Isaac Sim Automator supports varierty of GPU instances and stop-start functionality to save on cloud costs, provides tools to aid the workflow (uploading and downloading data, autorun, deployment management, etc).
+The result is a fully configured remote-desktop cloud workstation, which can be used for development and testing of the robotic applications within minutes and on a budget. Isaac Automator supports varierty of GPU instances and stop-start functionality to save on cloud costs, provides tools to aid the workflow (uploading and downloading data, autorun, deployment management, etc).
 
 - [Installation](#installation)
   - [Installing Docker](#installing-docker)
@@ -63,7 +63,7 @@ Please enter the following command in the project root directory to build the co
 docker build --platform linux/x86_64 -t isa .
 ```
 
-This will build the Isaac Sim Automator container and tag it as `isa`.
+This will build the Isaac Automator container and tag it as `isa`.
 
 ## Usage
 
