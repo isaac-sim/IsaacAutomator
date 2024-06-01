@@ -1,6 +1,6 @@
 ![Isaac Automator](src/banner.png)
 
-# Isaac Automator
+# Isaac Automator (v3)
 
 Isaac Automator allows a quick deployment of Isaac Sim and Isaac Sim-based applications (like Orbit and Omniverse Isaac Gym Environments) in the public clouds (AWS, GCP, Azure, and Alibaba Cloud are currently supported).
 
