@@ -86,4 +86,4 @@ c["default_oige_git_checkpoint"] = "no"
 c["default_orbit_git_checkpoint"] = "no"
 
 # --isaaclab
-c["default_isaaclab_git_checkpoint"] = "isaac-lab"
+c["default_isaaclab_git_checkpoint"] = "main"

@@ -23,12 +23,9 @@ ENV PYTHON_PATH="${ISAACSIM_PATH}/python.sh"
 # add github to known hosts
 RUN mkdir /root/.ssh && ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
 
-# [DEV] (remove private key usage)
 # clone isaaclab repo
-ADD isaaclab.pem /root/
-RUN chmod 0600 /root/isaaclab.pem
-RUN ssh-agent bash -c 'ssh-add /root/isaaclab.pem; git clone git@github.com:isaac-sim/IsaacLab.git .'
-RUN git checkout "{{ isaaclab_git_checkpoint }}"
+RUN git clone --recursive https://github.com/isaac-sim/IsaacLab.git .
+RUN git checkout "main"
 
 RUN ln -s ${ISAACSIM_PATH} _isaac_sim
 
@@ -38,8 +35,6 @@ RUN ./isaaclab.sh -i
 # create aliases for python
 RUN echo "alias PYTHON_PATH=${PYTHON_PATH}" >> ${HOME}/.bashrc
 RUN echo "alias python=${PYTHON_PATH}" >> ${HOME}/.bashrc
-
-# RUN ${ISAACSIM_PYTHON_EXE} -c "import omni.isaac.isaaclab; print('Orbit configuration is now complete.')"
 
 # link mapped folders to isaaclab path
 RUN mkdir /results ; ln -s /results ${ISAACLAB_PATH}/

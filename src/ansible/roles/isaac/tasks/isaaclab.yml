@@ -40,16 +40,6 @@
   with_items:
     - isaaclab.sh
 
-# !!!TMP!!!
-- name: "[TMP] Upload isaaclab.pem"
-  copy: src="/app/uploads/isaaclab.pem"
-    dest="{{ isaaclab_dir }}/isaaclab.pem"
-    mode=0600
-    owner=ubuntu
-    group=ubuntu
-  tags:
-    - __upload_isaaclab_pem
-
 - name: Desktop icon for Isaac Lab
   template:
     src: "{{ item }}"
