@@ -5,12 +5,12 @@ RUN apt-get update && apt-get install -qy \
   git nano cmake build-essential ncurses-term
 
 # # if in china, add local pip mirrors
-# {% if in_china %}
-# RUN mkdir -p $HOME/.pip || true
-# RUN echo '[global]' >> $HOME/.pip/pip.conf
-# RUN echo 'index-url = http://mirrors.aliyun.com/pypi/simple' >> $HOME/.pip/pip.conf
-# RUN echo 'trusted-host = mirrors.aliyun.com' >> $HOME/.pip/pip.conf
-# {% endif %}
+{% if in_china %}
+RUN mkdir -p $HOME/.pip || true
+RUN echo '[global]' >> $HOME/.pip/pip.conf
+RUN echo 'index-url = http://mirrors.aliyun.com/pypi/simple' >> $HOME/.pip/pip.conf
+RUN echo 'trusted-host = mirrors.aliyun.com' >> $HOME/.pip/pip.conf
+{% endif %}
 
 # install IsaacLab
 
