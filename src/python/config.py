@@ -47,8 +47,7 @@ c["default_remote_workspace_dir"] = "/home/ubuntu/workspace"
 # defaults
 
 # --isaac-image
-# TODO replace with public image once available
-c["default_isaac_image"] = "nvcr.io/nvidian/isaac-sim:latest-4.0"
+c["default_isaac_image"] = "nvcr.io/nvidia/isaac-sim:4.0.0"
 
 # --ssh-port
 c["default_ssh_port"] = 22
