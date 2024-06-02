@@ -24,14 +24,14 @@
 
 - name: Upload wallpaper
   copy:
-    src: wallpaper.png
-    dest: /home/{{ ansible_user }}/Pictures/wallpaper.png
+    src: wallpaper.jpg
+    dest: /home/{{ ansible_user }}/Pictures/wallpaper.jpg
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
     mode: 0644
 
 - name: Set wallpaper
-  shell: gsettings set org.gnome.desktop.background {{ item }} file:///home/{{ ansible_user }}/Pictures/wallpaper.png
+  shell: gsettings set org.gnome.desktop.background {{ item }} file:///home/{{ ansible_user }}/Pictures/wallpaper.jpg
   become_user: "{{ ansible_user }}"
   with_items:
     - picture-uri

@@ -23,6 +23,7 @@
 
 - name: Wallpaper
   import_tasks: wallpaper.yml
+  tags: __isaac_wallpaper
 
 - name: Desktop Icon
   import_tasks: icon.yml
