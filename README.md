@@ -24,7 +24,7 @@ The result is a fully configured remote-desktop cloud workstation, which can be 
   - [Connecting to Deployed Instances](#connecting-to-deployed-instances)
   - [Running Applications](#running-applications)
     - [Isaac Sim](#isaac-sim)
-    - [Shell in Isaac Sim Container](#shell-in-isaac-sim-container)
+    - [Isaac Lab](#isaac-lab)
     - [Omniverse Isaac Gym Environments](#omniverse-isaac-gym-environments)
     - [Isaac Orbit](#isaac-orbit)
   - [Autorun Script](#autorun-script)
@@ -231,15 +231,25 @@ Isaac Sim will be automatically started when cloud VM is deployed. Alternatively
 ~/isaacsim.sh
 ```
 
-#### Shell in Isaac Sim Container
-
 To get a shell inside Isaac Sim container, click "Isaac Sim Shell" icon on the desktop. Alternatively you can run the following command in the terminal on the deployed instance:
 
 ```sh
 ~/isaacsim-shell.sh
 ```
 
+#### Isaac Lab
+
+[Isaac Lab](https://isaac-sim.github.io/IsaacLab/) can be pre-installed on the deployed instances. To install a specific version of Isaac Lab, provide valid git reference from <https://isaac-sim.github.io/IsaacLab/> as a value of `--lab` parameter to the deployment command.
+
+To run Isaac Lab click "Isaac Lab" icon on the desktop or run the following command in the terminal:
+
+```sh
+~/isaaclab.sh
+```
+
 #### Omniverse Isaac Gym Environments
+
+*Omniverse Isaac Gym Environments is deprecated in favor of Isaac Lab.*
 
 [Omniverse Isaac Gym Reinforcement Learning Environments for Isaac Sim](https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs) ("Omni Isaac Gym Envs") can be pre-installed on the deployed Isaac instances.
 
@@ -251,7 +261,7 @@ To run Omniverse Isaac Gym Environments click "Omni Isaac Gym Envs" icon on the 
 
 Default output directory (`/OmniIsaacGymEnvs/omniisaacgymenvs/runs`) in the OmniIsaacGymEnvs contaner will be linked to the default results directory (`/home/ubuntu/results`) on the deployed instance. You can download the contents of this directory to your local machine using `./download <deployment_name>` command.
 
-Tip: To install a specific git reference of OmniIsaacGymEnvs, provide valid reference from <https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs> as a value of `--oige` parameter to the deployment command. For example, to install `devel` branch on an AWS instance, run the following command:
+Tip: To install a specific version of OmniIsaacGymEnvs, provide valid reference from <https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs> as a value of `--oige` parameter to the deployment command. For example, to install `devel` branch on an AWS instance, run the following command:
 
 ```sh
 ./deploy-aws --oige devel
@@ -259,7 +269,7 @@ Tip: To install a specific git reference of OmniIsaacGymEnvs, provide valid refe
 
 #### Isaac Orbit
 
-*Isaac Orbit is still experimental and intended for preview purposes only.*
+*Isaac Orbit is deprecated in favor of Isaac Lab.*
 
 [Isaac Orbit](https://isaac-orbit.github.io/orbit/index.html) can be pre-installed on the deployed Isaac instances.
 
@@ -269,7 +279,7 @@ To run Isaac Orbit click "Isaac Orbit" icon on the desktop or run the following 
 ~/isaac-orbit.sh
 ```
 
-Tip: To install a specific git reference of Isaac Orbit, provide valid git reference from <https://github.com/NVIDIA-Omniverse/Orbit> as a value of `--orbit` parameter to the deployment command. For example, to install `devel` branch on an AWS instance, run the following command:
+Tip: To install a specific version of Isaac Orbit, provide valid git reference from <https://github.com/NVIDIA-Omniverse/Orbit> as a value of `--orbit` parameter to the deployment command. For example, to install `devel` branch on an AWS instance, run the following command:
 
 ```sh
 ./deploy-aws --orbit devel
