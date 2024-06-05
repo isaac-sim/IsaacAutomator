@@ -6,6 +6,7 @@ import argparse
 import glob
 import sys
 from subprocess import PIPE, STDOUT, Popen
+from pathlib import Path
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
@@ -33,23 +34,42 @@ def upload_file(file_name, bucket, object_name=None):
 
 
 def build_videos(source_directory):
+    """Builds video from source_directory. Source directory must be parent folder of ground truth generated using ORA extension.
+
+    :param source_directory: Source directory containing ground truth generated using ORA extension.
+    :return: None
+    """
     if os.path.isdir(source_directory):
         # Grab all the rgb folders in the source directory
         rgb_folders = glob.glob("{}/*/rgb/".format(source_directory))
         build_process_list = []
+        curr_dir = os.getcwd()
+        logging.info("Creating videos from images in source_directory - {}. This might take a while based on the length of video to be generated. Logs for video creation are at {}.".format(source_directory, os.path.join(curr_dir, "video_creation_logs")))
         try:
             for folder in rgb_folders:
                 # Get parent folder name
-                camer_folder_name = os.path.basename(os.path.abspath(os.path.join(folder, os.pardir)))
+                rgb_path = Path(folder)
+                camera_folder_name = os.path.basename(rgb_path.parent.absolute())
+
+                # Split till the second occurence of '_' and use the last portion of string. That is, go from World_Cameras_Camera_01 to Camera_01
+                camera_folder_name = camera_folder_name.split('_', 2)[-1]
+
+                # Create log folder and log files for video generation
+                log_file_path = os.path.join(curr_dir, "video_creation_logs", "{}.log".format(camera_folder_name))
+                os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
+                log_file = open(log_file_path, "w") 
+                
+                # Run ffmpeg command for creating videos
                 build_process = Popen(
-                    "ffmpeg -r 30 -f image2 -s 1920x1080 -start_number 0 -y -i {}/%d.jpeg -vcodec libx264 -crf 23 -pix_fmt yuv420p {}/{}.mp4".format(
-                        folder, folder, camer_folder_name
+                    "ffmpeg -nostdin -r 30 -f image2 -s 1920x1080 -start_number 0 -y -i {}/%d.jpeg -vcodec libx264 -crf 23 -pix_fmt yuv420p {}/{}.mp4".format(
+                        folder, folder, camera_folder_name
                     ),
-                    shell=True,
+                    shell=True,stdout=log_file, stderr=log_file
                 )
                 build_process_list.append(build_process)
+
             # Wait for all ffmpeg processes to finish
-            for process in build_process:
+            for process in build_process_list:
                 process.wait()
             logging.info("Finished creating videos from images.")
         except Exception as e:
