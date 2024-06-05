@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
 Terminal=true
-Exec=/home/ubuntu/Desktop/orbit.sh
-Name=Isaac Orbit
+Exec={{ launch_scripts_dir }}/isaacsim-shell.sh
+Name=Isaac Sim Shell
 Icon=/home/ubuntu/Pictures/isaacsim-icon-shell.png

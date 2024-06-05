@@ -1,5 +1,5 @@
 # region copyright
-# Copyright 2023 NVIDIA Corporation
+# Copyright 2023-2024 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,33 +14,33 @@
 # limitations under the License.
 # endregion
 
-- name: Create directory for OmniIsaacGymEnvs
+- name: Create directory for Isaac Lab
   file:
-    path: "{{ omni_isaac_gym_envs_dir }}"
+    path: "{{ isaaclab_dir }}"
     state: directory
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
     mode: 0755
 
-- name: Upload OmniIsaacGymEnvs setup files [1]
+- name: Upload Isaac Lab setup files [1]
   template: src={{ item }}
-    dest="{{ omni_isaac_gym_envs_dir }}/{{ item }}"
+    dest="{{ isaaclab_dir }}/{{ item }}"
     mode=755
     owner=ubuntu
     group=ubuntu
   with_items:
-    - omni-isaac-gym-envs.dockerfile
+    - isaaclab.dockerfile
 
-- name: Upload OmniIsaacGymEnvs setup files [2]
+- name: Upload Isaac Lab setup files [2]
   template: src="{{ item }}"
     dest="{{ launch_scripts_dir }}/{{ item }}"
     mode=755
     owner=ubuntu
     group=ubuntu
   with_items:
-    - omni-isaac-gym-envs.sh
+    - isaaclab.sh
 
-- name: Desktop icon for OmniIsaacGymEnvs
+- name: Desktop icon for Isaac Lab
   template:
     src: "{{ item }}"
     dest: "/home/{{ ansible_user }}/Desktop/{{ item }}"
@@ -48,25 +48,25 @@
     group: "{{ ansible_user }}"
     mode: 0644
   with_items:
-    - omni-isaac-gym-envs.desktop
+    - isaaclab.desktop
 
-- name: Allow execution of desktop icon for OmniIsaacGymEnvs
+- name: Allow execution of desktop icon for Isaac Lab
   shell: gio set "/home/{{ ansible_user }}/Desktop/{{ item }}" metadata::trusted true
   become_user: "{{ ansible_user }}"
   with_items:
-    - omni-isaac-gym-envs.desktop
+    - isaaclab.desktop
 
-- name: Set permissions for OmniIsaacGymEnvs desktop icon
+- name: Set permissions for Isaac Lab desktop icon
   file:
     path: "/home/{{ ansible_user }}/Desktop/{{ item }}"
     mode: 0755
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
   with_items:
-    - omni-isaac-gym-envs.desktop
+    - isaaclab.desktop
 
-- name: Build OmniIsaacGymEnvs
-  shell: docker build -t omni-isaac-gym-envs -f "{{ omni_isaac_gym_envs_dir }}/omni-isaac-gym-envs.dockerfile" "{{ omni_isaac_gym_envs_dir }}"
+- name: Build Isaac Lab
+  shell: docker build -t isaaclab -f "{{ isaaclab_dir }}/isaaclab.dockerfile" "{{ isaaclab_dir }}"
   become_user: "{{ ansible_user }}"
   tags:
     - skip_in_ovami

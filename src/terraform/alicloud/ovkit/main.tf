@@ -33,11 +33,12 @@ resource "alicloud_instance" "default" {
   instance_type        = var.instance_type
   internet_charge_type = "PayByTraffic"
   stopped_mode         = "StopCharging"
-  image_id             = "ubuntu_20_04_x64_20G_alibase_20230907.vhd"
-  key_name             = var.key_pair.key_pair_name
-  vswitch_id           = alicloud_vswitch.default.id
-  security_groups      = alicloud_security_group.default.*.id
-  availability_zone    = try(sort(data.alicloud_zones.instance_availability.ids)[0], "not-available")
+  # https://www.alibabacloud.com/help/en/ecs/user-guide/release-notes-for-2024#79a20b64e4tuk
+  image_id          = "ubuntu_22_04_x64_20G_alibase_20240220.vhd"
+  key_name          = var.key_pair.key_pair_name
+  vswitch_id        = alicloud_vswitch.default.id
+  security_groups   = alicloud_security_group.default.*.id
+  availability_zone = try(sort(data.alicloud_zones.instance_availability.ids)[0], "not-available")
 
   # @see: https://www.alibabacloud.com/help/en/ecs/user-guide/essds
   system_disk_performance_level = "PL1"

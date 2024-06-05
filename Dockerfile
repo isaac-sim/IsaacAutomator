@@ -57,6 +57,8 @@ RUN pip install click randomname pwgen debugpy
 
 # ansible
 ENV ANSIBLE_FORCE_COLOR=true
+# for some reason, the ansible.cfg file is not being picked up on Windows
+ENV ANSIBLE_CONFIG="/app/src/ansible/ansible.cfg"
 RUN pip install ansible
 RUN ansible-galaxy collection install community.docker
 
@@ -88,11 +90,11 @@ RUN ./aws/install
 COPY . /app
 
 # customoize bash prompt
-RUN echo "export PS1='\[\033[01;36m\][Isaac Sim Automator \${VERSION}]\[\033[00m\]:\w\$ '" >>  /root/.bashrc
+RUN echo "export PS1='\[\033[01;36m\][Isaac Automator \${VERSION}]\[\033[00m\]:\w\$ '" >>  /root/.bashrc
 
 WORKDIR /app
 
 ENTRYPOINT [ "/bin/sh", "-c" ]
 
-ENV VERSION="v2.3.1"
 
+ENV VERSION="v3.0.0"

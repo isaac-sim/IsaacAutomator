@@ -47,7 +47,7 @@ c["default_remote_workspace_dir"] = "/home/ubuntu/workspace"
 # defaults
 
 # --isaac-image
-c["default_isaac_image"] = "nvcr.io/nvidia/isaac-sim:2023.1.1"
+c["default_isaac_image"] = "nvcr.io/nvidia/isaac-sim:4.0.0"
 
 # --ssh-port
 c["default_ssh_port"] = 22
@@ -80,7 +80,10 @@ c["alicloud_default_region"] = "us-east-1"
 c["default_prefix"] = "isa"
 
 # --oige
-c["default_oige_git_checkpoint"] = "main"
+c["default_oige_git_checkpoint"] = "no"
 
 # --orbit
-c["default_orbit_git_checkpoint"] = "v0.3.0"
+c["default_orbit_git_checkpoint"] = "no"
+
+# --isaaclab
+c["default_isaaclab_git_checkpoint"] = "main"

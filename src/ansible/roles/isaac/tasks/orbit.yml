@@ -34,7 +34,7 @@
 
 - name: Upload Orbit setup files [2]
   template: src="{{ item }}"
-    dest="/home/{{ ansible_user }}/Desktop"
+    dest="{{ launch_scripts_dir }}/{{ item }}"
     mode=755
     owner=ubuntu
     group=ubuntu
@@ -42,7 +42,7 @@
     - orbit.sh
 
 - name: Desktop icon for Orbit
-  copy:
+  template:
     src: "{{ item }}"
     dest: "/home/{{ ansible_user }}/Desktop/{{ item }}"
     owner: "{{ ansible_user }}"

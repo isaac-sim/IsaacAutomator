@@ -245,7 +245,7 @@ class DeployCommand(click.core.Command):
 
         # --oige
         help = (
-            "Install Omni Isaac Gym Envs? Valid values: 'no', "
+            "[DEPRECATED] Install Omni Isaac Gym Envs? Valid values: 'no', "
             + "or <git ref in github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs>"
         )
         self.params.insert(
@@ -253,7 +253,7 @@ class DeployCommand(click.core.Command):
             click.core.Option(
                 ("--oige",),
                 help=help,
-                default="main",
+                default=config["default_oige_git_checkpoint"],
                 show_default=True,
                 prompt=colorize_prompt("* " + help),
                 callback=DeployCommand.oige_callback,
@@ -262,7 +262,7 @@ class DeployCommand(click.core.Command):
 
         # --orbit
         help = (
-            "[EXPERIMENTAL] Install Isaac Sim Orbit? Valid values: 'no', "
+            "[DEPRECATED] Install Isaac Sim Orbit? Valid values: 'no', "
             + "or <git ref in github.com/NVIDIA-Omniverse/orbit>"
         )
         self.params.insert(
@@ -274,6 +274,22 @@ class DeployCommand(click.core.Command):
                 show_default=True,
                 prompt=colorize_prompt("* " + help),
                 callback=DeployCommand.orbit_callback,
+            ),
+        )
+
+        # --isaaclab
+        help = (
+            "Install Isaac Sim Lab? Valid values: 'no', "
+            + "or <git ref in github.com/isaac-sim/IsaacLab>"
+        )
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--isaaclab",),
+                help=help,
+                default=config["default_isaaclab_git_checkpoint"],
+                show_default=True,
+                prompt=colorize_prompt("* " + help),
             ),
         )
 

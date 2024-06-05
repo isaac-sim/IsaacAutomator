@@ -23,12 +23,16 @@
 
 - name: Wallpaper
   import_tasks: wallpaper.yml
+  tags: __isaac_wallpaper
 
 - name: Desktop Icon
   import_tasks: icon.yml
 
 - name: Isaac App
   import_tasks: isaac_app.yml
+
+- name: Autorun
+  import_tasks: autorun.yml
 
 #  https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs
 - name: Omni Isaac Gym Envs
@@ -40,6 +44,11 @@
   import_tasks: orbit.yml
   when: orbit_git_checkpoint != 'no'
   tags: __orbit
+
+- name: Isaac Lab
+  import_tasks: isaaclab.yml
+  when: isaaclab_git_checkpoint != 'no'
+  tags: __isaaclab
 
 - name: Restart NX server
   meta: noop

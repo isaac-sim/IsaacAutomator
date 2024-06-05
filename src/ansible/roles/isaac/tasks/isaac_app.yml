@@ -22,16 +22,16 @@
     group: "{{ ansible_user }}"
     mode: 0777
 
-- name: Launch scripts [1]
+- name: Make sure {{ launch_scripts_dir }} exists
   file:
-    path: /home/ubuntu/Desktop
+    path: "{{ launch_scripts_dir}}"
     state: directory
     owner: ubuntu
     group: ubuntu
 
 - name: Launch scripts [2]
   template: src={{ item }}
-    dest=/home/ubuntu/Desktop/{{ item }}
+    dest="{{ launch_scripts_dir }}/{{ item }}"
     mode=755
     owner=ubuntu
     group=ubuntu
@@ -71,32 +71,3 @@
   tags:
     - never
     - cleanup
-
-- name: Start Application
-  shell: |
-    if [ -f /home/{{ ansible_user }}/uploads/autorun.sh ]; then
-      # if autorun script is present, run it
-      CMD="/home/{{ ansible_user }}/uploads/autorun.sh"
-    else
-      # otherwise, run Isaac Sim with default options
-      CMD="/home/{{ ansible_user }}/Desktop/isaacsim.sh"
-    fi
-
-    chmod +x "$CMD"
-    export DISPLAY=:0
-
-    # wait for display to become available
-    while ! xset q > /dev/null 2>&1 ; do
-      echo "Waiting for the display to become available..."
-      sleep 1
-    done
-    # run in a terminal on desktop
-    gnome-terminal -- bash -c "$CMD; exec bash"
-  args:
-    chdir: /home/{{ ansible_user }}/Desktop
-  become_user: "{{ ansible_user }}"
-  when: ngc_api_key != "none"
-  tags:
-    - skip_in_image
-    - on_stop_start
-    - autorun

@@ -28,6 +28,10 @@ omni_isaac_gym_envs_git_checkpoint: main
 orbit_dir: /opt/orbit
 orbit_git_checkpoint: devel
 
+# Isaac Lab
+isaaclab_dir: /opt/isaaclab
+isaaclab_git_checkpoint: isaac-lab
+
 # "none" skips login/pull
 ngc_api_key:
 
@@ -39,3 +43,5 @@ uploads_dir: /home/{{ ansible_user }}/uploads
 omniverse_user:
 omniverse_password:
 nucleus_uri:
+
+launch_scripts_dir: /home/{{ ansible_user }}

@@ -1,4 +1,10 @@
-# Isaac Sim Automator
+![Isaac Automator](src/banner.png)
+
+# Isaac Automator (v3)
+
+Isaac Automator allows a quick deployment of Isaac Sim and Isaac Sim-based applications (like Orbit and Omniverse Isaac Gym Environments) in the public clouds (AWS, GCP, Azure, and Alibaba Cloud are currently supported).
+
+The result is a fully configured remote-desktop cloud workstation, which can be used for development and testing of the robotic applications within minutes and on a budget. Isaac Automator supports varierty of GPU instances and stop-start functionality to save on cloud costs, provides tools to aid the workflow (uploading and downloading data, autorun, deployment management, etc).
 
 Isaac Sim Automator allows for quick deployment of Isaac Sim and Isaac Sim-based applications (like Orbit and Omniverse Isaac Gym Environments), onto the public clouds (AWS, GCP, Azure, and Alibaba Cloud are currently supported).
 
@@ -8,8 +14,12 @@ The result is a fully configured remote desktod cloud workstation, which can be 
   - [Installing Docker](#installing-docker)
   - [Obtaining NGC API Key](#obtaining-ngc-api-key)
   - [Building the Container](#building-the-container)
+    - [Linux/MacOS](#linuxmacos)
+    - [Windows](#windows)
 - [Usage](#usage)
-  - [Tip: Running the Automator Commands](#tip-running-the-automator-commands)
+  - [Running the Automator Commands](#running-the-automator-commands)
+    - [Linux/MacOS](#linuxmacos-1)
+    - [Windows](#windows-1)
   - [Deploying Isaac Sim](#deploying-isaac-sim)
     - [AWS](#aws)
     - [GCP](#gcp)
@@ -18,7 +28,7 @@ The result is a fully configured remote desktod cloud workstation, which can be 
   - [Connecting to Deployed Instances](#connecting-to-deployed-instances)
   - [Running Applications](#running-applications)
     - [Isaac Sim](#isaac-sim)
-    - [Shell in Isaac Sim Container](#shell-in-isaac-sim-container)
+    - [Isaac Lab](#isaac-lab)
     - [Omniverse Isaac Gym Environments](#omniverse-isaac-gym-environments)
     - [Isaac Orbit](#isaac-orbit)
   - [Autorun Script](#autorun-script)
@@ -45,17 +55,27 @@ This tool automates deployment of [Isaac Sim](https://developer.nvidia.com/isaac
 
 Please enter the following command in the project root directory to build the container:
 
+#### Linux/MacOS
+
 ```sh
 ./build
 ```
 
-This will build the Isaac Sim Automator container and tag it as `isa`.
+#### Windows
+
+```sh
+docker build --platform linux/x86_64 -t isa .
+```
+
+This will build the Isaac Automator container and tag it as `isa`.
 
 ## Usage
 
-### Tip: Running the Automator Commands
+### Running the Automator Commands
 
-There are two ways to run the automator commands:
+#### Linux/MacOS
+
+On Linux and MacOS there are two ways to run the automator commands:
 
 1. First enter the automator container and then run the command inside the container:
 
@@ -77,6 +97,22 @@ for example:
 ```sh
 ./run ./deploy-aws
 ./run ./destroy my-deployment
+```
+
+#### Windows
+
+On Windows, you can run the automator commands by entering the container first and then running the command inside the container like so:
+
+(enter the automator container)
+
+```sh
+docker run --platform linux/x86_64 -it --rm -v .:/app isa bash
+```
+
+(run the command inside the container)
+
+```sh
+./somecommand
 ```
 
 ### Deploying Isaac Sim
@@ -202,30 +238,40 @@ To use installed applications, connect to the deployed instance using noVNC or N
 Isaac Sim will be automatically started when cloud VM is deployed. Alternatively you can click "Isaac Sim" icon on the desktop or run the following command in the terminal on the deployed instance or launch it from the terminal as follows:
 
 ```sh
-~/Desktop/isaacsim.sh
+~/isaacsim.sh
 ```
-
-#### Shell in Isaac Sim Container
 
 To get a shell inside Isaac Sim container, click "Isaac Sim Shell" icon on the desktop. Alternatively you can run the following command in the terminal on the deployed instance:
 
 ```sh
-~/Desktop/isaacsim-shell.sh
+~/isaacsim-shell.sh
+```
+
+#### Isaac Lab
+
+[Isaac Lab](https://isaac-sim.github.io/IsaacLab/) can be pre-installed on the deployed instances. To install a specific version of Isaac Lab, provide valid git reference from <https://isaac-sim.github.io/IsaacLab/> as a value of `--lab` parameter to the deployment command.
+
+To run Isaac Lab click "Isaac Lab" icon on the desktop or run the following command in the terminal:
+
+```sh
+~/isaaclab.sh
 ```
 
 #### Omniverse Isaac Gym Environments
+
+*Omniverse Isaac Gym Environments is deprecated in favor of Isaac Lab.*
 
 [Omniverse Isaac Gym Reinforcement Learning Environments for Isaac Sim](https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs) ("Omni Isaac Gym Envs") can be pre-installed on the deployed Isaac instances.
 
 To run Omniverse Isaac Gym Environments click "Omni Isaac Gym Envs" icon on the desktop or run the following command in the terminal:
 
 ```sh
-~/Desktop/omni-isaac-gym-envs.sh
+~/omni-isaac-gym-envs.sh
 ```
 
 Default output directory (`/OmniIsaacGymEnvs/omniisaacgymenvs/runs`) in the OmniIsaacGymEnvs contaner will be linked to the default results directory (`/home/ubuntu/results`) on the deployed instance. You can download the contents of this directory to your local machine using `./download <deployment_name>` command.
 
-Tip: To install a specific git reference of OmniIsaacGymEnvs, provide valid reference from <https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs> as a value of `--oige` parameter to the deployment command. For example, to install `devel` branch on an AWS instance, run the following command:
+Tip: To install a specific version of OmniIsaacGymEnvs, provide valid reference from <https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs> as a value of `--oige` parameter to the deployment command. For example, to install `devel` branch on an AWS instance, run the following command:
 
 ```sh
 ./deploy-aws --oige devel
@@ -233,17 +279,17 @@ Tip: To install a specific git reference of OmniIsaacGymEnvs, provide valid refe
 
 #### Isaac Orbit
 
-*Isaac Orbit is still experimental and intended for preview purposes only.*
+*Isaac Orbit is deprecated in favor of Isaac Lab.*
 
 [Isaac Orbit](https://isaac-orbit.github.io/orbit/index.html) can be pre-installed on the deployed Isaac instances.
 
 To run Isaac Orbit click "Isaac Orbit" icon on the desktop or run the following command in the terminal:
 
 ```sh
-~/Desktop/isaac-orbit.sh
+~/isaac-orbit.sh
 ```
 
-Tip: To install a specific git reference of Isaac Orbit, provide valid git reference from <https://github.com/NVIDIA-Omniverse/Orbit> as a value of `--orbit` parameter to the deployment command. For example, to install `devel` branch on an AWS instance, run the following command:
+Tip: To install a specific version of Isaac Orbit, provide valid git reference from <https://github.com/NVIDIA-Omniverse/Orbit> as a value of `--orbit` parameter to the deployment command. For example, to install `devel` branch on an AWS instance, run the following command:
 
 ```sh
 ./deploy-aws --orbit devel

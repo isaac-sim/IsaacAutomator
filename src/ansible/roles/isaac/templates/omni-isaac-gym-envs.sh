@@ -7,4 +7,4 @@ docker build -t omni-isaac-gym-envs -f "{{ omni_isaac_gym_envs_dir }}/omni-isaac
 
 clear
 
-/home/{{ ansible_user }}/Desktop/isaacsim.sh --docker_image="omni-isaac-gym-envs" --cmd="bash"
+"{{ launch_scripts_dir }}/isaacsim.sh" --docker_image="omni-isaac-gym-envs" --cmd="bash"

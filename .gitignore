@@ -17,3 +17,6 @@ __pycache__
 
 results/*
 .DS_Store
+
+src/ansible/roles/isaac/files/autorun.sh
+src/ansible/roles/isaac/files/isaaclab.pem

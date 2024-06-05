@@ -180,9 +180,11 @@ class AzureDeployer(Deployer):
             self.create_tfvars(
                 {
                     "region": self.params["region"],
-                    "resource_group_name": self.params["resource_group"].split("/")[-1]
-                    if len(self.params["resource_group"]) > 0
-                    else f"{self.params['prefix']}.{self.params['deployment_name']}.rg",
+                    "resource_group_name": (
+                        self.params["resource_group"].split("/")[-1]
+                        if len(self.params["resource_group"]) > 0
+                        else f"{self.params['prefix']}.{self.params['deployment_name']}.rg"
+                    ),
                 }
             )
 
@@ -214,9 +216,6 @@ class AzureDeployer(Deployer):
         # upload user data
         if self.params["upload"]:
             self.upload_user_data()
-
-        # run autorun
-        self.run_autorun_ansible()
 
         # connection info for the user
         self.output_deployment_info()
