@@ -2,9 +2,10 @@
 --region '<aws-region-name>' 
 --isaac 
 --isaac-instance-type 'g5.12xlarge' 
---isaac-image 'nvcr.io/nv-metropolis-dev/metropolis-analytic/isaac-sim:latest-develop-05222024' 
+--isaac-image 'nvcr.io/nvidia/isaac-sim:4.0.0' 
 --oige 'no' 
---orbit 'no' 
+--orbit 'no'
+--isaaclab 'no'
 --ngc-api-key '<ngc-api-key>' 
 --ngc-api-key-check 
 --aws-access-key-id '<aws-access-key>' 
