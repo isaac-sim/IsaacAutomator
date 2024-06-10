@@ -2,7 +2,7 @@
 
 # Isaac Automator (v3)
 
-Isaac Automator allows a quick deployment of Isaac Sim and Isaac Sim-based applications (like Orbit and Omniverse Isaac Gym Environments) in the public clouds (AWS, GCP, Azure, and Alibaba Cloud are currently supported).
+Isaac Automator allows a quick deployment of Isaac Sim and Isaac Lab to the public clouds (AWS, GCP, Azure, and Alibaba Cloud are currently supported).
 
 The result is a fully configured remote-desktop cloud workstation, which can be used for development and testing of the robotic applications within minutes and on a budget. Isaac Automator supports varierty of GPU instances and stop-start functionality to save on cloud costs, provides tools to aid the workflow (uploading and downloading data, autorun, deployment management, etc).
 
@@ -34,8 +34,6 @@ The result is a fully configured remote-desktop cloud workstation, which can be 
   - [Downloading Data](#downloading-data)
   - [Repairing](#repairing)
   - [Destroying](#destroying)
-
-This tool automates deployment of [Isaac Sim](https://developer.nvidia.com/isaac-sim) to public clouds.
 
 ## Installation
 
