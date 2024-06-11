@@ -28,6 +28,10 @@
 - name: Desktop Icon
   import_tasks: icon.yml
 
+- name: OV Launcher
+  import_tasks: ov_launcher.yml
+  tags: __ov_launcher
+
 - name: Isaac App
   import_tasks: isaac_app.yml
 
