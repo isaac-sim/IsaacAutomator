@@ -47,5 +47,7 @@ RUN echo "export PS1='\[\033[01;33m\][IsaacLab]\[\033[00m\]:\w\$ '" >>  $HOME/.b
 # # welcome message
 RUN echo "echo '\\nWelcome to Isaac Lab!\\n'" >>  $HOME/.bashrc
 
+ENV ISAACSIM_PYTHON_EXE="${ISAACSIM_PATH}/python.sh"
+
 ENTRYPOINT [""]
 CMD ["/usr/bin/bash"]
