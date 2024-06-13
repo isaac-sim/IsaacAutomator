@@ -58,10 +58,10 @@ def build_videos(source_directory):
                 log_file_path = os.path.join(curr_dir, "video_creation_logs", "{}.log".format(camera_folder_name))
                 os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
                 log_file = open(log_file_path, "w") 
-                
+
                 # Run ffmpeg command for creating videos
                 build_process = Popen(
-                    "ffmpeg -nostdin -r 30 -f image2 -s 1920x1080 -start_number 0 -y -i {}/%d.jpeg -vcodec libx264 -crf 23 -pix_fmt yuv420p {}/{}.mp4".format(
+                    "ffmpeg -nostdin -r 30 -f image2 -s 1920x1080 -start_number 0 -y -i {}/%d.jpeg -vcodec libx264 -crf 23 -x264opts 'bframes=0:keyint=30' -pix_fmt yuv420p {}/{}.mp4".format(
                         folder, folder, camera_folder_name
                     ),
                     shell=True,stdout=log_file, stderr=log_file
