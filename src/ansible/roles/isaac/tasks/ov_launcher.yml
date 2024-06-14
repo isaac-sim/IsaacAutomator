@@ -14,6 +14,15 @@
 # limitations under the License.
 # endregion
 
+- name: Prerequisites for Omniverse Launcher
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - xdg-utils
+    - libfuse2
+    - chromium-browser
+
 - name: Make sure dirs exist
   file:
     path: "{{ item }}"
@@ -25,7 +34,7 @@
     - /home/{{ ansible_user }}/Pictures
     - /home/{{ ansible_user }}/Desktop
 
-- name: Upload OV Icon
+- name: Upload Omniverse Launcher Icon
   copy:
     src: "{{ item }}"
     dest: "/home/{{ ansible_user }}/Pictures/{{ item }}"
@@ -33,14 +42,14 @@
   with_items:
     - ov-icon.png
 
-- name: Download OV Launcher
+- name: Download Omniverse Launcher
   get_url:
     url: https://install.launcher.omniverse.nvidia.com/installers/omniverse-launcher-linux.AppImage
     dest: "/home/{{ ansible_user }}/Omniverse.AppImage"
     mode: 0755
   become_user: "{{ ansible_user }}"
 
-- name: Create desktop icon
+- name: Create desktop icon for Omniverse Launcher
   copy:
     content: |
       [Desktop Entry]
@@ -54,13 +63,13 @@
     dest: /home/{{ ansible_user }}/Desktop/ovl.desktop
     mode: 0644
 
-- name: Allow execution of OVL desktop icon
+- name: Allow execution of Omniverse Launcher desktop icon
   shell: gio set /home/{{ ansible_user }}/Desktop/{{ item }} metadata::trusted true
   become_user: "{{ ansible_user }}"
   with_items:
     - ovl.desktop
 
-- name: Set permissions for OVL desktop icon
+- name: Set permissions for Omniverse Launcher desktop icon
   file:
     path: /home/{{ ansible_user }}/Desktop/{{ item }}
     mode: 0755

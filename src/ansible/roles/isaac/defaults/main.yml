@@ -24,10 +24,6 @@ isaac_cache_dir: /home/{{ ansible_user }}/isaac
 omni_isaac_gym_envs_dir: /opt/omni-isaac-gym-envs
 omni_isaac_gym_envs_git_checkpoint: main
 
-# Orbit
-orbit_dir: /opt/orbit
-orbit_git_checkpoint: devel
-
 # Isaac Lab
 isaaclab_dir: /opt/isaaclab
 isaaclab_git_checkpoint: isaac-lab

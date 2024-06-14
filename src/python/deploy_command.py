@@ -115,17 +115,6 @@ class DeployCommand(click.core.Command):
 
         return value
 
-    @staticmethod
-    def orbit_callback(ctx, param, value):
-        """
-        Called after parsing --orbit option
-        """
-
-        if "" == value:
-            return config["default_orbit_git_checkpoint"]
-
-        return value
-
     def param_index(self, param_name):
         """
         Return index of parameter with given name.
@@ -257,23 +246,6 @@ class DeployCommand(click.core.Command):
                 show_default=True,
                 prompt=colorize_prompt("* " + help),
                 callback=DeployCommand.oige_callback,
-            ),
-        )
-
-        # --orbit
-        help = (
-            "[DEPRECATED] Install Isaac Sim Orbit? Valid values: 'no', "
-            + "or <git ref in github.com/NVIDIA-Omniverse/orbit>"
-        )
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--orbit",),
-                help=help,
-                default=config["default_orbit_git_checkpoint"],
-                show_default=True,
-                prompt=colorize_prompt("* " + help),
-                callback=DeployCommand.orbit_callback,
             ),
         )
 
