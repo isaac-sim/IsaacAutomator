@@ -26,7 +26,6 @@ The result is a fully configured remote-desktop cloud workstation, which can be 
     - [Isaac Sim](#isaac-sim)
     - [Isaac Lab](#isaac-lab)
     - [Omniverse Isaac Gym Environments](#omniverse-isaac-gym-environments)
-    - [Isaac Orbit](#isaac-orbit)
   - [Autorun Script](#autorun-script)
   - [Mapped Folders](#mapped-folders)
   - [Pausing and Resuming](#pausing-and-resuming)
@@ -263,24 +262,6 @@ Tip: To install a specific version of OmniIsaacGymEnvs, provide valid reference 
 
 ```sh
 ./deploy-aws --oige devel
-```
-
-#### Isaac Orbit
-
-*Isaac Orbit is deprecated in favor of Isaac Lab.*
-
-[Isaac Orbit](https://isaac-orbit.github.io/orbit/index.html) can be pre-installed on the deployed Isaac instances.
-
-To run Isaac Orbit click "Isaac Orbit" icon on the desktop or run the following command in the terminal:
-
-```sh
-~/isaac-orbit.sh
-```
-
-Tip: To install a specific version of Isaac Orbit, provide valid git reference from <https://github.com/NVIDIA-Omniverse/Orbit> as a value of `--orbit` parameter to the deployment command. For example, to install `devel` branch on an AWS instance, run the following command:
-
-```sh
-./deploy-aws --orbit devel
 ```
 
 ### Autorun Script
