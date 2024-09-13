@@ -19,7 +19,7 @@
 
 - name: Download NoMachine server
   get_url:
-    url: https://download.nomachine.com/download/8.11/Linux/nomachine_8.11.3_4_amd64.deb
+    url: https://download.nomachine.com/download/8.12/Linux/nomachine_8.12.12_4_amd64.deb
     dest: /tmp/nomachine.deb
     mode: 0644
     timeout: 600 # 10 minutes
