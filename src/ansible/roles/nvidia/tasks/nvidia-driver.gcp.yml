@@ -24,6 +24,7 @@
   with_items:
     - build-essential
     - python3-pip # required by asible get_url
+    - gcc-12 # fix for https://github.com/isaac-sim/IsaacAutomator/issues/17
 
 - name: GCP / Prerequisites (PIP)
   pip:
