@@ -23,9 +23,16 @@ ENV PYTHON_PATH="${ISAACSIM_PATH}/python.sh"
 # add github to known hosts
 RUN mkdir /root/.ssh && ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
 
-# clone isaaclab repo
+{% if isaaclab_private_git == "" %}
+# clone public isaaclab repo
 RUN git clone --recursive https://github.com/isaac-sim/IsaacLab.git .
-RUN git checkout "main"
+RUN git checkout "{{ isaaclab_git_checkpoint }}"
+{% else %}
+ADD isaaclab.pem /root/
+RUN chmod 0600 /root/isaaclab.pem
+RUN ssh-agent bash -c 'ssh-add /root/isaaclab.pem; git clone git@{{ isaaclab_private_git }} .'
+RUN git checkout "{{ isaaclab_git_checkpoint }}"
+{% endif %}
 
 RUN ln -s ${ISAACSIM_PATH} _isaac_sim
 

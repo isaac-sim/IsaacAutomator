@@ -265,6 +265,18 @@ class DeployCommand(click.core.Command):
             ),
         )
 
+        # [DEV]
+        # private git repo for Isaac Lab
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--isaaclab-private-git",),
+                default="",
+                help="[DEV] Private git repo for Isaac Sim Lab.",
+                hidden=True,
+            ),
+        )
+
         self.params.insert(
             len(self.params),
             click.core.Option(
