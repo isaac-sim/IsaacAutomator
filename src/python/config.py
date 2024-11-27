@@ -83,4 +83,4 @@ c["default_prefix"] = "isa"
 c["default_oige_git_checkpoint"] = "no"
 
 # --isaaclab
-c["default_isaaclab_git_checkpoint"] = "v1.2.0"
+c["default_isaaclab_git_checkpoint"] = "v1.3.0"
