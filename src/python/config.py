@@ -33,7 +33,7 @@ c["app_image_name"] = "isa"
 # gcp driver
 # @see https://cloud.google.com/compute/docs/gpus/grid-drivers-table
 c["gcp_driver_url"] = (
-    "https://storage.googleapis.com/nvidia-drivers-us-public/GRID/vGPU16.2/NVIDIA-Linux-x86_64-535.129.03-grid.run"
+    "https://raw.githubusercontent.com/GoogleCloudPlatform/compute-gpu-installation/main/linux/install_gpu_driver.py"
 )
 
 # aws/alicloud driver
