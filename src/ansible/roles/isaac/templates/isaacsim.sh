@@ -4,7 +4,7 @@
 
 # isaac sim startup command
 CMD="/isaac-sim/kit/kit \
-      /isaac-sim/apps/omni.isaac.sim.kit \
+      /isaac-sim/apps/isaacsim.exp.full.kit \
       --ext-folder /isaac-sim/apps \
       --allow-root"
 
