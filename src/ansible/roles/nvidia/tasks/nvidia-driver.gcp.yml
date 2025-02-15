@@ -14,8 +14,6 @@
 # limitations under the License.
 # endregion
 
-# @see https://cloud.google.com/compute/docs/gpus/install-grid-drivers
-
 - name: GCP / Prerequisites (APT)
   apt: name={{ item }}
     state=latest
@@ -32,44 +30,14 @@
     name: requests==2.20.1
     executable: pip3
 
-# download driver
-- name: GCP / Download GRID driver
+- name: GCP / Download script to install GPU driver
   get_url:
     url: "{{ gcp_driver_url }}"
-    dest: /tmp/nvidia_driver.run
+    dest: /tmp/install_gpu_driver.py
     mode: 0755
 
-- name: GCP / Install GRID driver
-  shell: "/tmp/nvidia_driver.run \
-    --x-module-path=/usr/lib/xorg/modules/drivers \
-    --run-nvidia-xconfig  \
-    --disable-nouveau \
-    --no-questions \
-    --silent"
+- name: GCP / Install gpu driver
+  shell: "python3 /tmp/install_gpu_driver.py"
 
 - name: GCP / Enable persistent mode for the driver
   shell: nvidia-smi -pm ENABLED
-
-- name: GCP / Copy gridd.conf
-  copy: >
-    src=/etc/nvidia/gridd.conf.template
-    dest=/etc/nvidia/gridd.conf
-    remote_src=true
-    force=no
-
-- name: GCP / Update GRID config [1]
-  lineinfile:
-    path: /etc/nvidia/gridd.conf
-    line: "{{ item }}"
-    state: present
-  with_items:
-    - "IgnoreSP=FALSE"
-    - "EnableUI=TRUE"
-
-- name: GCP / Update GRID config [2]
-  lineinfile:
-    path: /etc/nvidia/gridd.conf
-    regexp: "^FeatureType=(.*)$"
-    line: '# FeatureType=\1'
-    state: present
-    backrefs: yes

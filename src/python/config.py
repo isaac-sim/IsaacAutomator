@@ -33,7 +33,7 @@ c["app_image_name"] = "isa"
 # gcp driver
 # @see https://cloud.google.com/compute/docs/gpus/grid-drivers-table
 c["gcp_driver_url"] = (
-    "https://storage.googleapis.com/nvidia-drivers-us-public/GRID/vGPU16.2/NVIDIA-Linux-x86_64-535.129.03-grid.run"
+    "https://raw.githubusercontent.com/GoogleCloudPlatform/compute-gpu-installation/main/linux/install_gpu_driver.py"
 )
 
 # aws/alicloud driver
@@ -47,7 +47,7 @@ c["default_remote_workspace_dir"] = "/home/ubuntu/workspace"
 # defaults
 
 # --isaac-image
-c["default_isaac_image"] = "nvcr.io/nvidia/isaac-sim:4.2.0"
+c["default_isaac_image"] = "nvcr.io/nvidia/isaac-sim:4.5.0"
 
 # --ssh-port
 c["default_ssh_port"] = 22
@@ -83,4 +83,4 @@ c["default_prefix"] = "isa"
 c["default_oige_git_checkpoint"] = "no"
 
 # --isaaclab
-c["default_isaaclab_git_checkpoint"] = "v1.2.0"
+c["default_isaaclab_git_checkpoint"] = "v2.0.0"
