@@ -83,4 +83,5 @@ c["default_prefix"] = "isa"
 c["default_oige_git_checkpoint"] = "no"
 
 # --isaaclab
-c["default_isaaclab_git_checkpoint"] = "v2.0.0"
+c["default_isaaclab_git_checkpoint"] = "bf28d97486156f337a763c85790a44f85d374131"
+# fixes https://github.com/isaac-sim/IsaacLab/issues/1807
