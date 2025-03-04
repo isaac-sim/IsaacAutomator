@@ -61,10 +61,13 @@
   when: reboot_required_file.stat.exists == true
 
 # download driver, timeout 3 min, 5 retries
-# @see https://github.com/Azure/azhpc-extensions/blob/master/NvidiaGPU/resources.json#L275
+# Temporary Downgrade for Driver Issue
+# Due to the issue described in https://github.com/isaac-sim/IsaacAutomator/issues/28,
+# we are temporarily downgrading the NVIDIA GRID driver from version 550.144.03 to 535.161.08.
+# NOTE: The original link (https://go.microsoft.com/fwlink/?linkid=874272) always points to the latest driver
 - name: Azure / Download GRID driver
   get_url:
-    url: https://go.microsoft.com/fwlink/?linkid=874272
+    url: https://download.microsoft.com/download/8/d/a/8da4fb8e-3a9b-4e6a-bc9a-72ff64d7a13c/NVIDIA-Linux-x86_64-535.161.08-grid-azure.run
     dest: /tmp/nvidia_grid_azure_driver.run
     mode: "0755"
     timeout: 180
