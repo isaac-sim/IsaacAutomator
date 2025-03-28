@@ -66,7 +66,7 @@ c["default_remote_results_dir"] = "/home/ubuntu/results"
 # --isaac-instance-type
 c["aws_default_isaac_instance_type"] = "g5.2xlarge"
 # str, 1-index in DeployAzureCommand.AZURE_OVKIT_INSTANCE_TYPES
-c["azure_default_isaac_instance_type"] = "2"
+c["azure_default_isaac_instance_type"] = "Standard_NV36ads_A10_v5"
 c["gcp_default_isaac_instance_type"] = "g2-standard-8"
 c["alicloud_default_isaac_instance_type"] = "ecs.gn7i-c16g1.4xlarge"
 
