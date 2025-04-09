@@ -154,7 +154,7 @@ If you are using temporary credentials that may expire and prevent you from dele
 nano /app/state/<deployment_name>/.tfvars
 ```
 
-Then set the `aws_access_key`, `aws_secret_key` and `aws_session_token` variables to the new ones.
+Then set the `aws_access_key_id`, `aws_secret_key` and `aws_session_token` variables to the new ones.
 
 #### GCP
 
