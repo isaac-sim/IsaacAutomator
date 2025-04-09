@@ -18,6 +18,7 @@ The result is a fully configured remote-desktop cloud workstation, which can be 
     - [Windows](#windows-1)
   - [Deploying Isaac Sim](#deploying-isaac-sim)
     - [AWS](#aws)
+      - [Using Temporary Credentials](#using-temporary-credentials)
     - [GCP](#gcp)
     - [Azure](#azure)
     - [Alibaba Cloud](#alibaba-cloud)
@@ -143,6 +144,17 @@ If you have completed the above steps or already have your permissions and crede
 ```
 
 Tip: Run `./deploy-aws --help` to see more options.
+
+##### Using Temporary Credentials
+
+If you are using temporary credentials that may expire and prevent you from deleting the deployment or stopping/starting the instance (e.g. from `aws sts assume-role`), you can manually edit the `/app/state/<deployment-name>/.tfvars` file in the Automator container like so:
+
+```sh
+# inside container:
+nano /app/state/<deployment_name>/.tfvars
+```
+
+Then set the `aws_access_key`, `aws_secret_key` and `aws_session_token` variables to the new ones.
 
 #### GCP
 
