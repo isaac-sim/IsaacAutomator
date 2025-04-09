@@ -183,6 +183,19 @@ class DeployAWSCommand(DeployCommand):
             ),
         )
 
+        # --aws-session-token
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--aws-session-token",),
+                prompt=colorize_prompt(
+                    "* AWS Session Token (if using temporary credentials, otherwise leave empty)"
+                ),
+                default=os.environ.get("AWS_SESSION_TOKEN", ""),
+                show_default="AWS_SESSION_TOKEN environment variable",
+            ),
+        )
+
         # --ovami
         # deploy OV AMI instance?
         self.params.insert(
@@ -231,6 +244,7 @@ class AWSDeployer(Deployer):
                     "ovami_enabled": self.params["ovami"],
                     "aws_access_key_id": self.params["aws_access_key_id"],
                     "aws_secret_access_key": self.params["aws_secret_access_key"],
+                    "aws_session_token": self.params["aws_session_token"],
                 }
             )
 
