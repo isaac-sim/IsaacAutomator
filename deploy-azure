@@ -41,6 +41,9 @@ class DeployAzureCommand(DeployCommand):
 
     # azure instace types capable of running isaac
     AZURE_OVKIT_INSTANCE_TYPES = [
+        "Standard_NV6ads_A10_v5",
+        "Standard_NV12ads_A10_v5",
+        "Standard_NV18ads_A10_v5",
         "Standard_NV36ads_A10_v5",
         "Standard_NV36adms_A10_v5",
         "Standard_NV72ads_A10_v5",
@@ -49,18 +52,12 @@ class DeployAzureCommand(DeployCommand):
     @staticmethod
     def ovkit_instance_type_callback(ctx, param, value):
         if value not in DeployAzureCommand.AZURE_OVKIT_INSTANCE_TYPES:
-            if (
-                int(value) > len(DeployAzureCommand.AZURE_OVKIT_INSTANCE_TYPES)
-                or int(value) < 1
-            ):
-                raise click.BadParameter(
-                    colorize_error(
-                        f"Invalid instance type: {value}. Valid values: "
-                        + f"{[i+1 for i in range(len(DeployAzureCommand.AZURE_OVKIT_INSTANCE_TYPES))]}"
-                    )
+            raise click.BadParameter(
+                colorize_error(
+                    f"Invalid instance type: {value}. Valid values: "
+                    + ", ".join(DeployAzureCommand.AZURE_OVKIT_INSTANCE_TYPES)
                 )
-
-            value = DeployAzureCommand.AZURE_OVKIT_INSTANCE_TYPES[int(value) - 1]
+            )
 
         return value
 
@@ -95,14 +92,14 @@ class DeployAzureCommand(DeployCommand):
                 ("--isaac-instance-type",),
                 type=str,
                 prompt=colorize_prompt("* Isaac Sim VM Type")
-                + f"\n  1) {self.AZURE_OVKIT_INSTANCE_TYPES[0]}\t1x NVIDIA A10\t440 GB RAM"
-                + f"\n  2) {self.AZURE_OVKIT_INSTANCE_TYPES[1]}\t1x NVIDIA A10\t880 GB RAM"
-                + f"\n  3) {self.AZURE_OVKIT_INSTANCE_TYPES[2]}\t2x NVIDIA A10\t880 GB RAM\n"
-                + "",
+                + f"\n  * {self.AZURE_OVKIT_INSTANCE_TYPES[0]}: 6 vCPUs, 1/6 NVIDIA A10, 4 GB GPU Memory, 55 GB RAM"
+                + f"\n  * {self.AZURE_OVKIT_INSTANCE_TYPES[1]}: 12 vCPUs, 1/3 NVIDIA A10, 8 GB GPU Memory, 110 GB RAM"
+                + f"\n  * {self.AZURE_OVKIT_INSTANCE_TYPES[2]}: 18 vCPUs, 1/2 NVIDIA A10, 12 GB GPU Memory, 220 GB RAM"
+                + f"\n  * {self.AZURE_OVKIT_INSTANCE_TYPES[3]}: 36 vCPUs, 1x NVIDIA A10, 24 GB GPU Memory, 440 GB RAM"
+                + f"\n  * {self.AZURE_OVKIT_INSTANCE_TYPES[4]}: 36 vCPUs, 1x NVIDIA A10, 24 GB GPU Memory, 880 GB RAM"
+                + f"\n  * {self.AZURE_OVKIT_INSTANCE_TYPES[5]}: 72 vCPUs, 2x NVIDIA A10, 48 GB GPU Memory, 880 GB RAM"
+                + "\n",
                 default=config["azure_default_isaac_instance_type"],
-                show_default=self.AZURE_OVKIT_INSTANCE_TYPES[
-                    int(config["azure_default_isaac_instance_type"]) - 1
-                ],
                 callback=DeployAzureCommand.ovkit_instance_type_callback,
                 help="Isaac Sim VM type. Currently supported: "
                 + ", ".join(self.AZURE_OVKIT_INSTANCE_TYPES)

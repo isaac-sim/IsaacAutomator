@@ -66,7 +66,7 @@ c["default_remote_results_dir"] = "/home/ubuntu/results"
 # --isaac-instance-type
 c["aws_default_isaac_instance_type"] = "g5.2xlarge"
 # str, 1-index in DeployAzureCommand.AZURE_OVKIT_INSTANCE_TYPES
-c["azure_default_isaac_instance_type"] = "2"
+c["azure_default_isaac_instance_type"] = "Standard_NV36ads_A10_v5"
 c["gcp_default_isaac_instance_type"] = "g2-standard-8"
 c["alicloud_default_isaac_instance_type"] = "ecs.gn7i-c16g1.4xlarge"
 
@@ -83,4 +83,5 @@ c["default_prefix"] = "isa"
 c["default_oige_git_checkpoint"] = "no"
 
 # --isaaclab
-c["default_isaaclab_git_checkpoint"] = "v2.0.0"
+c["default_isaaclab_git_checkpoint"] = "v2.1.0"
+# fixes https://github.com/isaac-sim/IsaacLab/issues/1807

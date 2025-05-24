@@ -18,6 +18,7 @@ The result is a fully configured remote-desktop cloud workstation, which can be 
     - [Windows](#windows-1)
   - [Deploying Isaac Sim](#deploying-isaac-sim)
     - [AWS](#aws)
+      - [Using Temporary Credentials](#using-temporary-credentials)
     - [GCP](#gcp)
     - [Azure](#azure)
     - [Alibaba Cloud](#alibaba-cloud)
@@ -133,7 +134,7 @@ docker run --platform linux/x86_64 -it --rm -v .:/app isa bash
   You will need _AWS Access Key_ and _AWS Secret Key_ for an existing account. You can obtain those in <a href="https://console.aws.amazon.com/iamv2/home#/home">Identity and Access Management (IAM) Section</a> in the AWS console.
 </details>
 
-If yoou have completed the above steps or already have your permissions and credentials set up, run the following command in the project root directory:
+If you have completed the above steps or already have your permissions and credentials set up, run the following command in the project root directory:
 
 ```sh
 # enter the automator container
@@ -143,6 +144,17 @@ If yoou have completed the above steps or already have your permissions and cred
 ```
 
 Tip: Run `./deploy-aws --help` to see more options.
+
+##### Using Temporary Credentials
+
+If you are using temporary credentials that may expire and prevent you from deleting the deployment or stopping/starting the instance (e.g. from `aws sts assume-role`), you can manually edit the `/app/state/<deployment-name>/.tfvars` file in the Automator container like so:
+
+```sh
+# inside container:
+nano /app/state/<deployment_name>/.tfvars
+```
+
+Then set the `aws_access_key_id`, `aws_secret_key` and `aws_session_token` variables to the new ones.
 
 #### GCP
 

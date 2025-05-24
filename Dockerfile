@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -qy \
     unzip \
     rsync \
     curl \
+    nano \
     wget \
     gpg \
     jq
@@ -97,4 +98,4 @@ WORKDIR /app
 
 ENTRYPOINT [ "/bin/sh", "-c" ]
 
-ENV VERSION="v3.5.0"
+ENV VERSION="v3.7.2"
