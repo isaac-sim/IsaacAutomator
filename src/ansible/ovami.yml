@@ -33,5 +33,5 @@
   roles:
     - ovami
   handlers:
-    - include: roles/rdesktop/handlers/main.yml
-    - include: roles/system/handlers/main.yml
+    - include_tasks: roles/rdesktop/handlers/main.yml
+    - include_tasks: roles/system/handlers/main.yml
