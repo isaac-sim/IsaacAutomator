@@ -20,7 +20,7 @@
 
 # add extra ssh ports
 - name: Change SSH port to {{ ssh_port }}
-  include: custom_ssh.yml
+  include_tasks: custom_ssh.yml
   when: ssh_port != 22
 
 - name: Upgrade the OS (apt-get dist-upgrade)
@@ -28,7 +28,7 @@
     update_cache=yes
 
 - name: Set OS user password
-  include: password.yml
+  include_tasks: password.yml
 
 - name: Disable IPv6 for apt-get
   copy:
@@ -67,7 +67,7 @@
 
 # - set hostname
 # - set prompt color and hostname
-- include: id.yml
+- include_tasks: id.yml
 
 # swap
 

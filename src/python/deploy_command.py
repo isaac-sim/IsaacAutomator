@@ -75,9 +75,13 @@ class DeployCommand(click.core.Command):
             return value
 
         # check if it contains what's allowed
-        if not re.match("^[A-Za-z0-9]{32,}$", value):
+        # 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
+        if not (
+            re.match("^[A-Za-z0-9]{32,}$", value)
+            or re.match("^nvapi-[A-Za-z0-9]{64}$", value)
+        ):
             raise click.BadParameter(
-                colorize_error("Key contains invalid characters or too short.")
+                colorize_error("Key contains invalid characters or is too short.")
             )
 
         return value
