@@ -1,6 +1,6 @@
 # Dockerfile for runnig and distributing the app
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV force_color_prompt=yes
@@ -24,13 +24,13 @@ RUN apt-get update && apt-get install -qy \
     jq
 
 # hashicorp sources
+RUN apt-get install -yq software-properties-common
+
 RUN wget -O- https://apt.releases.hashicorp.com/gpg | \
     gpg --dearmor | \
-    tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
+    tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
 
-RUN echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \
-    https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
-    tee /etc/apt/sources.list.d/hashicorp.list
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release || lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
 
 RUN apt-get update
 
