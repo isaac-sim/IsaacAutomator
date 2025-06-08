@@ -67,6 +67,14 @@ class DeployAWSCommand(DeployCommand):
         "g6.12xlarge",
         "g6.24xlarge",
         "g6.48xlarge",
+        # AWS L40S - https://aws.amazon.com/ec2/instance-types/g6e/
+        "g6e.2xlarge",
+        "g6e.4xlarge",
+        "g6e.8xlarge",
+        "g6e.12xlarge",
+        "g6e.16xlarge",
+        "g6e.24xlarge",
+        "g6e.48xlarge"
     ]
 
     @staticmethod
