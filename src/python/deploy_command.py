@@ -75,7 +75,6 @@ class DeployCommand(click.core.Command):
             return value
 
         # check if it contains what's allowed
-        # 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
         if not (
             re.match("^[A-Za-z0-9]{32,}$", value)
             or re.match("^nvapi-[A-Za-z0-9]{64}$", value)
