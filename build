@@ -3,4 +3,5 @@
 SELF_DIR="$(realpath "$(dirname "${BASH_SOURCE}")")"
 TAG="isa"
 
-docker build --platform linux/x86_64 -t "${TAG}" "${SELF_DIR}"
+# run build and pasthrough all the args
+docker build --platform linux/x86_64 -t "${TAG}" "${SELF_DIR}" "$@"
