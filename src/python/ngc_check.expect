@@ -20,7 +20,7 @@ set timeout -1
 debug 0
 
 # usage ngc_ckeck.expect
-set NGC_API_KEY [lindex $argv 0]
+set NGC_CLI_API_KEY [lindex $argv 0]
 set ORG [lindex $argv 1]
 set TEAM [lindex $argv 2]
 
@@ -31,7 +31,7 @@ wait
 spawn /opt/ngc-cli/ngc config set
  
 expect "Enter API key"
-send -- "$NGC_API_KEY\r"
+send -- "$NGC_CLI_API_KEY\r"
  
 expect {
     # 100: invalid api key

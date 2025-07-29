@@ -289,8 +289,8 @@ class DeployCommand(click.core.Command):
                 prompt=colorize_prompt(
                     "* NGC API Key (can be obtained at https://ngc.nvidia.com/setup/api-key)"
                 ),
-                default=os.environ.get("NGC_API_KEY", ""),
-                show_default='"NGC_API_KEY" environment variable',
+                default=os.environ.get("NGC_CLI_API_KEY", ""),
+                show_default='"NGC_CLI_API_KEY" environment variable',
                 help="NGC API Key (can be obtained at https://ngc.nvidia.com/setup/api-key)",
                 callback=DeployCommand.ngc_api_key_callback,
             ),
