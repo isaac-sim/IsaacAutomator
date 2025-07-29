@@ -12,7 +12,7 @@ resource "aws_security_group" "sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.ingress_cidrs
   }
 
   # nomachine
@@ -20,13 +20,13 @@ resource "aws_security_group" "sg" {
     from_port   = 4000
     to_port     = 4000
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.ingress_cidrs
   }
   ingress {
     from_port   = 4000
     to_port     = 4000
     protocol    = "udp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.ingress_cidrs
   }
 
   # dcv
@@ -34,13 +34,13 @@ resource "aws_security_group" "sg" {
     from_port   = 8443
     to_port     = 8443
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.ingress_cidrs
   }
   ingress {
     from_port   = 8443
     to_port     = 8443
     protocol    = "udp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.ingress_cidrs
   }
 
   # vnc
@@ -48,7 +48,7 @@ resource "aws_security_group" "sg" {
     from_port   = 5900
     to_port     = 5900
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.ingress_cidrs
   }
 
   # novnc
@@ -56,7 +56,7 @@ resource "aws_security_group" "sg" {
     from_port   = 6080
     to_port     = 6080
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.ingress_cidrs
   }
 
   # allow outbound traffic

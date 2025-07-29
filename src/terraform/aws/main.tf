@@ -44,6 +44,7 @@ module "isaac" {
   region            = var.region
   ssh_port          = var.ssh_port
   deployment_name   = var.deployment_name
+  ingress_cidrs     = var.ingress_cidrs
   prebuilt_ami_name = "${var.prefix}.packer.isaac_image.*"
 
   iam_instance_profile = null
@@ -61,6 +62,7 @@ module "ovami" {
   keypair_id      = module.common.aws_key_pair_id
   ssh_port        = var.ssh_port
   deployment_name = var.deployment_name
+  ingress_cidrs   = var.ingress_cidrs
 
   vpc = {
     id         = module.vpc.vpc.id

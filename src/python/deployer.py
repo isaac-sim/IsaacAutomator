@@ -32,6 +32,7 @@ from src.python.utils import (
     colorize_result,
     read_meta,
     shell_command,
+    get_my_public_ip,
 )
 
 
@@ -232,6 +233,41 @@ class Deployer:
             - run_ansible: keep tfvars/tfstate, don't ask for user input, skip terraform steps
         """
 
+        debug = self.params["debug"]
+
+        # convert CIDRs from special values
+
+        ingress_cidrs = [
+            x.strip().lower() for x in str(self.params["ingress_cidrs"]).split(",")
+        ]
+
+        ingress_cidrs_actual = []
+
+        for cidr in ingress_cidrs:
+
+            # if no ingress CIDRs are specified, use my public IP
+            if cidr in ("", "auto", "myip"):
+                cidr = get_my_public_ip() + "/32"
+                if debug:
+                    click.echo(
+                        colorize_info(
+                            f"* No ingress CIDRs specified, using public IP: {cidr}"
+                        )
+                    )
+            elif cidr == "mynet":
+                # if "mynet" is specified, use my public IP with /16 mask
+                cidr = ".".join(get_my_public_ip().split(".")[0:2]) + ".0.0/16"
+                if debug:
+                    click.echo(
+                        colorize_info(f"* Using CIDR block for my network: {cidr}")
+                    )
+            # elif cidr == "nvidia": TODO
+
+            ingress_cidrs_actual.append(cidr)
+
+        # remove duplicates
+        ingress_cidrs_actual = list(set(ingress_cidrs_actual))
+
         # default values common for all clouds
         tfvars.update(
             {
@@ -253,6 +289,7 @@ class Deployer:
                 ),
                 #
                 "deployment_name": self.params["deployment_name"],
+                "ingress_cidrs": ingress_cidrs_actual,
             }
         )
 

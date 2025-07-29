@@ -50,3 +50,9 @@ variable "prebuilt_ami_name" {
 variable "ssh_port" {
   type = number
 }
+
+# for general use, ["0.0.0.0/0"] is ok
+# but may be helpful for accounts with stricter security policies
+variable "ingress_cidrs" {
+  type = list(string)
+}
