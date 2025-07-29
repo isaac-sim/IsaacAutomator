@@ -2,6 +2,8 @@
 
 FROM ubuntu:22.04
 
+ARG WITH_PACKER=1
+
 ENV DEBIAN_FRONTEND=noninteractive
 ENV force_color_prompt=yes
 
@@ -37,13 +39,15 @@ RUN apt-get update
 # terraform
 RUN apt-get install -qy terraform
 
-# install packer
-RUN apt-get install -yq packer
-
-# init packer plugins
+# install packer & plugins
 COPY . /tmp/app
-RUN (cd /tmp/app/src/packer/azure/isaac && packer init .)
-RUN (cd /tmp/app/src/packer/aws/isaac && packer init .)
+RUN if [ "$WITH_PACKER" = "1" ]; then \
+    apt-get install -yq packer; \
+    (cd /tmp/app/src/packer/azure/isaac && packer init .) \
+    && (cd /tmp/app/src/packer/aws/isaac && packer init .) \
+    else \
+    echo "Skipping Packer installation"; \
+    fi
 
 # azure command line
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
@@ -100,4 +104,4 @@ WORKDIR /app
 
 ENTRYPOINT [ "/bin/sh", "-c" ]
 
-ENV VERSION="v3.9.0"
+ENV VERSION="v3.9.1"
