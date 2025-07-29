@@ -93,9 +93,11 @@ COPY . /app
 
 # customoize bash prompt
 RUN echo "export PS1='\[\033[01;36m\][Isaac Automator \${VERSION}]\[\033[00m\]:\w\$ '" >>  /root/.bashrc
+# set NGC_CLI_API_KEY to contents of NGC_API_KEY var (if it exists:
+RUN echo "if [ -n \"\$NGC_API_KEY\" ]; then export NGC_CLI_API_KEY=\"\$NGC_API_KEY\"; fi" >> /root/.bashrc
 
 WORKDIR /app
 
 ENTRYPOINT [ "/bin/sh", "-c" ]
 
-ENV VERSION="v3.8.0"
+ENV VERSION="v3.9.0"

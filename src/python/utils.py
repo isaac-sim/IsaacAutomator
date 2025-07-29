@@ -186,3 +186,16 @@ def gcp_login(verbose=False):
             "gcloud auth application-default login --no-launch-browser --disable-quota-project --verbosity none",
             verbose=verbose,
         )
+
+
+def get_my_public_ip(verbose=False):
+    """
+    Get the current public IP address
+    """
+    res = shell_command(
+        "curl -s https://api.ipify.org",
+        capture_output=True,
+        exit_on_error=True,
+        verbose=verbose,
+    )
+    return res.stdout.decode().strip()

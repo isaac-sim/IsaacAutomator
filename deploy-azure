@@ -66,8 +66,8 @@ class DeployAzureCommand(DeployCommand):
 
         # --region
         self.params.insert(
-            # insert before --isaac option
-            self.param_index("isaac"),
+            # insert before --ingres-cidrs option
+            self.param_index("ingress_cidrs"),
             click.core.Option(
                 ("--region",),
                 prompt=colorize_prompt(

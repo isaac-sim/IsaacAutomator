@@ -24,7 +24,7 @@ from src.python.ngc import check_ngc_access
 
 class Test_NGC_Key_Validation(unittest.TestCase):
     INVALID_KEY = "__invalid__"
-    VALID_KEY = os.environ.get("NGC_API_KEY", "__none__")
+    VALID_KEY = os.environ.get("NGC_CLI_API_KEY", "__none__")
 
     def test_invalid_key(self):
         """Test invalid key"""
@@ -32,10 +32,10 @@ class Test_NGC_Key_Validation(unittest.TestCase):
         self.assertEqual(r, 100)
 
     def test_valid_key(self):
-        """Test valid key (should be set in NGC_API_KEY env var)"""
+        """Test valid key (should be set in NGC_CLI_API_KEY env var)"""
 
         if "__none__" == self.VALID_KEY:
-            self.skipTest("No NGC_API_KEY env var set")
+            self.skipTest("No NGC_CLI_API_KEY env var set")
             return
 
         r = check_ngc_access(self.VALID_KEY)

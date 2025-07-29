@@ -46,3 +46,7 @@ variable "isaac_enabled" {
 variable "isaac_instance_type" {
   type = string
 }
+
+variable "ingress_cidrs" {
+  type = list(string)
+}

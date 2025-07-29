@@ -27,7 +27,7 @@ export AZURE_SUBSCRIPTION_ID="..."
 export AZURE_TENANT_ID="..."
 export AZURE_SP_CLIENT_ID="..."
 export AZURE_SP_CLIENT_SECRET="..."
-export NGC_API_KEY="..."
+export NGC_CLI_API_KEY="..."
 ```
 
 Alternatively you can pass them as variables in the packer command (`packer -var=varname=value...`).

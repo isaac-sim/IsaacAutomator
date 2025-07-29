@@ -27,7 +27,7 @@ from pwgen import pwgen
 
 from src.python.config import c as config
 from src.python.debug import debug_break  # noqa
-from src.python.utils import colorize_error, colorize_prompt
+from src.python.utils import colorize_error, colorize_prompt, get_my_public_ip
 
 
 class DeployCommand(click.core.Command):
@@ -77,10 +77,10 @@ class DeployCommand(click.core.Command):
         # check if it contains what's allowed
         if not (
             re.match("^[A-Za-z0-9]{32,}$", value)
-            or re.match("^nvapi-[A-Za-z0-9]{64}$", value)
+            or re.match("^nvapi-[A-Za-z0-9_\-+/]{64}$", value)
         ):
             raise click.BadParameter(
-                colorize_error("Key contains invalid characters or is too short.")
+                colorize_error("`Key contains invalid characters or is too short`.")
             )
 
         return value
@@ -117,6 +117,35 @@ class DeployCommand(click.core.Command):
             return config["default_oige_git_checkpoint"]
 
         return value
+
+    def ingress_cidrs_callback(ctx, param, value):
+        """
+        Called after parsing --ingress-cidrs option
+        """
+
+        # allow special values
+        if value is None or value == "":
+            return value
+
+        # split by commas
+        value = value.split(",")
+
+        # strip spaces, convert to lower case
+        value = [v.strip().lower() for v in value]
+
+        # validate each CIDR block
+        for cidr in value:
+            if cidr not in [
+                "auto",
+                "",
+                "myip",
+                "mynet",
+                "nvidia",
+                None,
+            ] and not re.match(r"^\d{1,3}(\.\d{1,3}){3}/\d{1,2}$", cidr):
+                raise click.BadParameter(colorize_error(f"Invalid CIDR block: {cidr}"))
+
+        return ",".join(value)
 
     def param_index(self, param_name):
         """
@@ -191,6 +220,24 @@ class DeployCommand(click.core.Command):
                 callback=DeployCommand.deployment_name_callback,
                 show_default="<randomly generated>",
                 help="Name of the deployment. Used to identify the created cloud resources and files.",
+            ),
+        )
+
+        # ingress cidr blocks
+        help = (
+            "CIDR blocks for ingress traffic on the created VM, "
+            + f'comma separated. Type "myip" to use your public IP ({get_my_public_ip()})'
+        )
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--ingress-cidrs",),
+                default=config["default_ingress_cidrs"],
+                show_default=True,
+                type=str,
+                help=help + ".",
+                prompt=colorize_prompt("* " + help),
+                callback=DeployCommand.ingress_cidrs_callback,
             ),
         )
 
@@ -288,8 +335,8 @@ class DeployCommand(click.core.Command):
                 prompt=colorize_prompt(
                     "* NGC API Key (can be obtained at https://ngc.nvidia.com/setup/api-key)"
                 ),
-                default=os.environ.get("NGC_API_KEY", ""),
-                show_default='"NGC_API_KEY" environment variable',
+                default=os.environ.get("NGC_CLI_API_KEY", ""),
+                show_default='"NGC_CLI_API_KEY" environment variable',
                 help="NGC API Key (can be obtained at https://ngc.nvidia.com/setup/api-key)",
                 callback=DeployCommand.ngc_api_key_callback,
             ),

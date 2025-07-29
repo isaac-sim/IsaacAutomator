@@ -35,3 +35,7 @@ variable "ssh_port" {
 variable "deployment_name" {
   type = string
 }
+
+variable "ingress_cidrs" {
+  type = list(string)
+}

@@ -85,3 +85,7 @@ c["default_oige_git_checkpoint"] = "no"
 # --isaaclab
 c["default_isaaclab_git_checkpoint"] = "v2.1.0"
 # fixes https://github.com/isaac-sim/IsaacLab/issues/1807
+
+# --ingress-cidrs
+# empty value will be replaced with the current public IP
+c["default_ingress_cidrs"] = "0.0.0.0/0"

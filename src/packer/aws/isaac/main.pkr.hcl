@@ -57,7 +57,7 @@ variable "image_name" {
 }
 
 variable "ngc_api_key" {
-  default = env("NGC_API_KEY")
+  default = env("NGC_CLI_API_KEY")
 }
 
 variable skip_tags {
