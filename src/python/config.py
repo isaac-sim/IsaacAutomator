@@ -37,7 +37,7 @@ c["gcp_driver_url"] = (
 )
 
 # aws/alicloud driver
-c["generic_driver_apt_package"] = "nvidia-driver-535-server"
+c["generic_driver_apt_package"] = "nvidia-driver-580-server"
 
 # default remote dirs
 c["default_remote_uploads_dir"] = "/home/ubuntu/uploads"
