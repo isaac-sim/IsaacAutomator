@@ -199,3 +199,19 @@ def get_my_public_ip(verbose=False):
         verbose=verbose,
     )
     return res.stdout.decode().strip()
+
+
+def subnet_from_ip(ip, mask):
+    """
+    Get CIDR notation from IP and mask
+    """
+    if "24" == mask:
+        return f"{ip.rsplit('.', 1)[0]}.0/24"
+    elif "16" == mask:
+        return f"{ip.rsplit('.', 2)[0]}.0.0/16"
+    elif "8" == mask:
+        return f"{ip.rsplit('.', 3)[0]}.0.0.0/8"
+    else:
+        raise Exception(f"Unsupported mask: {mask}")
+
+    return f"{ip}/{mask}"

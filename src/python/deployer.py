@@ -33,6 +33,7 @@ from src.python.utils import (
     read_meta,
     shell_command,
     get_my_public_ip,
+    subnet_from_ip,
 )
 
 
@@ -254,9 +255,21 @@ class Deployer:
                             f"* No ingress CIDRs specified, using public IP: {cidr}"
                         )
                     )
-            elif cidr == "mynet":
+            elif cidr in ("mynet", "myip/16"):
                 # if "mynet" is specified, use my public IP with /16 mask
-                cidr = ".".join(get_my_public_ip().split(".")[0:2]) + ".0.0/16"
+                cidr = subnet_from_ip(get_my_public_ip(), "16")
+                if debug:
+                    click.echo(
+                        colorize_info(f"* Using CIDR block for my network: {cidr}")
+                    )
+            elif cidr in ("myip/24"):
+                cidr = subnet_from_ip(get_my_public_ip(), "24")
+                if debug:
+                    click.echo(
+                        colorize_info(f"* Using CIDR block for my network: {cidr}")
+                    )
+            elif cidr in ("myip/8"):
+                cidr = subnet_from_ip(get_my_public_ip(), "8")
                 if debug:
                     click.echo(
                         colorize_info(f"* Using CIDR block for my network: {cidr}")

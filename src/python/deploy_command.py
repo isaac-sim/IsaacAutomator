@@ -27,7 +27,12 @@ from pwgen import pwgen
 
 from src.python.config import c as config
 from src.python.debug import debug_break  # noqa
-from src.python.utils import colorize_error, colorize_prompt, get_my_public_ip
+from src.python.utils import (
+    colorize_error,
+    colorize_prompt,
+    get_my_public_ip,
+    subnet_from_ip,
+)
 
 
 class DeployCommand(click.core.Command):
@@ -136,9 +141,12 @@ class DeployCommand(click.core.Command):
         # validate each CIDR block
         for cidr in value:
             if cidr not in [
-                "auto",
                 "",
+                "auto",
                 "myip",
+                "myip/8",
+                "myip/16",
+                "myip/24",
                 "mynet",
                 "nvidia",
                 None,
@@ -226,7 +234,8 @@ class DeployCommand(click.core.Command):
         # ingress cidr blocks
         help = (
             "CIDR blocks for ingress traffic on the created VM, "
-            + f'comma separated. Type "myip" to use your public IP ({get_my_public_ip()})'
+            + f'comma separated. Type "myip" to use your public IP ({get_my_public_ip()}). '
+            + "Add /8, /16, or /24 to specify the subnet mask."
         )
         self.params.insert(
             len(self.params),
