@@ -104,4 +104,4 @@ WORKDIR /app
 
 ENTRYPOINT [ "/bin/sh", "-c" ]
 
-ENV VERSION="v3.9.3"
+ENV VERSION="v3.10.0"
