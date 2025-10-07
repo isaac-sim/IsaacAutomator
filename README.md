@@ -13,7 +13,7 @@ The result is a fully configured remote-desktop cloud workstation, which can be 
     - [Linux/MacOS](#linuxmacos)
     - [Windows](#windows)
 - [Usage](#usage)
-  - [Running the Automator Commands](#running-the-automator-commands)
+  - [Running](#running)
     - [Linux/MacOS](#linuxmacos-1)
     - [Windows](#windows-1)
   - [Deploying Isaac Sim](#deploying-isaac-sim)
@@ -65,16 +65,16 @@ This will build the Isaac Automator container and tag it as `isa`.
 
 ## Usage
 
-### Running the Automator Commands
+### Running
 
 #### Linux/MacOS
 
-On Linux and MacOS there are two ways to run the automator commands:
+On Linux and MacOS there are two ways to run the Isaac Automator commands:
 
-1. First enter the automator container and then run the command inside the container:
+1. First enter the Isaac Atomator container and then run the command inside the container:
 
 ```sh
-# enter the automator container
+# enter Isaac Automator container
 ./run
 # inside container:
 ./somecommand
@@ -95,9 +95,9 @@ for example:
 
 #### Windows
 
-On Windows, you can run the automator commands by entering the container first and then running the command inside the container like so:
+On Windows, you can run Isaac Automator commands by entering the container first and then running the command inside the container like so:
 
-(enter the automator container)
+(enter Isaac Automator container)
 
 ```sh
 docker run --platform linux/x86_64 -it --rm -v .:/app isa bash
@@ -137,7 +137,7 @@ docker run --platform linux/x86_64 -it --rm -v .:/app isa bash
 If you have completed the above steps or already have your permissions and credentials set up, run the following command in the project root directory:
 
 ```sh
-# enter the automator container
+# enter Isaac Automator container
 ./run
 # inside container:
 ./deploy-aws
@@ -159,7 +159,7 @@ Then set the `aws_access_key_id`, `aws_secret_key` and `aws_session_token` varia
 #### GCP
 
 ```sh
-# enter the automator container
+# enter Isaac Automator container
 ./run
 # inside container:
 ./deploy-gcp
@@ -172,7 +172,7 @@ Tip: Run `./deploy-gcp --help` to see more options.
 If You Have Single Subscription:
 
 ```sh
-# enter the automator container
+# enter Isaac Automator container
 ./run
 # inside container:
 ./deploy-azure
@@ -181,7 +181,7 @@ If You Have Single Subscription:
 If You Have Multiple Subscriptions:
 
 ```sh
- # enter the automator container
+ # enter Isaac Automator container
 ./run
 
 # inside container:
@@ -204,7 +204,7 @@ Tip: Run `./deploy-azure --help` to see more options.
 Once you have prepared the access credentials, run the following command in the project root directory:
 
 ```sh
-# enter the automator container
+# enter Isaac Automator container
 ./run
 # inside container:
 ./deploy-alicloud
@@ -299,7 +299,7 @@ The following folders are mapped to the running Isaac Sim container by default (
 You can stop and re-start instances to save on cloud costs. To do so, run the following commands:
 
 ```sh
-# enter the automator container
+# enter Isaac Automator container
 ./run
 # inside container:
 ./stop <deployment-name>
@@ -311,7 +311,7 @@ You can stop and re-start instances to save on cloud costs. To do so, run the fo
 You can upload user data from `uploads/` folder (in the project root) to the deployment by running the following command:
 
 ```sh
-# enter the automator container
+# enter Isaac Automator container
 ./run
 # inside container:
 ./upload <deployment-name>
@@ -324,7 +324,7 @@ Data will be uploaded to `/home/ubuntu/uploads` directory by default to all depl
 You can download user data to `results/` folder (in the project root) from deployed instances by running the following command:
 
 ```sh
-# enter the automator container
+# enter Isaac Automator container
 ./run
 # inside container:
 ./download <deployment-name>
@@ -350,7 +350,7 @@ If for some reason the deployment cloud resouces or software configuration get c
 To destroy a deployment, run the following command:
 
 ```sh
-# enter the automator container
+# enter Isaac Automator container
 ./run
 # inside container:
 ./destroy <deployment-name>
