@@ -28,7 +28,7 @@ c["ansible_dir"] = "/app/src/ansible"
 c["terraform_dir"] = "/app/src/terraform"
 
 # app image name
-c["app_image_name"] = "isa"
+c["app_image_name"] = "isaac_automator"
 
 # gcp driver
 # @see https://cloud.google.com/compute/docs/gpus/grid-drivers-table
