@@ -83,7 +83,7 @@ c["default_prefix"] = "isa"
 c["default_oige_git_checkpoint"] = "no"
 
 # --isaaclab
-c["default_isaaclab_git_checkpoint"] = "v2.2.0"
+c["default_isaaclab_git_checkpoint"] = "v2.2.1"
 
 # --ingress-cidrs
 # empty value will be replaced with the current public IP
