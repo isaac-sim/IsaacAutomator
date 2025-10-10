@@ -13,12 +13,11 @@ The result is a fully configured remote-desktop cloud workstation, which can be 
     - [Linux/MacOS](#linuxmacos)
     - [Windows](#windows)
 - [Usage](#usage)
-  - [Running](#running)
+  - [Running Isaac Automator](#running-isaac-automator)
     - [Linux/MacOS](#linuxmacos-1)
     - [Windows](#windows-1)
-  - [Deploying Isaac Sim](#deploying-isaac-sim)
+  - [Deploying Instances](#deploying-instances)
     - [AWS](#aws)
-      - [Using Temporary Credentials](#using-temporary-credentials)
     - [GCP](#gcp)
     - [Azure](#azure)
     - [Alibaba Cloud](#alibaba-cloud)
@@ -34,6 +33,8 @@ The result is a fully configured remote-desktop cloud workstation, which can be 
   - [Downloading Data](#downloading-data)
   - [Repairing](#repairing)
   - [Destroying](#destroying)
+- [Tips](#tips)
+  - [Persisting Modifications to Isaac Sim/Lab Environment](#persisting-modifications-to-isaac-simlab-environment)
 
 ## Installation
 
@@ -65,7 +66,7 @@ This will build the Isaac Automator container and tag it as `isa`.
 
 ## Usage
 
-### Running
+### Running Isaac Automator
 
 #### Linux/MacOS
 
@@ -109,7 +110,7 @@ docker run --platform linux/x86_64 -it --rm -v .:/app isa bash
 ./somecommand
 ```
 
-### Deploying Isaac Sim
+### Deploying Instances
 
 #### AWS
 
@@ -359,3 +360,43 @@ To destroy a deployment, run the following command:
 You will be prompted to enter the deployment name to destroy.
 
 *Please note that information about the deployed cloud resources is stored in `state/` directory. Do not delete this directory ever.*
+
+## Tips
+
+### Persisting Modifications to Isaac Sim/Lab Environment
+
+It is common to require modifications to the Isaac Lab & Isaac Sim source code, as well as installed custom components to persist during instances shutdowns, re-starts and re-deployments.
+
+To achive that, you can do the following:
+
+Go to `/uploads/` dir in the repo and find `autorun.sh` file4
+
+Modify it's contents like so (this example customizes Isaac Lab environment):
+
+```sh
+#!/bin/sh
+
+# This script is executed when
+# 1. the VM is first deployed
+# 2. the VM is started after being stopped
+
+SELF_DIR="$(dirname $0)"
+
+docker image tag isaaclab:latest isaaclab:stock
+docker build -t isaaclab:latest -f "${SELF_DIR}/isaaclab-custom.dockerfile" "${SELF_DIR}"
+```
+
+Now, create `isaaclab-custom.dockerfile` in the same `uploads/` directory with your changes and first line being:
+
+```dockerfile
+FROM isaaclab:stock
+```
+
+Every time you deploy or start an instance (using `./start`), `uploads/` dir will be uploaded and `autorun.sh` executed, which will build the customized Isaac Lab environment.
+
+Alternatively, you can push your custom docker image somewhere and pull it from autorun script tagging it isaaclab:latest like so:
+
+```sh
+docker pull your-custom-image
+docker tag your-custom-image isaaclab:latest
+```
