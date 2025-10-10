@@ -17,7 +17,7 @@
     "flake8.args": [
         "--max-line-length=120"
     ],
-    "markdown.extension.toc.levels": "2..5",
+    "markdown.extension.toc.levels": "2..4",
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter",
         "editor.formatOnSave": true
