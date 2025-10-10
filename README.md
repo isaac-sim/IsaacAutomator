@@ -10,11 +10,11 @@ The result is a fully configured remote desktop cloud workstation that you can u
   - [Installing Docker](#installing-docker)
   - [Obtaining NGC API Key](#obtaining-ngc-api-key)
   - [Building the Container](#building-the-container)
-    - [Linux/MacOS](#linuxmacos)
+    - [Linux/macOS](#linuxmacos)
     - [Windows](#windows)
 - [Usage](#usage)
   - [Running Isaac Automator](#running-isaac-automator)
-    - [Linux/MacOS](#linuxmacos-1)
+    - [Linux/macOS](#linuxmacos-1)
     - [Windows](#windows-1)
   - [Deploying Instances](#deploying-instances)
     - [AWS](#aws)
@@ -59,10 +59,10 @@ Please enter the following command in the project root directory to build the co
 #### Windows
 
 ```sh
-docker build --platform linux/x86_64 -t isa .
+docker build --platform linux/x86_64 -t isaac_automator .
 ```
 
-This will build the Isaac Automator container and tag it as `isa`.
+This will build the Isaac Automator container and tag it as `isaac_automator`.
 
 ## Usage
 
@@ -101,7 +101,7 @@ On Windows, you can run Isaac Automator commands by entering the container first
 (enter Isaac Automator container)
 
 ```sh
-docker run --platform linux/x86_64 -it --rm -v .:/app isa bash
+docker run --platform linux/x86_64 -it --rm -v .:/app isaac_automator bash
 ```
 
 (run the command inside the container)

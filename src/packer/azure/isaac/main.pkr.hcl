@@ -99,8 +99,8 @@ source "azure-arm" "isaac" {
 
   location = "westus3"
 
-  managed_image_resource_group_name = "isa.packer"
-  managed_image_name                = "isa.${var.image_name}"
+  managed_image_resource_group_name = "isaac_automator.packer"
+  managed_image_name                = "isaac_automator.${var.image_name}"
 
   vm_size = "Standard_NV36adms_A10_v5"
   os_type = "Linux"

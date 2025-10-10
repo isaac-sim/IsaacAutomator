@@ -28,7 +28,7 @@ c["ansible_dir"] = "/app/src/ansible"
 c["terraform_dir"] = "/app/src/terraform"
 
 # app image name
-c["app_image_name"] = "isa"
+c["app_image_name"] = "isaac_automator"
 
 # gcp driver
 # @see https://cloud.google.com/compute/docs/gpus/grid-drivers-table
@@ -83,7 +83,7 @@ c["default_prefix"] = "isa"
 c["default_oige_git_checkpoint"] = "no"
 
 # --isaaclab
-c["default_isaaclab_git_checkpoint"] = "v2.2.0"
+c["default_isaaclab_git_checkpoint"] = "v2.2.1"
 
 # --ingress-cidrs
 # empty value will be replaced with the current public IP
