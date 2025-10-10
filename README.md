@@ -2,9 +2,9 @@
 
 # Isaac Automator (v3)
 
-Isaac Automator allows a quick deployment of Isaac Sim and Isaac Lab to the public clouds (AWS, GCP, Azure, and Alibaba Cloud are currently supported).
+Isaac Automator allows quick deployment of Isaac Sim and Isaac Lab to public clouds (AWS, GCP, Azure, and Alibaba Cloud are currently supported).
 
-The result is a fully configured remote-desktop cloud workstation, which can be used for development and testing of the robotic applications within minutes and on a budget. Isaac Automator supports varierty of GPU instances and stop-start functionality to save on cloud costs, provides tools to aid the workflow (uploading and downloading data, autorun, deployment management, etc).
+The result is a fully configured remote desktop cloud workstation that you can use to develop and test robotic applications within minutes and on a budget. Isaac Automator supports a variety of GPU instances and stop/start functionality to save on cloud costs and provides tools to aid your workflow (uploading and downloading data, autorun, deployment management, etc.).
 
 - [Installation](#installation)
   - [Installing Docker](#installing-docker)
@@ -34,23 +34,23 @@ The result is a fully configured remote-desktop cloud workstation, which can be 
   - [Repairing](#repairing)
   - [Destroying](#destroying)
 - [Tips](#tips)
-  - [Persisting Modifications to Isaac Sim/Lab Environment](#persisting-modifications-to-isaac-simlab-environment)
+  - [Persisting Modifications to the Isaac Sim/Lab Environment](#persisting-modifications-to-the-isaac-simlab-environment)
 
 ## Installation
 
 ### Installing Docker
 
-`docker` should be present on your system. Visit <https://docs.docker.com/engine/install/> for installation instructions.
+Docker should be installed on your system. Visit <https://docs.docker.com/engine/install/> for installation instructions.
 
 ### Obtaining NGC API Key
 
-**NGC API Key** allows you to download docker images from <https://ngc.nvidia.com/>. Please prepare one or obtain it at <https://ngc.nvidia.com/setup/api-key>.
+An **NGC API Key** allows you to download Docker images from <https://ngc.nvidia.com/>. Obtain one at <https://ngc.nvidia.com/setup/api-key>.
 
 ### Building the Container
 
 Please enter the following command in the project root directory to build the container:
 
-#### Linux/MacOS
+#### Linux/macOS
 
 ```sh
 ./build
@@ -68,11 +68,11 @@ This will build the Isaac Automator container and tag it as `isa`.
 
 ### Running Isaac Automator
 
-#### Linux/MacOS
+#### Linux/macOS
 
-On Linux and MacOS there are two ways to run the Isaac Automator commands:
+On Linux and macOS there are two ways to run Isaac Automator commands:
 
-1. First enter the Isaac Atomator container and then run the command inside the container:
+1. First enter the Isaac Automator container and then run the command inside the container:
 
 ```sh
 # enter Isaac Automator container
@@ -81,7 +81,7 @@ On Linux and MacOS there are two ways to run the Isaac Automator commands:
 ./somecommand
 ```
 
-2. Simply prepend the command with `./run` like so:
+2. Simply prepend the command with `./run`, like so:
 
 ```sh
 ./run ./somecommand <parameters>
@@ -96,7 +96,7 @@ for example:
 
 #### Windows
 
-On Windows, you can run Isaac Automator commands by entering the container first and then running the command inside the container like so:
+On Windows, you can run Isaac Automator commands by entering the container first and then running the command inside the container, like so:
 
 (enter Isaac Automator container)
 
@@ -118,7 +118,7 @@ docker run --platform linux/x86_64 -it --rm -v .:/app isa bash
   <a name="#aws-permissions"></a>
   <summary>Enabling Access Permissions</summary>
 
-  You need _AmazonEC2FullAccess_ permissions enabled for your AWS user. You can enable those in [Identity and Access Management (IAM) Section](https://console.aws.amazon.com/iamv2/home#/home) in AWS console like so:
+  You need _AmazonEC2FullAccess_ permissions enabled for your AWS user. You can enable those in the [Identity and Access Management (IAM) section](https://console.aws.amazon.com/iamv2/home#/home) of the AWS console, as follows:
 
   1. Go to <https://console.aws.amazon.com/iamv2/home#/home>
   2. Click "Access Management" \> "Users" in the left menu
@@ -132,7 +132,7 @@ docker run --platform linux/x86_64 -it --rm -v .:/app isa bash
 <details>
   <a name="#aws-access-creds"></a>
   <summary>Getting Access Credentials</summary>
-  You will need _AWS Access Key_ and _AWS Secret Key_ for an existing account. You can obtain those in <a href="https://console.aws.amazon.com/iamv2/home#/home">Identity and Access Management (IAM) Section</a> in the AWS console.
+  You will need an _AWS Access Key_ and _AWS Secret Key_ for an existing account. You can obtain those in the [Identity and Access Management (IAM) section](https://console.aws.amazon.com/iamv2/home#/home) of the AWS console.
 </details>
 
 If you have completed the above steps or already have your permissions and credentials set up, run the following command in the project root directory:
@@ -148,14 +148,14 @@ Tip: Run `./deploy-aws --help` to see more options.
 
 ##### Using Temporary Credentials
 
-If you are using temporary credentials that may expire and prevent you from deleting the deployment or stopping/starting the instance (e.g. from `aws sts assume-role`), you can manually edit the `/app/state/<deployment-name>/.tfvars` file in the Automator container like so:
+If you are using temporary credentials that may expire and prevent you from deleting the deployment or stopping/starting the instance (e.g., from `aws sts assume-role`), you can manually edit the `/app/state/<deployment-name>/.tfvars` file in the Automator container, like so:
 
 ```sh
 # inside container:
 nano /app/state/<deployment_name>/.tfvars
 ```
 
-Then set the `aws_access_key_id`, `aws_secret_key` and `aws_session_token` variables to the new ones.
+Then set the `aws_access_key_id`, `aws_secret_key`, and `aws_session_token` variables to the new values.
 
 #### GCP
 
@@ -170,7 +170,7 @@ Tip: Run `./deploy-gcp --help` to see more options.
 
 #### Azure
 
-If You Have Single Subscription:
+If you have a single subscription:
 
 ```sh
 # enter Isaac Automator container
@@ -179,7 +179,7 @@ If You Have Single Subscription:
 ./deploy-azure
 ```
 
-If You Have Multiple Subscriptions:
+If you have multiple subscriptions:
 
 ```sh
  # enter Isaac Automator container
@@ -199,7 +199,7 @@ Tip: Run `./deploy-azure --help` to see more options.
 <details>
   <a name="#alicloud-access-creds"></a>
   <summary>Getting Access Credentials</summary>
-  You will need <i>Access Key</i> and <i>Secret Key</i> for an existing AliCloud account. You can obtain those in <a href="https://usercenter.console.aliyun.com/#/manage/ak">AccessKey Management</a> section in the Alibaba Cloud console.
+  You will need an _Access Key_ and _Secret Key_ for an existing Alibaba Cloud account. You can obtain those in the [AccessKey Management](https://usercenter.console.aliyun.com/#/manage/ak) section of the Alibaba Cloud console.
 </details>
 
 Once you have prepared the access credentials, run the following command in the project root directory:
@@ -213,7 +213,7 @@ Once you have prepared the access credentials, run the following command in the 
 
 Tip: Run `./deploy-alicloud --help` to see more options.
 
-GPU-accelerated instances with NVIDIA A100, A10 and T4 GPUs are supported. You can find the complete list of instance types, availability and pricing at <https://www.alibabacloud.com/help/en/ecs/user-guide/gpu-accelerated-compute-optimized-and-vgpu-accelerated-instance-families-1>. Please note that vGPU instances are not supported.
+GPU-accelerated instances with NVIDIA A100, A10, and T4 GPUs are supported. You can find the complete list of instance types, availability, and pricing at <https://www.alibabacloud.com/help/en/ecs/user-guide/gpu-accelerated-compute-optimized-and-vgpu-accelerated-instance-families-1>. Please note that vGPU instances are not supported.
 
 ### Connecting to Deployed Instances
 
@@ -223,25 +223,25 @@ Deployed Isaac Sim instances can be accessed via:
 - noVNC (browser-based VNC client)
 - NoMachine (remote desktop client)
 
-Look for the connection instructions at the end of the deploymnt command output. Additionally, this info is saved in `state/<deployment-name>/info.txt` file.
+Look for the connection instructions at the end of the deployment command output. Additionally, this information is saved in the `state/<deployment-name>/info.txt` file.
 
-You can view available arguments with `--help` switch for the start scripts, in most cases you wouldn't need to change the defaults.
+You can view available arguments with the `--help` switch for the start scripts. In most cases, you won't need to change the defaults.
 
-Tip: You can use `./connect <deployment-name>` helper command to connect to the deployed instance via ssh.
+Tip: You can use the `./connect <deployment-name>` helper command to connect to the deployed instance via SSH.
 
 ### Running Applications
 
-To use installed applications, connect to the deployed instance using noVNC or NoMachine. You can find the connection instructions at the end of the deployment command output. Additionally, this info is saved in `state/<deployment-name>/info.txt` file.
+To use the installed applications, connect to the deployed instance using noVNC or NoMachine. You can find the connection instructions at the end of the deployment command output. Additionally, this information is saved in the `state/<deployment-name>/info.txt` file.
 
 #### Isaac Sim
 
-Isaac Sim will be automatically started when cloud VM is deployed. Alternatively you can click "Isaac Sim" icon on the desktop or run the following command in the terminal on the deployed instance or launch it from the terminal as follows:
+Isaac Sim will automatically start when the cloud VM is deployed. Alternatively, click the "Isaac Sim" icon on the desktop, or run the following command in a terminal on the deployed instance:
 
 ```sh
 ~/isaacsim.sh
 ```
 
-To get a shell inside Isaac Sim container, click "Isaac Sim Shell" icon on the desktop. Alternatively you can run the following command in the terminal on the deployed instance:
+To get a shell inside the Isaac Sim container, click the "Isaac Sim Shell" icon on the desktop. Alternatively, run the following command in a terminal on the deployed instance:
 
 ```sh
 ~/isaacsim-shell.sh
@@ -249,9 +249,9 @@ To get a shell inside Isaac Sim container, click "Isaac Sim Shell" icon on the d
 
 #### Isaac Lab
 
-[Isaac Lab](https://isaac-sim.github.io/IsaacLab/) can be pre-installed on the deployed instances. To install a specific version of Isaac Lab, provide valid git reference from <https://isaac-sim.github.io/IsaacLab/> as a value of `--lab` parameter to the deployment command.
+[Isaac Lab](https://isaac-sim.github.io/IsaacLab/) can be pre-installed on deployed instances. To install a specific version of Isaac Lab, provide a valid Git reference from <https://isaac-sim.github.io/IsaacLab/> as the value of the `--lab` parameter to the deployment command.
 
-To run Isaac Lab click "Isaac Lab" icon on the desktop or run the following command in the terminal:
+To run Isaac Lab, click the "Isaac Lab" icon on the desktop or run the following command in the terminal:
 
 ```sh
 ~/isaaclab.sh
@@ -259,19 +259,19 @@ To run Isaac Lab click "Isaac Lab" icon on the desktop or run the following comm
 
 #### Omniverse Isaac Gym Environments
 
-*Omniverse Isaac Gym Environments is deprecated in favor of Isaac Lab.*
+_Omniverse Isaac Gym Environments is deprecated in favor of Isaac Lab._
 
-[Omniverse Isaac Gym Reinforcement Learning Environments for Isaac Sim](https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs) ("Omni Isaac Gym Envs") can be pre-installed on the deployed Isaac instances.
+[Omniverse Isaac Gym Reinforcement Learning Environments for Isaac Sim](https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs) ("Omni Isaac Gym Envs") can be pre-installed on deployed instances.
 
-To run Omniverse Isaac Gym Environments click "Omni Isaac Gym Envs" icon on the desktop or run the following command in the terminal:
+To run Omniverse Isaac Gym Environments, click the "Omni Isaac Gym Envs" icon on the desktop or run the following command in the terminal:
 
 ```sh
 ~/omni-isaac-gym-envs.sh
 ```
 
-Default output directory (`/OmniIsaacGymEnvs/omniisaacgymenvs/runs`) in the OmniIsaacGymEnvs contaner will be linked to the default results directory (`/home/ubuntu/results`) on the deployed instance. You can download the contents of this directory to your local machine using `./download <deployment_name>` command.
+The default output directory (`/OmniIsaacGymEnvs/omniisaacgymenvs/runs`) in the OmniIsaacGymEnvs container will be linked to the default results directory (`/home/ubuntu/results`) on the deployed instance. You can download the contents of this directory to your local machine using the `./download <deployment_name>` command.
 
-Tip: To install a specific version of OmniIsaacGymEnvs, provide valid reference from <https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs> as a value of `--oige` parameter to the deployment command. For example, to install `devel` branch on an AWS instance, run the following command:
+Tip: To install a specific version of OmniIsaacGymEnvs, provide a valid reference from <https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs> as the value of the `--oige` parameter to the deployment command. For example, to install the `devel` branch on an AWS instance, run the following command:
 
 ```sh
 ./deploy-aws --oige devel
@@ -279,25 +279,25 @@ Tip: To install a specific version of OmniIsaacGymEnvs, provide valid reference 
 
 ### Autorun Script
 
-By default, Isaac Sim will be started when the cloud VM is deployed.
+By default, Isaac Sim will start when the cloud VM is deployed.
 
-If you want to launch a custom application or script on startup, you can modify the [`uploads/autorun.sh`](uploads/autorun.sh) script (on your local machine). It will either be uploaded to the cloud VM automatically or you can upload it manually using the `./upload` command.
+If you want to launch a custom application or script on startup, modify the [`uploads/autorun.sh`](uploads/autorun.sh) script (on your local machine). It will either be uploaded to the cloud VM automatically, or you can upload it manually using the `./upload` command.
 
 Every time the cloud VM is deployed or started from a stopped state, the `autorun.sh` script will be executed.
 
-This functionality can be useful for running batch jobs, generating data on startup or preparing the environment for the user.
+This functionality can be useful for running batch jobs, generating data on startup, or preparing the environment for the user.
 
 ### Mapped Folders
 
-The following folders are mapped to the running Isaac Sim container by default (container paths may be different for specific applications):
+The following folders are mapped to the running Isaac Sim container by default (container paths may differ for specific applications):
 
-- `/home/ubuntu/uploads` (host) --> `/uploads` (container) - user data uploaded to the deployment with `./upload` command or automatically from local `uploads/` folder
-- `/home/ubuntu/results` (host) --> `/results` (container) - results of the applications run on the deployment, can be downloaded from the deployed machine with `./download` command
-- `/home/ubuntu/workspace` (host) --> `/workspace` (container) - workspace folder, can be used to exchange data between the host and the container.
+- `/home/ubuntu/uploads` (host) --> `/uploads` (container) - user data uploaded to the deployment with the `./upload` command or automatically from the local `uploads/` folder
+- `/home/ubuntu/results` (host) --> `/results` (container) - results of applications run on the deployment; you can download them from the deployed machine with the `./download` command
+- `/home/ubuntu/workspace` (host) --> `/workspace` (container) - workspace folder; can be used to exchange data between the host and the container
 
 ### Pausing and Resuming
 
-You can stop and re-start instances to save on cloud costs. To do so, run the following commands:
+You can stop and restart instances to save on cloud costs. To do so, run the following commands:
 
 ```sh
 # enter Isaac Automator container
@@ -309,7 +309,7 @@ You can stop and re-start instances to save on cloud costs. To do so, run the fo
 
 ### Uploading Data
 
-You can upload user data from `uploads/` folder (in the project root) to the deployment by running the following command:
+You can upload user data from the `uploads/` folder (in the project root) to the deployment by running the following command:
 
 ```sh
 # enter Isaac Automator container
@@ -318,11 +318,11 @@ You can upload user data from `uploads/` folder (in the project root) to the dep
 ./upload <deployment-name>
 ```
 
-Data will be uploaded to `/home/ubuntu/uploads` directory by default to all deployed instances. You can change this by passing `--remote-dir` argument to the command. Run `./upload --help` to see more options.
+Data will be uploaded to the `/home/ubuntu/uploads` directory by default, on all deployed instances. You can change this by passing the `--remote-dir` argument to the command. Run `./upload --help` to see more options.
 
 ### Downloading Data
 
-You can download user data to `results/` folder (in the project root) from deployed instances by running the following command:
+You can download user data to the `results/` folder (in the project root) from deployed instances by running the following command:
 
 ```sh
 # enter Isaac Automator container
@@ -331,11 +331,11 @@ You can download user data to `results/` folder (in the project root) from deplo
 ./download <deployment-name>
 ```
 
-Data will be downloaded from `/home/ubuntu/results` directory by default. You can change this by passing `--remote-dir` argument to the command. Run `./download --help` to see more options.
+Data will be downloaded from the `/home/ubuntu/results` directory by default. You can change this by passing the `--remote-dir` argument to the command. Run `./download --help` to see more options.
 
 ### Repairing
 
-If for some reason the deployment cloud resouces or software configuration get corrupted, you can attempt to repair the deployment by running the following command:
+If, for some reason, the deployment cloud resources or software configuration become corrupted, you can attempt to repair the deployment by running the following commands:
 
 ```sh
 # run both terraform and ansible
@@ -359,19 +359,19 @@ To destroy a deployment, run the following command:
 
 You will be prompted to enter the deployment name to destroy.
 
-*Please note that information about the deployed cloud resources is stored in `state/` directory. Do not delete this directory ever.*
+_Please note that information about the deployed cloud resources is stored in the `state/` directory. Do not delete this directory._
 
 ## Tips
 
-### Persisting Modifications to Isaac Sim/Lab Environment
+### Persisting Modifications to the Isaac Sim/Lab Environment
 
-It is common to require modifications to the Isaac Lab & Isaac Sim source code, as well as installed custom components to persist during instances shutdowns, re-starts and re-deployments.
+It's common to require that modifications to the Isaac Lab and Isaac Sim source code, as well as installed custom components, persist across instance shutdowns, restarts, and redeployments.
 
-To achive that, you can do the following:
+To achieve that, you can do the following:
 
-Go to `/uploads/` dir in the repo and find `autorun.sh` file4
+Go to the `/uploads/` directory in the repo and find the `autorun.sh` file.
 
-Modify it's contents like so (this example customizes Isaac Lab environment):
+Modify its contents like so (this example customizes the Isaac Lab environment):
 
 ```sh
 #!/bin/sh
@@ -386,15 +386,15 @@ docker image tag isaaclab:latest isaaclab:stock
 docker build -t isaaclab:latest -f "${SELF_DIR}/isaaclab-custom.dockerfile" "${SELF_DIR}"
 ```
 
-Now, create `isaaclab-custom.dockerfile` in the same `uploads/` directory with your changes and first line being:
+Now, create `isaaclab-custom.dockerfile` in the same `uploads/` directory with your changes and the first line being:
 
 ```dockerfile
 FROM isaaclab:stock
 ```
 
-Every time you deploy or start an instance (using `./start`), `uploads/` dir will be uploaded and `autorun.sh` executed, which will build the customized Isaac Lab environment.
+Every time you deploy or start an instance (using `./start`), the `uploads/` directory will be uploaded and `autorun.sh` executed, which will build the customized Isaac Lab environment.
 
-Alternatively, you can push your custom docker image somewhere and pull it from autorun script tagging it isaaclab:latest like so:
+Alternatively, you can push your custom Docker image to a registry and pull it from the autorun script, tagging it `isaaclab:latest`, like so:
 
 ```sh
 docker pull your-custom-image
