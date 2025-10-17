@@ -47,7 +47,7 @@ c["default_remote_workspace_dir"] = "/home/ubuntu/workspace"
 # defaults
 
 # --isaac-image
-c["default_isaac_image"] = "nvcr.io/nvidia/isaac-sim:5.0.0"
+c["default_isaac_image"] = "nvcr.io/nvidian/isaac-sim:latest-release-5-1"
 
 # --ssh-port
 c["default_ssh_port"] = 22
@@ -83,7 +83,7 @@ c["default_prefix"] = "isa"
 c["default_oige_git_checkpoint"] = "no"
 
 # --isaaclab
-c["default_isaaclab_git_checkpoint"] = "v2.2.1"
+c["default_isaaclab_git_checkpoint"] = "release/2.3.0"
 
 # --ingress-cidrs
 # empty value will be replaced with the current public IP

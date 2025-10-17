@@ -1,8 +1,15 @@
 FROM "{{ isaac_image }}"
 
+USER root
+
 # prereqs: apt packages
 RUN apt-get update && apt-get install -qy \
   git nano cmake build-essential ncurses-term
+
+# add github to known hosts
+RUN mkdir /root/.ssh && ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
+
+USER isaac-sim
 
 # # if in china, add local pip mirrors
 {% if in_china %}
@@ -19,9 +26,6 @@ WORKDIR ${ISAACLAB_PATH}
 
 ENV ISAACSIM_PATH="/isaac-sim"
 ENV PYTHON_PATH="${ISAACSIM_PATH}/python.sh"
-
-# add github to known hosts
-RUN mkdir /root/.ssh && ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
 
 {% if isaaclab_private_git == "" %}
 # clone public isaaclab repo
