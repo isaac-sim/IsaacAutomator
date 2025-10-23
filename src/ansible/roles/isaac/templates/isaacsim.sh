@@ -3,10 +3,7 @@
 # default parameter values
 
 # isaac sim startup command
-CMD="/isaac-sim/kit/kit \
-      /isaac-sim/apps/isaacsim.exp.full.kit \
-      --ext-folder /isaac-sim/apps \
-      --allow-root"
+CMD="/isaac-sim/runapp.sh"
 
 DISPLAY=":0"
 CONTAINER_NAME="isaacsim"
