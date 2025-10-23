@@ -8,4 +8,11 @@ if [[ $(docker images -q "$TAG" 2> /dev/null) == '' ]]; then
   "${SELF_DIR}/build"
 fi
 
-docker run --platform linux/x86_64 -it --rm -v "${SELF_DIR}":/app $TAG "${*:-bash}"
+# check if we're on mac
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  # we're on mac - enable emulation
+  docker run --platform linux/x86_64 -it --rm -v "${SELF_DIR}":/app $TAG "${*:-bash}"
+else
+  # we're not on mac
+  docker run -it --rm -v "${SELF_DIR}":/app $TAG "${*:-bash}"
+fi

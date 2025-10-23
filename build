@@ -4,4 +4,12 @@ SELF_DIR="$(realpath "$(dirname "${BASH_SOURCE}")")"
 TAG="isaac_automator"
 
 # run build and pasthrough all the args
-docker build --platform linux/x86_64 -t "${TAG}" "${SELF_DIR}" "$@"
+
+# check if we're on mac
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  # we're on macOS
+  docker build --platform linux/x86_64 -t "${TAG}" "${SELF_DIR}" "$@"
+else
+  # we're on Linux
+  docker build -t "${TAG}" "${SELF_DIR}" "$@"
+fi
