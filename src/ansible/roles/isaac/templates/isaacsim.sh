@@ -114,6 +114,9 @@ for d in "${OUT_DIR}" "${UPLOADS_DIR}" "${WORKSPACE_DIR}"; do
   [ ! -d "${d}" ] && mkdir -pv "${d}"
 done
 
+# allow local connections to X server
+xhost +local:
+
 # kill any existing container
 docker kill $CONTAINER_NAME 2>/dev/null
 
