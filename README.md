@@ -35,6 +35,7 @@ The result is a fully configured remote desktop cloud workstation that you can u
   - [Destroying](#destroying)
 - [Tips](#tips)
   - [Persisting Modifications to the Isaac Sim/Lab Environment](#persisting-modifications-to-the-isaac-simlab-environment)
+  - [Updating Expired AWS Credentials](#updating-expired-aws-credentials)
 
 ## Installation
 
@@ -399,4 +400,15 @@ Alternatively, you can push your custom Docker image to a registry and pull it f
 ```sh
 docker pull your-custom-image
 docker tag your-custom-image isaaclab:latest
+```
+
+### Updating Expired AWS Credentials
+
+If you are using temporary AWS credentials that expire (e.g., from `aws sts assume-role`), you may be unable to stop, start, or destroy the deployed instance after the credentials expire. To fix this, you can manually edit the `state/<deployment-name>/.tfvars` file in the Automator container, updating the `aws_access_key_id`, `aws_secret_key`, and `aws_session_token` variables to the new values.
+
+You can do this by running the following command:
+
+```sh
+# inside container:
+nano /app/state/<deployment_name>/.tfvars
 ```
