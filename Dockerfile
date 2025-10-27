@@ -12,11 +12,14 @@ ENV PYTHONPATH=/app:/app/lib:/app/src:/app/py:/app/python:/app/cli:/app/utils:/a
 
 # misc
 RUN apt-get update && apt-get install -qy \
+    apt-transport-https \
+    ca-certificates \
     openssh-client \
     lsb-release \
     python3-pip \
     apt-utils \
     expect \
+    gnupg \
     unzip \
     rsync \
     curl \
@@ -93,7 +96,10 @@ RUN aliyun auto-completion
 # aws cli
 # @see https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
 WORKDIR /tmp
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+RUN case "$(dpkg --print-architecture)" in \
+    amd64) curl -sS "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" ;; \
+    arm64) curl -sS "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip" ;; \
+    esac
 RUN unzip awscliv2.zip
 RUN ./aws/install
 
