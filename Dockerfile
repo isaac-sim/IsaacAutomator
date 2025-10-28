@@ -45,11 +45,11 @@ RUN apt-get install -qy terraform
 # install packer & plugins
 COPY . /tmp/app
 RUN if [ "$WITH_PACKER" = "1" ]; then \
-    apt-get install -yq packer; \
-    (cd /tmp/app/src/packer/azure/isaac && packer init .) \
-    && (cd /tmp/app/src/packer/aws/isaac && packer init .) \
+        apt-get install -yq packer; \
+        (cd /tmp/app/src/packer/azure/isaac && packer init .) \
+        && (cd /tmp/app/src/packer/aws/isaac && packer init .) \
     else \
-    echo "Skipping Packer installation"; \
+        echo "Skipping Packer installation"; \
     fi
 
 # azure command line
@@ -73,9 +73,9 @@ RUN ansible-galaxy collection install community.docker
 # ngc cli: https://docs.ngc.nvidia.com/cli/script.html
 RUN  case "$(dpkg --print-architecture)" in \
     amd64) \
-    wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/4.8.2/files/ngccli_linux.zip -O /opt/ngccli_linux.zip && unzip /opt/ngccli_linux.zip -d /opt ;; \
+        wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/4.8.2/files/ngccli_linux.zip -O /opt/ngccli_linux.zip && unzip /opt/ngccli_linux.zip -d /opt ;; \
     arm64) \
-    wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/4.8.2/files/ngccli_arm64.zip -O /opt/ngccli_arm64.zip && unzip /opt/ngccli_arm64.zip -d /opt ;; \
+        wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/4.8.2/files/ngccli_arm64.zip -O /opt/ngccli_arm64.zip && unzip /opt/ngccli_arm64.zip -d /opt ;; \
     esac
 RUN echo 'export PATH="$PATH:/opt/ngc-cli"' >> ~/.bashrc
 
@@ -97,8 +97,8 @@ RUN aliyun auto-completion
 # @see https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
 WORKDIR /tmp
 RUN case "$(dpkg --print-architecture)" in \
-    amd64) curl -sS "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" ;; \
-    arm64) curl -sS "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip" ;; \
+        amd64) curl -sS "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" ;; \
+        arm64) curl -sS "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip" ;; \
     esac
 RUN unzip awscliv2.zip
 RUN ./aws/install
