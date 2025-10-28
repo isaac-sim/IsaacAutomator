@@ -42,10 +42,6 @@ from src.python.utils import (
     shell_command,
 )
 
-APP_NAMES = [
-    "isaac",
-]
-
 
 @click.command()
 @click.option(
@@ -58,39 +54,16 @@ APP_NAMES = [
     required=True,
     type=click.Choice(deployments()),
 )
-@click.option(
-    "--app",
-    default="all",
-    type=click.Choice(["all"] + APP_NAMES),
-    help="Application.",
-)
-@click.argument(
-    "app",
-    required=False,
-)
 def main(
-    app: str,
     debug: bool,
     deployment_name: str,
 ):
     # cleck what cloud is deployment for
     cloud = read_tf_output(deployment_name, "cloud", verbose=debug)
 
-    # go through apps
-
-    apps = APP_NAMES if app == "all" else [app]
-
-    for app_name in apps:
+    for app_name in ["isaac"]:
         vm_id = read_tf_output(deployment_name, f"{app_name}_vm_id", verbose=debug)
         vm_ip = read_tf_output(deployment_name, f"{app_name}_ip", verbose=debug)
-
-        if vm_id in ["NA", ""]:
-            # show "not found" message if:
-            # - app is explicitly specified
-            # - debug is enabled
-            if app != "all" or debug:
-                click.echo(colorize_info(f"* No {format_app_name(app_name)} VM found"))
-            continue
 
         # stop VM
 
