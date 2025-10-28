@@ -28,9 +28,6 @@ else
   exit 1
 fi
 
-# find .Xauthority
-XAUTHORITY_LOCATION=$(systemctl --user show-environment | grep XAUTHORITY | cut -c 12-)
-
 # process named arguments
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -144,8 +141,6 @@ docker run \
   -v "${UPLOADS_DIR}":/uploads \
   -v "${WORKSPACE_DIR}":/workspace \
   \
-  -v "/tmp/.X11-unix:/tmp/.X11-unix" \
-  -v "${XAUTHORITY_LOCATION}:/root/.Xauthority" \
   -v /etc/xdg:/etc/xdg \
   --env XDG_CONFIG_DIRS \
   --env DISPLAY \
