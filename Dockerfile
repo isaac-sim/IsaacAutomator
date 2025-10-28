@@ -72,10 +72,10 @@ RUN ansible-galaxy collection install community.docker
 
 # ngc cli: https://docs.ngc.nvidia.com/cli/script.html
 RUN  case "$(dpkg --print-architecture)" in \
-      amd64) \
-        wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/4.8.2/files/ngccli_linux.zip -O /opt/ngccli_linux.zip && unzip /opt/ngccli_linux.zip -d /opt ;; \
-      arm64) \
-        wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/4.8.2/files/ngccli_arm64.zip -O /opt/ngccli_arm64.zip && unzip /opt/ngccli_arm64.zip -d /opt ;; \
+    amd64) \
+    wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/4.8.2/files/ngccli_linux.zip -O /opt/ngccli_linux.zip && unzip /opt/ngccli_linux.zip -d /opt ;; \
+    arm64) \
+    wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/4.8.2/files/ngccli_arm64.zip -O /opt/ngccli_arm64.zip && unzip /opt/ngccli_arm64.zip -d /opt ;; \
     esac
 RUN echo 'export PATH="$PATH:/opt/ngc-cli"' >> ~/.bashrc
 
