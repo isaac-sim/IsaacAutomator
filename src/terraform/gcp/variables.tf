@@ -43,4 +43,7 @@ variable "isaac_gpu_type" {
   type = string
 }
 
+variable "ingress_cidrs" {
+  type = list(string)
+}
 

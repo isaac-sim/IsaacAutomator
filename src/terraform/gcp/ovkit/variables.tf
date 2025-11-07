@@ -30,3 +30,8 @@ variable "isaac_enabled" {
   type    = bool
   default = false
 }
+
+variable "ingress_cidrs" {
+  type = list(string)
+}
+

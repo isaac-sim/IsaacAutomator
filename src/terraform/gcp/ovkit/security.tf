@@ -26,7 +26,7 @@ resource "google_compute_firewall" "ssh" {
     ports    = ["22"]
   }
 
-  source_ranges = ["0.0.0.0/0"]
+  source_ranges = var.ingress_cidrs
 }
 
 # nomachine
@@ -44,7 +44,7 @@ resource "google_compute_firewall" "nomachine" {
     ports    = ["4000"]
   }
 
-  source_ranges = ["0.0.0.0/0"]
+  source_ranges = var.ingress_cidrs
 }
 
 # vnc
@@ -57,7 +57,7 @@ resource "google_compute_firewall" "vnc" {
     ports    = ["5900"]
   }
 
-  source_ranges = ["0.0.0.0/0"]
+  source_ranges = var.ingress_cidrs
 }
 
 # novnc
@@ -70,7 +70,7 @@ resource "google_compute_firewall" "novnc" {
     ports    = ["6080"]
   }
 
-  source_ranges = ["0.0.0.0/0"]
+  source_ranges = var.ingress_cidrs
 }
 
 # custom ssh port
@@ -83,5 +83,5 @@ resource "google_compute_firewall" "ssh_custom" {
     ports    = ["${var.ssh_port}"]
   }
 
-  source_ranges = ["0.0.0.0/0"]
+  source_ranges = var.ingress_cidrs
 }
