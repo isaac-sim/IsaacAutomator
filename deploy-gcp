@@ -39,12 +39,13 @@ class DeployGCPCommand(DeployCommand):
     Defines options specific for "deploy-gcp" command.
     """
 
-    # azure instace types capable of running isaac
+    # gcp instance types capable of running isaac
     GCP_OVKIT_INSTANCE_TYPES = (
         [f"g2-standard-{i}" for i in [4, 8, 12, 16, 32]]
         + [f"n1-standard-{i}" for i in [4, 8, 16, 32, 64, 96]]
         + [f"n1-highmem-{i}" for i in [4, 8, 16, 32, 64, 96]]
         + [f"n1-highcpu-{i}" for i in [16, 32, 64, 96]]
+        + [f"g4-standard-{i}" for i in [48, 96, 192, 384]]
     )
 
     @staticmethod
@@ -127,10 +128,11 @@ class DeployGCPCommand(DeployCommand):
             click.core.Option(
                 ("--isaac-gpu-count",),
                 prompt=colorize_prompt(
-                    "* Isaac Sim: Number of GPUs. N1 instances use NVIDIA T4; G2 use NVIDIA L4 GPUs."
+                    "* Isaac Sim: Number of GPUs. N1 - up to 4x NVIDIA T4; "
+                    + "G2 - up to 8x NVIDIA L4; G4 - up to 8x NVIDIA RTX PRO 60000 GPUs."
                 ),
                 show_default=True,
-                type=click.Choice(["1", "2", "4"]),
+                type=click.Choice(["1", "2", "4", "8"]),
                 default=str(config["gcp_default_isaac_gpu_count"]),
                 help="Number of GPUs to attach to Isaac Sim instance.",
             ),
@@ -161,6 +163,11 @@ class GCPDeployer(Deployer):
 
         if self.existing_behavior != "run_ansible":
             # create tfvars file, deal with existing deployment
+            instance_type_prefix = self.params["isaac_instance_type"][:2]
+            boot_disk_type = (
+                "hyperdisk-balanced" if instance_type_prefix == "g4" else "pd-ssd"
+            )
+
             self.create_tfvars(
                 {
                     "zone": self.params["zone"],
@@ -169,7 +176,9 @@ class GCPDeployer(Deployer):
                     "isaac_gpu_type": {
                         "g2": "nvidia-l4",
                         "n1": "nvidia-tesla-t4",
-                    }[self.params["isaac_instance_type"][:2]],
+                        "g4": "nvidia-rtx-pro-6000",
+                    }[instance_type_prefix],
+                    "boot_disk_type": boot_disk_type,
                 }
             )
 

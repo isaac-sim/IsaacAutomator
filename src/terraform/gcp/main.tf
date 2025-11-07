@@ -32,4 +32,5 @@ module "isaac" {
   gpu_type           = var.isaac_gpu_type
   ssh_port           = var.ssh_port
   ingress_cidrs      = var.ingress_cidrs
+  boot_disk_type     = var.boot_disk_type
 }

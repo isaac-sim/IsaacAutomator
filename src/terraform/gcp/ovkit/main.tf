@@ -27,7 +27,7 @@ resource "google_compute_instance" "default" {
       image = local.boot_image
       size  = local.boot_disk_size
       # @see https://cloud.google.com/compute/docs/disks
-      type = "pd-ssd"
+      type = var.boot_disk_type
     }
   }
 
@@ -49,4 +49,5 @@ resource "google_compute_instance" "default" {
     access_config {}
   }
 }
+
 
