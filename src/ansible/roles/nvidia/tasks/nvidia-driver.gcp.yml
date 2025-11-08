@@ -14,30 +14,32 @@
 # limitations under the License.
 # endregion
 
-- name: GCP / Prerequisites (APT)
-  apt: name={{ item }}
-    state=latest
-    update_cache=yes
-    install_recommends=no
-  with_items:
-    - build-essential
-    - python3-pip # required by asible get_url
-    - gcc-12 # fix for https://github.com/isaac-sim/IsaacAutomator/issues/17
+# @see https://docs.cloud.google.com/compute/docs/gpus/install-drivers-gpu
 
-- name: GCP / Prerequisites (PIP)
-  pip:
-    # older version is needed by ansible get_url for some reason
-    name: requests==2.20.1
-    executable: pip3
+#  Install prerequisites to avoid reboot during driver install 
+# (See ubuntu.py in https://storage.googleapis.com/compute-gpu-installation-us/installer/latest/cuda_installer.pyz)
+- name: GCP / Install required packages for NVIDIA driver
+  apt:
+    name:
+      - gcc
+      - make
+      - dkms
+      - cmake
+      - pciutils
+      - linux-image-gcp
+      - linux-headers-gcp
+      - software-properties-common
+    state: present
+    update_cache: yes
+  become: true
 
-- name: GCP / Download script to install GPU driver
-  get_url:
-    url: "{{ gcp_driver_url }}"
-    dest: /tmp/install_gpu_driver.py
-    mode: 0755
-
-- name: GCP / Install gpu driver
-  shell: "python3 /tmp/install_gpu_driver.py"
+- name: GCP / Install NVIDIA driver
+  shell: |
+      mkdir -p /opt/google/cuda-installer
+      cd /opt/google/cuda-installer
+      touch prerequisites
+      curl -fSsL -O https://storage.googleapis.com/compute-gpu-installation-us/installer/latest/cuda_installer.pyz
+      sudo python3 cuda_installer.pyz install_driver --installation-mode=binary --installation-branch=prod
 
 - name: GCP / Enable persistent mode for the driver
   shell: nvidia-smi -pm ENABLED
