@@ -30,3 +30,11 @@ variable "isaac_enabled" {
   type    = bool
   default = false
 }
+
+variable "ingress_cidrs" {
+  type = list(string)
+}
+
+variable "boot_disk_type" {
+  type = string
+}

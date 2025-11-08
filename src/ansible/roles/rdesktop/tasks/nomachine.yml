@@ -15,11 +15,11 @@
 # endregion
 
 ---
-# @see https://downloads.nomachine.com/download/?id=2 for new versions
+# @see https://downloads.nomachine.com/download/?id=1 for new versions
 
 - name: Download NoMachine server
   get_url:
-    url: https://download.nomachine.com/download/8.12/Linux/nomachine_8.12.12_4_amd64.deb
+    url: https://web9001.nomachine.com/download/9.2/Linux/nomachine_9.2.18_3_amd64.deb
     dest: /tmp/nomachine.deb
     mode: 0644
     timeout: 600 # 10 minutes

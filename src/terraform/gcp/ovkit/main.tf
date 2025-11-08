@@ -2,7 +2,7 @@ locals {
   # gcloud compute images list --filter="name~'ubuntu'"
   # boot_image     = "ubuntu-1804-bionic-v20230308"
   # boot_image     = "ubuntu-2004-focal-v20230302"
-  boot_image     = "ubuntu-2204-jammy-v20240519"
+  boot_image     = "ubuntu-2204-jammy-v20251023"
   boot_disk_size = 255
   os_username    = "ubuntu"
 }
@@ -27,7 +27,7 @@ resource "google_compute_instance" "default" {
       image = local.boot_image
       size  = local.boot_disk_size
       # @see https://cloud.google.com/compute/docs/disks
-      type = "pd-ssd"
+      type = var.boot_disk_type
     }
   }
 
@@ -49,4 +49,5 @@ resource "google_compute_instance" "default" {
     access_config {}
   }
 }
+
 

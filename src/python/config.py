@@ -30,11 +30,6 @@ c["terraform_dir"] = "/app/src/terraform"
 # app image name
 c["app_image_name"] = "isaac_automator"
 
-# gcp driver
-# @see https://cloud.google.com/compute/docs/gpus/grid-drivers-table
-c["gcp_driver_url"] = (
-    "https://raw.githubusercontent.com/GoogleCloudPlatform/compute-gpu-installation/main/linux/install_gpu_driver.py"
-)
 
 # aws/alicloud driver
 c["generic_driver_apt_package"] = "nvidia-driver-580-server"

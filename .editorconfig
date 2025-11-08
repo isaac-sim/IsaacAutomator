@@ -20,6 +20,9 @@ indent_size = 4
 [*.py]
 indent_size = 4
 
+[*.yml]
+indent_size = 2
+
 # fedor's ngingx config
 [nginx.ingress.router.conf]
 indent_size = 8

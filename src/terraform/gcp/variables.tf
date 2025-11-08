@@ -43,4 +43,15 @@ variable "isaac_gpu_type" {
   type = string
 }
 
+variable "ingress_cidrs" {
+  type = list(string)
+}
 
+variable "boot_disk_type" {
+  type    = string
+  default = "pd-ssd"
+  validation {
+    condition     = contains(["pd-ssd", "hyperdisk-balanced"], var.boot_disk_type)
+    error_message = "boot_disk_type must be one of: pd-ssd, hyperdisk-balanced."
+  }
+}
