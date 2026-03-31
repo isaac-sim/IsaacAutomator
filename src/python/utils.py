@@ -192,13 +192,12 @@ def get_my_public_ip(verbose=False):
     Get the current public IP address
     """
     methods = [
-        # DNS-based via UDP port 53 — works even when HTTP is blocked
-        "dig +short +time=2 +tries=1 myip.opendns.com @208.67.222.222",
-        "dig +short +time=2 +tries=1 myip.opendns.com @208.67.220.220",
-        # HTTP fallback
         "curl -sS --max-time 2 https://api.ipify.org",
         "curl -sS --max-time 2 https://icanhazip.com",
         "curl -sS --max-time 2 https://checkip.amazonaws.com",
+        # DNS-based via UDP port 53 — works even when HTTP is blocked
+        "dig +short +time=2 +tries=1 myip.opendns.com @208.67.222.222",
+        "dig +short +time=2 +tries=1 myip.opendns.com @208.67.220.220",
     ]
     for cmd in methods:
         res = shell_command(cmd, verbose=verbose, capture_output=True, exit_on_error=False)
