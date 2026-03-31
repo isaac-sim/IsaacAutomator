@@ -132,8 +132,7 @@ def format_instance_role(instance_role):
     """
 
     formatted = {
-        "isaac": "Isaac Sim",
-        "ovami": "OV AMI",
+        "isaac": "Isaac Workstation",
     }
 
     if instance_role in formatted:
