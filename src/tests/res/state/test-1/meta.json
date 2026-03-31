@@ -69,7 +69,6 @@
         "gcp_default_isaac_gpu_count": 1,
         "alicloud_default_region": "us-east-1",
         "default_prefix": "isa",
-        "default_oige_git_checkpoint": "no",
         "default_isaaclab_git_checkpoint": "v2.3.0",
         "default_ingress_cidrs": "0.0.0.0/0"
     }

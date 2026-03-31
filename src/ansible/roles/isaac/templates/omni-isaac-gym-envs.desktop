@@ -1,6 +1,0 @@
-[Desktop Entry]
-Type=Application
-Terminal=true
-Exec={{ launch_scripts_dir }}/omni-isaac-gym-envs.sh
-Name=Omni Isaac Gym Envs
-Icon=/home/ubuntu/Pictures/isaacsim-icon-shell.png

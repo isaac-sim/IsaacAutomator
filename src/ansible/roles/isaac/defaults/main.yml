@@ -18,10 +18,6 @@ deployment_name:
 
 isaac_cache_dir: /home/{{ ansible_user }}/isaac
 
-# OmniIsaacGymEnvs
-omni_isaac_gym_envs_dir: /opt/omni-isaac-gym-envs
-omni_isaac_gym_envs_git_checkpoint: main
-
 # Isaac Sim
 isaacsim_git_checkpoint: no
 

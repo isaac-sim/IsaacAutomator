@@ -71,9 +71,6 @@ c["alicloud_default_region"] = "us-east-1"
 # --prefix for the created cloud resources
 c["default_prefix"] = "isa"
 
-# --oige
-c["default_oige_git_checkpoint"] = "no"
-
 # --isaaclab
 c["default_isaaclab_git_checkpoint"] = "develop"
 

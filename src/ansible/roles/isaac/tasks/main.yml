@@ -36,11 +36,6 @@
   import_tasks: autorun.yml
   when: isaacsim_git_checkpoint != 'no'
 
-#  https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs
-- name: Omni Isaac Gym Envs
-  import_tasks: omni_isaac_gym_envs.yml
-  when: omni_isaac_gym_envs_git_checkpoint != 'no'
-
 - name: Isaac Lab
   import_tasks: isaaclab.yml
   when: isaaclab_git_checkpoint != 'no'

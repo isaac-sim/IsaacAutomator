@@ -25,7 +25,6 @@ The result is a fully configured remote desktop cloud workstation that you can u
   - [Running Applications](#running-applications)
     - [Isaac Sim](#isaac-sim)
     - [Isaac Lab](#isaac-lab)
-    - [Omniverse Isaac Gym Environments](#omniverse-isaac-gym-environments)
   - [Autorun Script](#autorun-script)
   - [Mapped Folders](#mapped-folders)
   - [Pausing and Resuming](#pausing-and-resuming)
@@ -256,26 +255,6 @@ To run Isaac Lab, click the "Isaac Lab" icon on the desktop or run the following
 
 ```sh
 ~/isaaclab.sh
-```
-
-#### Omniverse Isaac Gym Environments
-
-_Omniverse Isaac Gym Environments is deprecated in favor of Isaac Lab._
-
-[Omniverse Isaac Gym Reinforcement Learning Environments for Isaac Sim](https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs) ("Omni Isaac Gym Envs") can be pre-installed on deployed instances.
-
-To run Omniverse Isaac Gym Environments, click the "Omni Isaac Gym Envs" icon on the desktop or run the following command in the terminal:
-
-```sh
-~/omni-isaac-gym-envs.sh
-```
-
-The default output directory (`/OmniIsaacGymEnvs/omniisaacgymenvs/runs`) in the OmniIsaacGymEnvs container will be linked to the default results directory (`/home/ubuntu/results`) on the deployed instance. You can download the contents of this directory to your local machine using the `./download <deployment_name>` command.
-
-Tip: To install a specific version of OmniIsaacGymEnvs, provide a valid reference from <https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs> as the value of the `--oige` parameter to the deployment command. For example, to install the `devel` branch on an AWS instance, run the following command:
-
-```sh
-./deploy-aws --oige devel
 ```
 
 ### Autorun Script

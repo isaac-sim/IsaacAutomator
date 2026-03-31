@@ -79,17 +79,6 @@ class DeployCommand(click.core.Command):
 
         return value
 
-    @staticmethod
-    def oige_callback(ctx, param, value):
-        """
-        Called after parsing --oige option
-        """
-
-        if "" == value:
-            return config["default_oige_git_checkpoint"]
-
-        return value
-
     def ingress_cidrs_callback(ctx, param, value):
         """
         Called after parsing --ingress-cidrs option
@@ -247,23 +236,6 @@ class DeployCommand(click.core.Command):
                 default=config["default_isaacsim_git_checkpoint"],
                 show_default=True,
                 prompt=colorize_prompt("* " + help),
-            ),
-        )
-
-        # --oige
-        help = (
-            "[DEPRECATED] Install Omni Isaac Gym Envs? Valid values: 'no', "
-            + "or <git ref in github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs>"
-        )
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--oige",),
-                help=help,
-                default=config["default_oige_git_checkpoint"],
-                show_default=True,
-                prompt=colorize_prompt("* " + help),
-                callback=DeployCommand.oige_callback,
             ),
         )
 
