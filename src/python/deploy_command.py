@@ -177,7 +177,7 @@ class DeployCommand(click.core.Command):
             len(self.params),
             click.core.Option(
                 ("--debug/--no-debug",),
-                default=False,
+                default=os.environ.get("DEBUG", "0") == "1",
                 show_default=True,
                 help="Enable debug output.",
             ),
@@ -235,7 +235,7 @@ class DeployCommand(click.core.Command):
         # ingress cidr blocks
         help = (
             "CIDR blocks for ingress traffic on the created VM, "
-            + f'comma separated. Type "myip" to use your public IP ({get_my_public_ip(verbose="--debug" in sys.argv)}). '
+            + f'comma separated. Type "myip" to use your public IP ({get_my_public_ip(verbose="--debug" in sys.argv or os.environ.get("DEBUG", "0") == "1")}). '
             + "Add /8, /16, or /24 to specify the subnet mask."
         )
         self.params.insert(
