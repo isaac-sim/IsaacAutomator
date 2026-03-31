@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -qy \
     gnupg \
     unzip \
     rsync \
+    dnsutils \
     curl \
     nano \
     wget \
