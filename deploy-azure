@@ -87,7 +87,7 @@ class DeployAzureCommand(DeployCommand):
         # --isaac-instance-type
         self.params.insert(
             # insert after --isaac option
-            self.param_index("isaac") + 1,
+            self.param_index("isaacsim") + 1,
             click.core.Option(
                 ("--isaac-instance-type",),
                 type=str,
@@ -167,10 +167,6 @@ class AzureDeployer(Deployer):
     def main(self):
         # ask what to do if deployment already exists
         self.ask_existing_behavior()
-
-        # check if ngc api key is valid and has access to Isaac Sim
-        if self.params["isaac"]:
-            self.validate_ngc_api_key(self.params["isaac_image"])
 
         if self.existing_behavior != "run_ansible":
             # create tfvars file, deal with existing deployment

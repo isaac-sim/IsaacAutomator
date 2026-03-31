@@ -30,9 +30,11 @@
 
 - name: Isaac App
   import_tasks: isaac_app.yml
+  when: isaacsim_git_checkpoint != 'no'
 
 - name: Autorun
   import_tasks: autorun.yml
+  when: isaacsim_git_checkpoint != 'no'
 
 #  https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs
 - name: Omni Isaac Gym Envs

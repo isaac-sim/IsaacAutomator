@@ -284,9 +284,7 @@ class Deployer:
         # default values common for all clouds
         tfvars.update(
             {
-                "isaac_enabled": (
-                    self.params["isaac"] if "isaac" in self.params else False
-                ),
+                "isaac_enabled": True,
                 #
                 "isaac_instance_type": (
                     self.params["isaac_instance_type"]
@@ -497,13 +495,11 @@ class Deployer:
 
     def run_all_ansible(self):
         # run ansible for isaac
-        if "isaac" in self.params and self.params["isaac"]:
-
-            click.echo(colorize_info("* Running Ansible for Isaac Sim..."))
-            self.run_ansible(
-                playbook_name="isaac",
-                cwd=f"{self.config['ansible_dir']}",
-            )
+        click.echo(colorize_info("* Running Ansible for Isaac Sim..."))
+        self.run_ansible(
+            playbook_name="isaac",
+            cwd=f"{self.config['ansible_dir']}",
+        )
 
         # run ansible for ovami
         # todo: move to ./deploy-aws
@@ -569,7 +565,7 @@ class Deployer:
         Save info to file (_state_dir_/_deployment_name_/info.txt)
         """
 
-        isaac = "isaac" in self.params and self.params["isaac"]
+        isaac = True
         ovami = "ovami" in self.params and self.params["ovami"]
 
         vnc_password = self.params["vnc_password"]

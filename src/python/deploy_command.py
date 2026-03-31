@@ -42,18 +42,6 @@ class DeployCommand(click.core.Command):
     """
 
     @staticmethod
-    def isaac_callback(ctx, param, value):
-        """
-        Called after --isaac option is parsed
-        """
-        # disable isaac instance type selection if isaac is disabled
-        if value is False:
-            for p in ctx.command.params:
-                if p.name.startswith("isaac"):
-                    p.prompt = None
-        return value
-
-    @staticmethod
     def deployment_name_callback(ctx, param, value):
         # validate
         if not re.match("^[a-z0-9\\-]{1,32}$", value):
@@ -87,28 +75,6 @@ class DeployCommand(click.core.Command):
         ):
             raise click.BadParameter(
                 colorize_error("`Key contains invalid characters or is too short`.")
-            )
-
-        return value
-
-    @staticmethod
-    def ngc_image_callback(ctx, param, value):
-        """
-        Called after parsing --isaac-image options are parsed
-        """
-
-        # ignore case
-        value = value.lower()
-
-        if not re.match(
-            "^nvcr\\.io/[a-z0-9\\-_]+/([a-z0-9\\-_]+/)?[a-z0-9\\-_]+:[a-z0-9\\-_.]+$",
-            value,
-        ):
-            raise click.BadParameter(
-                colorize_error(
-                    "Invalid image name. "
-                    + "Expected: nvcr.io/<org>/[<team>/]<image>:<tag>"
-                )
             )
 
         return value
@@ -268,27 +234,19 @@ class DeployCommand(click.core.Command):
             ),
         )
 
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--isaac/--no-isaac",),
-                default=True,
-                show_default="yes",
-                prompt=colorize_prompt("* Install Isaac Sim?"),
-                callback=DeployCommand.isaac_callback,
-                help="Install Isaac Sim?",
-            ),
+        # --isaacsim
+        help = (
+            "Install Isaac Sim? Valid values: 'no', "
+            + "or <git ref in github.com/isaac-sim/IsaacLab>"
         )
-
         self.params.insert(
             len(self.params),
             click.core.Option(
-                ("--isaac-image",),
-                default=config["default_isaac_image"],
-                prompt=colorize_prompt("* Isaac Sim docker image"),
+                ("--isaacsim",),
+                help=help,
+                default=config["default_isaacsim_git_checkpoint"],
                 show_default=True,
-                callback=DeployCommand.ngc_image_callback,
-                help="Isaac Sim docker image to use.",
+                prompt=colorize_prompt("* " + help),
             ),
         )
 
