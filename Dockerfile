@@ -1,6 +1,6 @@
 # Dockerfile for runnig and distributing the app
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 ARG WITH_PACKER=1
 
@@ -61,13 +61,13 @@ RUN ln -s /app/state/.azure /root/.azure
 RUN echo "mkdir -p /app/state/.azure" >> /root/.bashrc
 
 # pip
-RUN pip install click randomname pwgen debugpy
+RUN pip install --break-system-packages click randomname pwgen debugpy
 
 # ansible
 ENV ANSIBLE_FORCE_COLOR=true
 # for some reason, the ansible.cfg file is not being picked up on Windows
 ENV ANSIBLE_CONFIG="/app/src/ansible/ansible.cfg"
-RUN pip install ansible
+RUN pip install --break-system-packages ansible
 RUN ansible-galaxy collection install community.docker
 
 # ngc cli: https://docs.ngc.nvidia.com/cli/script.html
