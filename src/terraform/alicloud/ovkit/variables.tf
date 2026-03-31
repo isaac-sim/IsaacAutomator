@@ -11,7 +11,7 @@ variable "ssh_port" {
 }
 
 variable "vswitch_netnum" {
-  description = "The number of the subnet to use for the app vswitch. 1-255."
+  description = "The number of the subnet to use for the instance_role vswitch. 1-255."
   type        = number
 }
 

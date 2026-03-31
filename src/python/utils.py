@@ -126,9 +126,9 @@ def read_tf_output(deployment_name, output, verbose=False):
     )
 
 
-def format_app_name(app_name):
+def format_instance_role(instance_role):
     """
-    Format app name for user output
+    Format instance role name for user output
     """
 
     formatted = {
@@ -136,10 +136,10 @@ def format_app_name(app_name):
         "ovami": "OV AMI",
     }
 
-    if app_name in formatted:
-        return formatted[app_name]
+    if instance_role in formatted:
+        return formatted[instance_role]
 
-    return app_name
+    return instance_role
 
 
 def format_cloud_name(cloud_name):

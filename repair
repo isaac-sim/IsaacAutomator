@@ -93,11 +93,11 @@ def main(
     # run ansible
     if ansible:
         click.echo(colorize_info("* Re-running Ansible..."))
-        for app in ["isaac", "ovami"]:
-            if meta["params"][app]:
+        for instance_role in ["isaac", "ovami"]:
+            if meta["params"][instance_role]:
                 shell_command(
                     f"ansible-playbook -i {config['state_dir']}/{deployment_name}/.inventory "
-                    + f"{app}.yml {'-vv' if debug else ''}",
+                    + f"{instance_role}.yml {'-vv' if debug else ''}",
                     cwd=f"{config['ansible_dir']}",
                     verbose=debug,
                 )

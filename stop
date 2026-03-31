@@ -36,7 +36,7 @@ from src.python.utils import (
     colorize_info,
     colorize_result,
     deployments,
-    format_app_name,
+    format_instance_role,
     format_cloud_name,
     read_tf_output,
     shell_command,
@@ -61,15 +61,15 @@ def main(
     # cleck what cloud is deployment for
     cloud = read_tf_output(deployment_name, "cloud", verbose=debug)
 
-    for app_name in ["isaac"]:
-        vm_id = read_tf_output(deployment_name, f"{app_name}_vm_id", verbose=debug)
-        vm_ip = read_tf_output(deployment_name, f"{app_name}_ip", verbose=debug)
+    for instance_role in ["isaac"]:
+        vm_id = read_tf_output(deployment_name, f"{instance_role}_vm_id", verbose=debug)
+        vm_ip = read_tf_output(deployment_name, f"{instance_role}_ip", verbose=debug)
 
         # stop VM
 
         click.echo(
             colorize_info(
-                f"* Stopping {format_app_name(app_name)} VM @ {format_cloud_name(cloud)} ({vm_ip})..."
+                f"* Stopping {format_instance_role(instance_role)} VM @ {format_cloud_name(cloud)} ({vm_ip})..."
             ),
             nl=False,
         )
@@ -120,7 +120,7 @@ def main(
 
         click.echo(
             colorize_result(
-                f"* {format_app_name(app_name)} VM stopped."
+                f"* {format_instance_role(instance_role)} VM stopped."
                 + " Please note: Storage and network resources may still incur costs."
                 + extra_info
             )

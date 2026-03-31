@@ -41,7 +41,7 @@ from src.python.utils import (
     colorize_info,
     colorize_result,
     deployments,
-    format_app_name,
+    format_instance_role,
     format_cloud_name,
     read_tf_output,
     shell_command,
@@ -66,15 +66,15 @@ def main(
     # cleck what cloud is deployment for
     cloud = read_tf_output(deployment_name, "cloud", verbose=debug)
 
-    # go through apps
+    # go through instance roles
 
-    for app_name in ["isaac"]:
-        vm_id = read_tf_output(deployment_name, f"{app_name}_vm_id", verbose=debug)
-        vm_ip = read_tf_output(deployment_name, f"{app_name}_ip", verbose=debug)
+    for instance_role in ["isaac"]:
+        vm_id = read_tf_output(deployment_name, f"{instance_role}_vm_id", verbose=debug)
+        vm_ip = read_tf_output(deployment_name, f"{instance_role}_ip", verbose=debug)
 
         click.echo(
             colorize_info(
-                f"* Starting {format_app_name(app_name)} VM @ {format_cloud_name(cloud)} ({vm_ip})..."
+                f"* Starting {format_instance_role(instance_role)} VM @ {format_cloud_name(cloud)} ({vm_ip})..."
             ),
             nl=False,
         )
@@ -122,13 +122,13 @@ def main(
             )
             exit(1)
 
-        click.echo(colorize_result(f"* {format_app_name(app_name)} VM started."))
+        click.echo(colorize_result(f"* {format_instance_role(instance_role)} VM started."))
 
         # run "on_stop_start" tags in ansible
-        click.echo(colorize_info(f"* Configuring {format_app_name(app_name)} VM..."))
+        click.echo(colorize_info(f"* Configuring {format_instance_role(instance_role)} VM..."))
         shell_command(
             f"ansible-playbook -i {config['state_dir']}/{deployment_name}/.inventory"
-            + f" {app_name}.yml"
+            + f" {instance_role}.yml"
             + " -t on_stop_start"
             + f" {'-vv' if debug else ''}",
             cwd=config["ansible_dir"],

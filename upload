@@ -27,12 +27,12 @@ from src.python.utils import (
     colorize_info,
     colorize_result,
     deployments,
-    format_app_name,
+    format_instance_role,
     read_tf_output,
     shell_command,
 )
 
-APP_NAMES = [
+INSTANCE_ROLE_NAMES = [
     "isaac",
     "ovami",
 ]
@@ -63,31 +63,31 @@ APP_NAMES = [
     help="Alow deleting when syncing results?",
 )
 @click.option(
-    "--app",
+    "--instance-role",
     default="all",
-    type=click.Choice(["all"] + APP_NAMES),
-    help="Application to upload to.",
+    type=click.Choice(["all"] + INSTANCE_ROLE_NAMES),
+    help="Instance role to upload to.",
 )
-@click.argument("app", required=False)
+@click.argument("instance_role", required=False)
 def main(
-    app: str,
+    instance_role: str,
     debug: bool,
     delete: bool,
     remote_dir: str,
     deployment_name: str,
 ):
-    apps = APP_NAMES if app == "all" else [app]
+    instance_roles = INSTANCE_ROLE_NAMES if instance_role == "all" else [instance_role]
 
-    for app_name in apps:
-        ip = read_tf_output(deployment_name, f"{app_name}_ip", verbose=debug)
+    for instance_role_name in instance_roles:
+        ip = read_tf_output(deployment_name, f"{instance_role_name}_ip", verbose=debug)
 
         if ip in ["NA", ""]:
             # show "not found" message if:
-            # - app is explicitly specified
+            # - instance_role is explicitly specified
             # - debug is enabled
-            if app != "all" or debug:
+            if instance_role != "all" or debug:
                 click.echo(
-                    colorize_info(f"* No {format_app_name(app_name)} instance found")
+                    colorize_info(f"* No {format_instance_role(instance_role_name)} instance found")
                 )
             continue
 
@@ -102,7 +102,7 @@ def main(
         click.echo(
             colorize_info(
                 f'* Uploading from "{uploads_dir}" to "{remote_dir}" @ '
-                + f"{format_app_name(app_name)} instance ({ip})..."
+                + f"{format_instance_role(instance_role_name)} instance ({ip})..."
             )
         )
 
@@ -141,7 +141,7 @@ def main(
 
         click.echo(
             colorize_result(
-                f'* Uploaded {output_dir_size} to "{remote_dir}" @ {format_app_name(app_name)} instance ({ip})'
+                f'* Uploaded {output_dir_size} to "{remote_dir}" @ {format_instance_role(instance_role_name)} instance ({ip})'
             )
         )
 
