@@ -20,6 +20,7 @@ Base deploy- command
 
 import os
 import re
+import sys
 
 import click
 import randomname
@@ -234,7 +235,7 @@ class DeployCommand(click.core.Command):
         # ingress cidr blocks
         help = (
             "CIDR blocks for ingress traffic on the created VM, "
-            + f'comma separated. Type "myip" to use your public IP ({get_my_public_ip()}). '
+            + f'comma separated. Type "myip" to use your public IP ({get_my_public_ip(verbose="--debug" in sys.argv)}). '
             + "Add /8, /16, or /24 to specify the subnet mask."
         )
         self.params.insert(
