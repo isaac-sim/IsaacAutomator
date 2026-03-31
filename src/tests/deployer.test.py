@@ -20,6 +20,7 @@ class Test_Deployer(unittest.TestCase):
                 "from_image": False,
                 "deployment_name": "test-1",
                 "existing": "ask",
+                "in_china": "no",
                 "region": "us-east-1",
                 "isaac": True,
                 "isaac_instance_type": "g5.2xlarge",
@@ -33,6 +34,7 @@ class Test_Deployer(unittest.TestCase):
                 "upload": True,
                 "aws_access_key_id": "__aws_access_key_id__",
                 "aws_secret_access_key": "__aws_secret_access_key__",
+                "ingress_cidrs": "auto",
             },
             config=self.config,
         )

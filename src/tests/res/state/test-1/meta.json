@@ -1,11 +1,12 @@
 {
-    "command": "src/tests/deployer.test.py --no-debug --prefix 'isa' --no-from-image --deployment-name 'test-1' --existing 'ask' --region 'us-east-1' --isaac --isaac-instance-type 'g5.2xlarge' --isaac-image 'nvcr.io/nvidia/isaac-sim:2022.2.0' --ngc-api-key '__ngc_api_key__' --ngc-api-key-check --vnc-password '__vnc_password__' --omniverse-user 'ovuser' --omniverse-password '__omniverse_password__' --ssh-port 22 --upload --aws-access-key-id '__aws_access_key_id__' --aws-secret-access-key '__aws_secret_access_key__'",
+    "command": "src/tests/deployer.test.py --no-debug --prefix 'isa' --not-from-image --deployment-name 'test-1' --existing 'ask' --in-china 'no' --region 'us-east-1' --isaac --isaac-instance-type 'g5.2xlarge' --isaac-image 'nvcr.io/nvidia/isaac-sim:2022.2.0' --ngc-api-key '__ngc_api_key__' --ngc-api-key-check --vnc-password '__vnc_password__' --omniverse-user 'ovuser' --omniverse-password '__omniverse_password__' --ssh-port 22 --upload --aws-access-key-id '__aws_access_key_id__' --aws-secret-access-key '__aws_secret_access_key__' --ingress-cidrs 'auto'",
     "input_params": {
         "debug": false,
         "prefix": "isa",
         "from_image": false,
         "deployment_name": "test-1",
         "existing": "ask",
+        "in_china": "no",
         "region": "us-east-1",
         "isaac": true,
         "isaac_instance_type": "g5.2xlarge",
@@ -18,7 +19,8 @@
         "ssh_port": 22,
         "upload": true,
         "aws_access_key_id": "__aws_access_key_id__",
-        "aws_secret_access_key": "__aws_secret_access_key__"
+        "aws_secret_access_key": "__aws_secret_access_key__",
+        "ingress_cidrs": "auto"
     },
     "params": {
         "debug": false,
@@ -26,6 +28,7 @@
         "from_image": false,
         "deployment_name": "test-1",
         "existing": "ask",
+        "in_china": false,
         "region": "us-east-1",
         "isaac": true,
         "isaac_instance_type": "g5.2xlarge",
@@ -38,7 +41,8 @@
         "ssh_port": 22,
         "upload": true,
         "aws_access_key_id": "__aws_access_key_id__",
-        "aws_secret_access_key": "__aws_secret_access_key__"
+        "aws_secret_access_key": "__aws_secret_access_key__",
+        "ingress_cidrs": "auto"
     },
     "config": {
         "app_dir": "/app",
@@ -48,18 +52,25 @@
         "tests_dir": "/app/src/tests",
         "ansible_dir": "/app/src/ansible",
         "terraform_dir": "/app/src/terraform",
-        "app_image_name": "isa",
-        "default_isaac_image": "nvcr.io/nvidia/isaac-sim:2023.1.0",
+        "app_image_name": "isaac_automator",
+        "generic_driver_apt_package": "nvidia-driver-580-server",
+        "default_remote_uploads_dir": "/home/ubuntu/uploads",
+        "default_remote_results_dir": "/home/ubuntu/results",
+        "default_remote_workspace_dir": "/home/ubuntu/workspace",
+        "default_isaac_image": "nvcr.io/nvidia/isaac-sim:5.1.0",
         "default_ssh_port": 22,
         "azure_default_from_image": false,
         "aws_default_from_image": false,
         "default_omniverse_user": "omniverse",
-        "default_remote_uploads_dir": "/home/ubuntu/uploads",
-        "default_remote_results_dir": "/home/ubuntu/results",
         "aws_default_isaac_instance_type": "g5.2xlarge",
-        "azure_default_isaac_instance_type": "2",
+        "azure_default_isaac_instance_type": "Standard_NV36ads_A10_v5",
         "gcp_default_isaac_instance_type": "g2-standard-8",
+        "alicloud_default_isaac_instance_type": "ecs.gn7i-c16g1.4xlarge",
         "gcp_default_isaac_gpu_count": 1,
-        "default_prefix": "isa"
+        "alicloud_default_region": "us-east-1",
+        "default_prefix": "isa",
+        "default_oige_git_checkpoint": "no",
+        "default_isaaclab_git_checkpoint": "v2.3.0",
+        "default_ingress_cidrs": "0.0.0.0/0"
     }
 }
