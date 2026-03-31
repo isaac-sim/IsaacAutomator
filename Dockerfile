@@ -108,7 +108,7 @@ RUN ./aws/install
 COPY . /app
 
 # customoize bash prompt
-RUN echo "export PS1='\[\033[01;36m\][Isaac Automator \${VERSION}]\[\033[00m\]:\w\$ '" >>  /root/.bashrc
+RUN echo "export PS1='\[\033[01;33m\][Isaac Automator \[\033[00;33m\]\${VERSION}\[\033[01;33m\]]\[\033[00m\]\[\033[00m\]:\w\$ \[\033[00m\]'" >>  /root/.bashrc
 # set NGC_CLI_API_KEY to contents of NGC_API_KEY var (if it exists:
 RUN echo "if [ -n \"\$NGC_API_KEY\" ]; then export NGC_CLI_API_KEY=\"\$NGC_API_KEY\"; fi" >> /root/.bashrc
 
