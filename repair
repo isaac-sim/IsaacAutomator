@@ -93,7 +93,7 @@ def main(
     # run ansible
     if ansible:
         click.echo(colorize_info("* Re-running Ansible..."))
-        for instance_role in ["isaac", "ovami"]:
+        for instance_role in ["isaac"]:
             if meta["params"][instance_role]:
                 shell_command(
                     f"ansible-playbook -i {config['state_dir']}/{deployment_name}/.inventory "

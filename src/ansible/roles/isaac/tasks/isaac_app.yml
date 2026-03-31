@@ -48,8 +48,6 @@
     - ubuntu
   timeout: 60 # for each item
   when: ngc_api_key != "none"
-  tags:
-    - skip_in_ovami
 
 - name: Pull Isaac Sim image
   docker_image:
@@ -58,8 +56,6 @@
     source: pull
   ignore_errors: true
   when: ngc_api_key != "none"
-  tags:
-    - skip_in_ovami
 
 - name: Log out from nvcr.io
   shell: docker logout nvcr.io

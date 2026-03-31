@@ -33,7 +33,6 @@ from src.python.utils import (
 
 INSTANCE_ROLE_NAMES = [
     "isaac",
-    "ovami",
 ]
 
 

@@ -64,8 +64,6 @@
 - name: NoMachine server
   import_tasks: nomachine.yml
   when: "'nxserver.service' not in ansible_facts.services"
-  tags:
-    - skip_in_ovami
 
 # NoVNC
 - name: NoVNC server

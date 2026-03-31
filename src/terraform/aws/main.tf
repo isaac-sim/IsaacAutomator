@@ -55,17 +55,3 @@ module "isaac" {
   }
 }
 
-module "ovami" {
-  source          = "./ovami"
-  prefix          = "${var.prefix}.${var.deployment_name}.ovami"
-  count           = var.ovami_enabled ? 1 : 0
-  keypair_id      = module.common.aws_key_pair_id
-  ssh_port        = var.ssh_port
-  deployment_name = var.deployment_name
-  ingress_cidrs   = var.ingress_cidrs
-
-  vpc = {
-    id         = module.vpc.vpc.id
-    cidr_block = module.vpc.vpc.cidr_block
-  }
-}

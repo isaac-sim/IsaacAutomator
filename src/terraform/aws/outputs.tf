@@ -16,7 +16,3 @@ output "isaac_vm_id" {
   value = try(var.isaac_enabled ? module.isaac[0].vm_id : "NA", "NA")
 }
 
-output "ovami_ip" {
-  value = var.ovami_enabled ? module.ovami[0].public_ip : "NA"
-}
-

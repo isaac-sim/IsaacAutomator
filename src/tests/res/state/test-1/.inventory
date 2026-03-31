@@ -14,11 +14,7 @@ ansible_ssh_private_key_file="/app/state/test-1/key.pem"
 
 [targets:children]
 isaac
-ovami
 
 [isaac]
 11.22.33.44
-
-[ovami]
-NA
 

@@ -79,5 +79,3 @@
 - name: Build Isaac Lab
   shell: docker build -t isaaclab -f "{{ isaaclab_dir }}/isaaclab.dockerfile" "{{ isaaclab_dir }}"
   become_user: "{{ ansible_user }}"
-  tags:
-    - skip_in_ovami

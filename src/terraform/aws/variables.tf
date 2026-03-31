@@ -13,10 +13,6 @@ variable "region" {
   type = string
 }
 
-variable "ovami_enabled" {
-  type = bool
-}
-
 variable "from_image" {
   default = false
   type    = bool

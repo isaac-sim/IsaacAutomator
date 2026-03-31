@@ -388,7 +388,6 @@ class Deployer:
         # get missing values from terraform
         for k in [
             "isaac_ip",
-            "ovami_ip",
             "cloud",
         ]:
             if k not in self.params or ansible_vars[k] is None:
@@ -501,12 +500,6 @@ class Deployer:
             cwd=f"{self.config['ansible_dir']}",
         )
 
-        # run ansible for ovami
-        # todo: move to ./deploy-aws
-        if "ovami" in self.params and self.params["ovami"]:
-            click.echo(colorize_info("* Running Ansible for OV AMI..."))
-            self.run_ansible(playbook_name="ovami", cwd=f"{self.config['ansible_dir']}")
-
     def tf_output(self, key: str, default: str = ""):
         """
         Read Terraform output.
@@ -566,7 +559,6 @@ class Deployer:
         """
 
         isaac = True
-        ovami = "ovami" in self.params and self.params["ovami"]
 
         vnc_password = self.params["vnc_password"]
         deployment_name = self.params["deployment_name"]
@@ -614,29 +606,6 @@ class Deployer:
                 "__app__", "Isaac Sim"
             ).replace(
                 "__ip__", self.tf_output("isaac_ip")
-            )
-
-        # todo: move to ./deploy-aws
-        if ovami:
-            instructions += f"""\n
-* OV AMI is deployed at {self.tf_output('ovami_ip')}
-
-* To connect to OV AMI via SSH:
-
-{self.ssh_connection_command(self.tf_output('ovami_ip'))}
-
-* To connect to OV AMI via NICE DCV:
-
-- IP: __ip__
-
-{vnc_instruction}
-
-{nomachine_instruction}
-
-""".replace(
-                "__app__", "OV AMI"
-            ).replace(
-                "__ip__", self.tf_output("ovami_ip")
             )
 
         # extra text

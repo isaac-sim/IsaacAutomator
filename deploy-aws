@@ -204,18 +204,6 @@ class DeployAWSCommand(DeployCommand):
             ),
         )
 
-        # --ovami
-        # deploy OV AMI instance?
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--ovami/--no-ovami",),
-                default=False,
-                prompt=False,
-                hidden=True,
-            ),
-        )
-
         # defaults
 
         self.params[self.param_index("from_image")].default = config[
@@ -245,7 +233,6 @@ class AWSDeployer(Deployer):
             self.create_tfvars(
                 {
                     "region": self.params["region"],
-                    "ovami_enabled": self.params["ovami"],
                     "aws_access_key_id": self.params["aws_access_key_id"],
                     "aws_secret_access_key": self.params["aws_secret_access_key"],
                     "aws_session_token": self.params["aws_session_token"],
