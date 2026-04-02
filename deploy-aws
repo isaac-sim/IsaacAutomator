@@ -74,13 +74,13 @@ class DeployAWSCommand(DeployCommand):
         "g6e.12xlarge",
         "g6e.16xlarge",
         "g6e.24xlarge",
-        "g6e.48xlarge"
+        "g6e.48xlarge",
     ]
 
     @staticmethod
     def ovkit_instance_type_callback(ctx, param, value):
         """
-        Called after parsing --isaac-workstation-instance-type option
+        Called after parsing --instance-type option
         """
 
         # warn of "g5.xlarge" being too small
@@ -134,21 +134,21 @@ class DeployAWSCommand(DeployCommand):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # --isaac-workstation-instance-type
+        # --instance-type
         self.params.insert(
             # insert after --isaac option
             self.param_index("isaacsim") + 1,
             click.core.Option(
-                ("--isaac-workstation-instance-type",),
+                ("--instance-type", "isaac_workstation_instance_type"),
                 prompt=colorize_prompt(
-                    "* Isaac Sim Instance Type "
+                    '* "Isaac Workstation" Instance Type '
                     + "(https://docs.aws.amazon.com/dlami/latest/devguide/gpu.html, "
                     + "G5, G4dn and G6 instances are supported)"
                 ),
                 show_default=True,
                 default=config["aws_default_isaac_workstation_instance_type"],
                 callback=DeployAWSCommand.ovkit_instance_type_callback,
-                help="Isaac Sim instance type. Currently supported: "
+                help='"Isaac Workstation" instance type. Currently supported: '
                 + ", ".join(self.AWS_OVKIT_INSTANCE_TYPES)
                 + ".",
             ),

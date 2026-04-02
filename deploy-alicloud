@@ -68,7 +68,7 @@ class DeployAlicloudCommand(DeployCommand):
     @staticmethod
     def ovkit_instance_type_callback(ctx, param, value):
         """
-        Called after parsing --isaac-workstation-instance-type option
+        Called after parsing --instance-type option
         """
 
         # warn of other unsupported types
@@ -133,14 +133,14 @@ class DeployAlicloudCommand(DeployCommand):
         for instance_type, description in self.ALICLOUD_OVKIT_INSTANCE_TYPES.items():
             instance_types_table += f"  {instance_type:<25} {description}\n"
 
-        # --isaac-workstation-instance-type
+        # --instance-type
         self.params.insert(
             # insert after --isaac option
             self.param_index("isaacsim") + 1,
             click.core.Option(
-                ("--isaac-workstation-instance-type",),
+                ("--instance-type", "isaac_workstation_instance_type"),
                 prompt=colorize_prompt(
-                    "* Isaac Sim Instance Type. Supported types:\n\n"
+                    '* "Isaac Workstation" Instance Type. Supported types:\n\n'
                     + instance_types_table
                     + "\n See https://www.alibabacloud.com/help/en/ecs/user-guide/overview-of-instance-families "
                     + "for availability and pricing.\n"
@@ -148,7 +148,7 @@ class DeployAlicloudCommand(DeployCommand):
                 show_default=True,
                 default=config["alicloud_default_isaac_workstation_instance_type"],
                 callback=DeployAlicloudCommand.ovkit_instance_type_callback,
-                help="Isaac Sim instance type. Currently supported: "
+                help='"Isaac Workstation" instance type. Currently supported: '
                 + ", ".join(self.ALICLOUD_OVKIT_INSTANCE_TYPES.keys())
                 + ".",
             ),

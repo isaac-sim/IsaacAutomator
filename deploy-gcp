@@ -102,21 +102,21 @@ class DeployGCPCommand(DeployCommand):
             ),
         )
 
-        # --isaac-workstation-instance-type
+        # --instance-type
 
         self.params.insert(
             # insert after --isaac option
             self.param_index("isaacsim") + 1,
             click.core.Option(
-                ("--isaac-workstation-instance-type",),
+                ("--instance-type", "isaac_workstation_instance_type"),
                 prompt=colorize_prompt(
-                    "* Isaac Sim Instance Type "
+                    '* "Isaac Workstation" Instance Type '
                     + "(see https://cloud.google.com/compute/docs/general-purpose-machines for details)"
                 ),
                 type=click.Choice(self.GCP_OVKIT_INSTANCE_TYPES),
                 show_default=True,
                 default=config["gcp_default_isaac_workstation_instance_type"],
-                help="Isaac Sim instance type.",
+                help='"Isaac Workstation" instance type.',
             ),
         )
 
@@ -168,7 +168,9 @@ class GCPDeployer(Deployer):
                 {
                     "zone": self.params["zone"],
                     "project": self.params["project"],
-                    "isaac_workstation_gpu_count": int(self.params["isaac_workstation_gpu_count"]),
+                    "isaac_workstation_gpu_count": int(
+                        self.params["isaac_workstation_gpu_count"]
+                    ),
                     "isaac_workstation_gpu_type": {
                         "g2": "nvidia-l4",
                         "n1": "nvidia-tesla-t4",

@@ -84,14 +84,14 @@ class DeployAzureCommand(DeployCommand):
             ),
         )
 
-        # --isaac-workstation-instance-type
+        # --instance-type
         self.params.insert(
             # insert after --isaac option
             self.param_index("isaacsim") + 1,
             click.core.Option(
-                ("--isaac-workstation-instance-type",),
+                ("--instance-type", "isaac_workstation_instance_type"),
                 type=str,
-                prompt=colorize_prompt("* Isaac Sim VM Type")
+                prompt=colorize_prompt('* "Isaac Workstation" Instance Type')
                 + f"\n  * {self.AZURE_OVKIT_INSTANCE_TYPES[0]}: 6 vCPUs, 1/6 NVIDIA A10, 4 GB GPU Memory, 55 GB RAM"
                 + f"\n  * {self.AZURE_OVKIT_INSTANCE_TYPES[1]}: 12 vCPUs, 1/3 NVIDIA A10, 8 GB GPU Memory, 110 GB RAM"
                 + f"\n  * {self.AZURE_OVKIT_INSTANCE_TYPES[2]}: 18 vCPUs, 1/2 NVIDIA A10, 12 GB GPU Memory, 220 GB RAM"
@@ -101,7 +101,7 @@ class DeployAzureCommand(DeployCommand):
                 + "\n",
                 default=config["azure_default_isaac_workstation_instance_type"],
                 callback=DeployAzureCommand.ovkit_instance_type_callback,
-                help="Isaac Sim VM type. Currently supported: "
+                help='"Isaac Workstation" instance type. Currently supported: '
                 + ", ".join(self.AZURE_OVKIT_INSTANCE_TYPES)
                 + ".",
             ),
