@@ -284,11 +284,11 @@ class Deployer:
         # default values common for all clouds
         tfvars.update(
             {
-                "isaac_enabled": True,
+                "isaac_workstation_enabled": True,
                 #
-                "isaac_instance_type": (
-                    self.params["isaac_instance_type"]
-                    if "isaac_instance_type" in self.params
+                "isaac_workstation_instance_type": (
+                    self.params["isaac_workstation_instance_type"]
+                    if "isaac_workstation_instance_type" in self.params
                     else "none"
                 ),
                 #
@@ -387,7 +387,7 @@ class Deployer:
 
         # get missing values from terraform
         for k in [
-            "isaac_ip",
+            "isaac_workstation_ip",
             "cloud",
         ]:
             if k not in self.params or ansible_vars[k] is None:
@@ -496,7 +496,7 @@ class Deployer:
         # run ansible for isaac
         click.echo(colorize_info("* Running Ansible for Isaac Sim..."))
         self.run_ansible(
-            playbook_name="isaac",
+            playbook_name="isaac-workstation",
             cwd=f"{self.config['ansible_dir']}",
         )
 
@@ -592,20 +592,20 @@ class Deployer:
         instructions = ""
 
         if isaac:
-            instructions += f"""{'*' * (29+len(self.tf_output('isaac_ip')))}
-* Isaac Sim is deployed at {self.tf_output('isaac_ip')} *
-{'*' * (29+len(self.tf_output('isaac_ip')))}
+            instructions += f"""{'*' * (29+len(self.tf_output('isaac_workstation_ip')))}
+* Isaac Sim is deployed at {self.tf_output('isaac_workstation_ip')} *
+{'*' * (29+len(self.tf_output('isaac_workstation_ip')))}
 
 * To connect to Isaac Sim via SSH:
 
-{self.ssh_connection_command(self.tf_output('isaac_ip'))}
+{self.ssh_connection_command(self.tf_output('isaac_workstation_ip'))}
 
 {nonvc_instruction}
 
 {nomachine_instruction}""".replace(
                 "__app__", "Isaac Sim"
             ).replace(
-                "__ip__", self.tf_output("isaac_ip")
+                "__ip__", self.tf_output("isaac_workstation_ip")
             )
 
         # extra text

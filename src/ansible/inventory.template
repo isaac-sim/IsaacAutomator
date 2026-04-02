@@ -21,8 +21,8 @@ generic_driver_apt_package="{config[generic_driver_apt_package]}"
 ansible_ssh_private_key_file="{config[state_dir]}/{deployment_name}/key.pem"
 
 [targets:children]
-isaac
+isaac-workstation
 
-[isaac]
-{isaac_ip}
+[isaac-workstation]
+{isaac_workstation_ip}
 

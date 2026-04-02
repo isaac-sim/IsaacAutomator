@@ -9,7 +9,7 @@ data "aws_ec2_instance_type_offerings" "zones" {
   location_type = "availability-zone"
 }
 
-# create a subnet for the isaac instance
+# create a subnet for the isaac-workstation instance
 
 resource "aws_subnet" "subnet" {
   # get a /24 block from vpc cidr

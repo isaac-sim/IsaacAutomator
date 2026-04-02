@@ -14,14 +14,25 @@
 # limitations under the License.
 # endregion
 
----
-galaxy_info:
-  role_name: isaac
-  author: NVIDIA Corporation
-  description: Isaac Sim installation
-  standalone: false
-dependencies:
-  - { role: system }
-  - { role: docker }
-  - { role: nvidia }
-  - { role: rdesktop }
+- name: Wait for the instance to become available
+  hosts: isaac-workstation
+  gather_facts: false
+  tasks:
+    - wait_for_connection: timeout=300
+  tags:
+    # packer checks connectivity beforehand
+    - skip_in_image
+    - on_stop_start
+
+- name: Deploy Isaac Sim
+  hosts: isaac-workstation
+  gather_facts: true
+  vars:
+    in_china: False
+    application_name: isaac
+    prompt_ansi_color: 36 # cyan
+  roles:
+    - isaac-workstation
+  handlers:
+    - include_tasks: roles/rdesktop/handlers/main.yml
+    - include_tasks: roles/system/handlers/main.yml

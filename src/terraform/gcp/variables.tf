@@ -25,20 +25,20 @@ variable "project" {
   type = string
 }
 
-variable "isaac_enabled" {
+variable "isaac_workstation_enabled" {
   default = false
   type    = bool
 }
 
-variable "isaac_instance_type" {
+variable "isaac_workstation_instance_type" {
   type = string
 }
 
-variable "isaac_gpu_count" {
+variable "isaac_workstation_gpu_count" {
   type = number
 }
 
-variable "isaac_gpu_type" {
+variable "isaac_workstation_gpu_type" {
   # "nvidia-tesla-t4" or "nvidia-l4"
   type = string
 }

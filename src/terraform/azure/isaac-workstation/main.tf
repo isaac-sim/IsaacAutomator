@@ -49,7 +49,7 @@ resource "azurerm_linux_virtual_machine" "vm_from_scratch" {
     version   = "22.04.202405140"
   }
 
-  computer_name                   = "isaac"
+  computer_name                   = "isaac-workstation"
   admin_username                  = "ubuntu"
   disable_password_authentication = true
 
@@ -80,7 +80,7 @@ resource "azurerm_linux_virtual_machine" "vm_from_image" {
   # TODO: update image name
   source_image_id = "/subscriptions/4ca485f9-4cdf-4749-9d14-320dd780fc1c/resourceGroups/isa.PACKER/providers/Microsoft.Compute/images/isa.isaac_image"
 
-  computer_name                   = "isaac"
+  computer_name                   = "isaac-workstation"
   admin_username                  = "ubuntu"
   disable_password_authentication = true
 

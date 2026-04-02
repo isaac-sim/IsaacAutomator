@@ -23,7 +23,7 @@ class Test_Deployer(unittest.TestCase):
                 "in_china": "no",
                 "region": "us-east-1",
                 "isaac": True,
-                "isaac_instance_type": "g5.2xlarge",
+                "isaac_workstation_instance_type": "g5.2xlarge",
                 "isaac_image": "nvcr.io/nvidia/isaac-sim:2022.2.0",
                 "ngc_api_key": "__ngc_api_key__",
                 "ngc_api_key_check": True,

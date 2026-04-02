@@ -14,14 +14,14 @@ module "common" {
   region = var.region
 }
 
-module "isaac" {
+module "isaac_workstation" {
   source         = "./ovkit"
-  count          = var.isaac_enabled ? 1 : 0
-  prefix         = "${var.prefix}-${var.deployment_name}-isaac"
+  count          = var.isaac_workstation_enabled ? 1 : 0
+  prefix         = "${var.prefix}-${var.deployment_name}-isaac-workstation"
   vswitch_netnum = 1
   ssh_port       = var.ssh_port
   vpc            = module.common.vpc
   key_pair       = module.common.key_pair
-  instance_type  = var.isaac_instance_type
+  instance_type  = var.isaac_workstation_instance_type
   resource_group = module.common.resource_group
 }

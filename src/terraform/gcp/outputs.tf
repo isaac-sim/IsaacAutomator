@@ -3,12 +3,12 @@ output "cloud" {
   value = "gcp"
 }
 
-output "isaac_ip" {
-  value = var.isaac_enabled ? module.isaac[0].public_ip : "NA"
+output "isaac_workstation_ip" {
+  value = var.isaac_workstation_enabled ? module.isaac_workstation[0].public_ip : "NA"
 }
 
-output "isaac_vm_id" {
-  value = var.isaac_enabled ? module.isaac[0].vm_id : "NA"
+output "isaac_workstation_vm_id" {
+  value = var.isaac_workstation_enabled ? module.isaac_workstation[0].vm_id : "NA"
 }
 
 output "ssh_key" {

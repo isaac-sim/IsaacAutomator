@@ -1,4 +1,4 @@
-# security group for isaac
+# security group for isaac-workstation
 resource "aws_security_group" "sg" {
   name   = "${var.prefix}.sg"
   vpc_id = var.vpc.id

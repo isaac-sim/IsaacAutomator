@@ -34,12 +34,12 @@ module "vpc" {
   region = var.region
 }
 
-module "isaac" {
-  source            = "./isaac"
-  prefix            = "${var.prefix}.${var.deployment_name}.isaac"
-  count             = var.isaac_enabled ? 1 : 0
+module "isaac_workstation" {
+  source            = "./isaac-workstation"
+  prefix            = "${var.prefix}.${var.deployment_name}.isaac-workstation"
+  count             = var.isaac_workstation_enabled ? 1 : 0
   keypair_id        = module.common.aws_key_pair_id
-  instance_type     = var.isaac_instance_type
+  instance_type     = var.isaac_workstation_instance_type
   from_image        = var.from_image
   region            = var.region
   ssh_port          = var.ssh_port

@@ -131,8 +131,8 @@ build {
 
   provisioner "ansible" {
     use_proxy     = false
-    groups        = ["isaac"]
-    playbook_file = "/app/src/ansible/isaac.yml"
+    groups        = ["isaac-workstation"]
+    playbook_file = "/app/src/ansible/isaac-workstation.yaml"
     ansible_env_vars = [
       "ANSIBLE_CONFIG=/app/src/ansible/ansible.cfg"
     ]

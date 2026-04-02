@@ -35,11 +35,11 @@ variable "ssh_port" {
   type = number
 }
 
-variable "isaac_enabled" {
+variable "isaac_workstation_enabled" {
   type = bool
 }
 
-variable "isaac_instance_type" {
+variable "isaac_workstation_instance_type" {
   type = string
 }
 
