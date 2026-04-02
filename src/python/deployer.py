@@ -487,7 +487,7 @@ class Deployer:
 
         shell_command(
             f"ansible-playbook -i {self.config['state_dir']}/{deployment_name}/.inventory "
-            + f"{playbook_name}.yml {tags} {skip_tags} {'-vv' if self.params['debug'] else ''}",
+            + f"{playbook_name}.yaml {tags} {skip_tags} {'-vv' if self.params['debug'] else ''}",
             cwd=cwd,
             verbose=debug,
         )
