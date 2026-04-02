@@ -19,14 +19,5 @@ packer build [-force] [-var=aws_region="us-east-1"] [-var=image_name="..."] [-va
 For example:
 
 ```sh
-packer build -force -var=isaac_image="nvcr.io/nvidia/isaac-sim:2023.1.0-hotfix.1" /app/src/packer/aws/isaac
-```
-
-```sh
-packer build -force \
--var=aws_region="us-east-1" \
--var=image_name=ovami-test-1 \
--var=system_user_password="nvidia123" \
--var=vnc_password="nvidia123" \
-/app/src/packer/aws/ovami
+packer build -force -var=isaacsim="aws" /app/src/packer/aws/isaac
 ```
