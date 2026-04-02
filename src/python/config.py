@@ -55,7 +55,7 @@ c["default_omniverse_user"] = "omniverse"
 c["default_remote_uploads_dir"] = "/home/ubuntu/uploads"
 c["default_remote_results_dir"] = "/home/ubuntu/results"
 
-# --isaac-instance-type
+# --isaac-workstation-instance-type
 c["aws_default_isaac_workstation_instance_type"] = "g5.2xlarge"
 # str, 1-index in DeployAzureCommand.AZURE_OVKIT_INSTANCE_TYPES
 c["azure_default_isaac_workstation_instance_type"] = "Standard_NV36ads_A10_v5"

@@ -102,38 +102,38 @@ class DeployGCPCommand(DeployCommand):
             ),
         )
 
-        # --isaac-instance-type
+        # --isaac-workstation-instance-type
 
         self.params.insert(
             # insert after --isaac option
             self.param_index("isaacsim") + 1,
             click.core.Option(
-                ("--isaac-instance-type",),
+                ("--isaac-workstation-instance-type",),
                 prompt=colorize_prompt(
                     "* Isaac Sim Instance Type "
                     + "(see https://cloud.google.com/compute/docs/general-purpose-machines for details)"
                 ),
                 type=click.Choice(self.GCP_OVKIT_INSTANCE_TYPES),
                 show_default=True,
-                default=config["gcp_default_isaac_instance_type"],
+                default=config["gcp_default_isaac_workstation_instance_type"],
                 help="Isaac Sim instance type.",
             ),
         )
 
-        # --isaac-gpu-count
+        # --isaac-workstation-gpu-count
 
         self.params.insert(
             # insert after --isaac-instance-type option
-            self.param_index("isaac_instance_type") + 1,
+            self.param_index("isaac_workstation_instance_type") + 1,
             click.core.Option(
-                ("--isaac-gpu-count",),
+                ("--isaac-workstation-gpu-count",),
                 prompt=colorize_prompt(
                     "* Isaac Sim: Number of GPUs. N1 - up to 4x NVIDIA T4; "
                     + "G2 - up to 8x NVIDIA L4; G4 - up to 8x NVIDIA RTX PRO 60000 GPUs."
                 ),
                 show_default=True,
                 type=click.Choice(["1", "2", "4", "8"]),
-                default=str(config["gcp_default_isaac_gpu_count"]),
+                default=str(config["gcp_default_isaac_workstation_gpu_count"]),
                 help="Number of GPUs to attach to Isaac Sim instance.",
             ),
         )
@@ -159,7 +159,7 @@ class GCPDeployer(Deployer):
 
         if self.existing_behavior != "run_ansible":
             # create tfvars file, deal with existing deployment
-            instance_type_prefix = self.params["isaac_instance_type"][:2]
+            instance_type_prefix = self.params["isaac_workstation_instance_type"][:2]
             boot_disk_type = (
                 "hyperdisk-balanced" if instance_type_prefix == "g4" else "pd-ssd"
             )
@@ -168,8 +168,8 @@ class GCPDeployer(Deployer):
                 {
                     "zone": self.params["zone"],
                     "project": self.params["project"],
-                    "isaac_gpu_count": int(self.params["isaac_gpu_count"]),
-                    "isaac_gpu_type": {
+                    "isaac_workstation_gpu_count": int(self.params["isaac_workstation_gpu_count"]),
+                    "isaac_workstation_gpu_type": {
                         "g2": "nvidia-l4",
                         "n1": "nvidia-tesla-t4",
                         "g4": "nvidia-rtx-pro-6000",
