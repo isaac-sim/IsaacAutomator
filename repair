@@ -93,14 +93,12 @@ def main(
     # run ansible
     if ansible:
         click.echo(colorize_info("* Re-running Ansible..."))
-        for instance_role in ["isaac"]:
-            if meta["params"][instance_role]:
-                shell_command(
-                    f"ansible-playbook -i {config['state_dir']}/{deployment_name}/.inventory "
-                    + f"{instance_role}.yml {'-vv' if debug else ''}",
-                    cwd=f"{config['ansible_dir']}",
-                    verbose=debug,
-                )
+        shell_command(
+            f"ansible-playbook -i {config['state_dir']}/{deployment_name}/.inventory "
+            + f"isaac-workstation.yaml {'-vv' if debug else ''}",
+            cwd=f"{config['ansible_dir']}",
+            verbose=debug,
+        )
 
 
 if __name__ == "__main__":
