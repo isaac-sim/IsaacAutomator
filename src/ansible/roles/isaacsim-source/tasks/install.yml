@@ -23,9 +23,8 @@
     mode: 0755
 
 - name: Check existing build tag
-  shell: cat "{{ isaacsim_source_dir }}/.build-tag"
+  shell: cat "{{ isaacsim_source_dir }}/.build-tag" 2>/dev/null || true
   register: isaacsim_build_tag
-  ignore_errors: true
   changed_when: false
 
 - name: Clone Isaac Sim repository
@@ -35,7 +34,7 @@
     version: "{{ isaacsim_git_checkpoint }}"
     force: true
   become_user: "{{ ansible_user }}"
-  when: isaacsim_build_tag is failed
+  when: isaacsim_build_tag.stdout | trim == ''
 
 - name: Get current commit hash
   shell: git rev-parse HEAD
@@ -47,11 +46,11 @@
 
 - name: Set isaacsim_build_needed flag
   set_fact:
-    isaacsim_build_needed: "{{ isaacsim_build_tag is failed or (isaacsim_build_tag.stdout | trim) != isaacsim_current_commit.stdout }}"
+    isaacsim_build_needed: "{{ (isaacsim_build_tag.stdout | trim) != isaacsim_current_commit.stdout }}"
 
 - name: Debug isaacsim_build_needed
   debug:
-    msg: "isaacsim_build_needed: {{ isaacsim_build_needed }} (current: {{ isaacsim_current_commit.stdout }}, tag: {{ isaacsim_build_tag.stdout if isaacsim_build_tag is succeeded else 'none' }})"
+    msg: "isaacsim_build_needed: {{ isaacsim_build_needed }} (current: {{ isaacsim_current_commit.stdout }}, tag: {{ isaacsim_build_tag.stdout | default('none', true) }})"
 
 - name: Pull LFS files
   shell: git lfs pull
