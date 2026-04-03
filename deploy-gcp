@@ -41,7 +41,7 @@ class DeployGCPCommand(DeployCommand):
 
     # gcp instance types capable of running isaac
     GCP_OVKIT_INSTANCE_TYPES = (
-        [f"g2-standard-{i}" for i in [4, 8, 12, 16, 32]]
+        [f"g2-standard-{i}" for i in [4, 8, 12, 16, 24, 32, 48, 96]]
         + [f"n1-standard-{i}" for i in [4, 8, 16, 32, 64, 96]]
         + [f"n1-highmem-{i}" for i in [4, 8, 16, 32, 64, 96]]
         + [f"n1-highcpu-{i}" for i in [16, 32, 64, 96]]
