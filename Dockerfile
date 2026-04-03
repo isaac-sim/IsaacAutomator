@@ -84,7 +84,7 @@ RUN echo 'export PATH="$PATH:/opt/ngc-cli"' >> ~/.bashrc
 # @see https://cloud.google.com/sdk/docs/install
 RUN apt-get install -yq apt-transport-https ca-certificates gnupg
 RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-RUN curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
 RUN apt-get update && apt-get install -yq google-cloud-cli
 RUN mkdir -p /root/.config && ln -s /app/state/.gcp /root/.config/gcloud
 RUN echo "mkdir -p /app/state/.gcp" >> /root/.bashrc
