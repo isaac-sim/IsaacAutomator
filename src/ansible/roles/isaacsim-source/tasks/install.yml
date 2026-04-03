@@ -65,6 +65,12 @@
     group: "{{ ansible_user }}"
   when: isaacsim_build_needed
 
+- name: Remove previous build directory
+  file:
+    path: "{{ isaacsim_source_dir }}/_build"
+    state: absent
+  when: isaacsim_build_needed
+
 - name: Build Isaac Sim
   shell: ./build.sh --release 2>&1 | tee /tmp/isaacsim-build.log
   args:
