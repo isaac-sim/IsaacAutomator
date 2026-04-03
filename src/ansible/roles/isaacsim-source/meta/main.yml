@@ -16,13 +16,10 @@
 
 ---
 galaxy_info:
-  role_name: "isaac_workstation"
+  role_name: isaacsim_source
   author: NVIDIA Corporation
-  description: Isaac Workstation
+  description: Install Isaac Sim from source
   standalone: false
 dependencies:
   - { role: system }
-  - { role: docker }
   - { role: nvidia }
-  - { role: remote-desktop }
-  - { role: isaacsim-source }
