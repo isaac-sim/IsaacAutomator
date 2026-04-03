@@ -24,4 +24,5 @@ module "isaac_workstation" {
   key_pair       = module.common.key_pair
   instance_type  = var.isaac_workstation_instance_type
   resource_group = module.common.resource_group
+  os_username    = var.os_username
 }

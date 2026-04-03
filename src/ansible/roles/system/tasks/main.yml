@@ -47,8 +47,8 @@
   apt: name=htop
     state=latest
 
-- name: Add user ubuntu to sudo group
-  user: name=ubuntu
+- name: Add user {{ ansible_user }} to sudo group
+  user: name={{ ansible_user }}
     groups=sudo
     append=yes
     state=present

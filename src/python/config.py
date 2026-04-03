@@ -34,10 +34,13 @@ c["app_image_name"] = "isaac_automator"
 # aws/alicloud driver
 c["generic_driver_apt_package"] = "nvidia-driver-580-server"
 
+# default ssh user
+c["default_ssh_user"] = "ubuntu"
+
 # default remote dirs
-c["default_remote_uploads_dir"] = "/home/ubuntu/uploads"
-c["default_remote_results_dir"] = "/home/ubuntu/results"
-c["default_remote_workspace_dir"] = "/home/ubuntu/workspace"
+c["default_remote_uploads_dir"] = f"/home/{c['default_ssh_user']}/uploads"
+c["default_remote_results_dir"] = f"/home/{c['default_ssh_user']}/results"
+c["default_remote_workspace_dir"] = f"/home/{c['default_ssh_user']}/workspace"
 
 # defaults
 
@@ -50,10 +53,6 @@ c["aws_default_from_image"] = False
 
 # --omniverse-user
 c["default_omniverse_user"] = "omniverse"
-
-# --remote-dir
-c["default_remote_uploads_dir"] = "/home/ubuntu/uploads"
-c["default_remote_results_dir"] = "/home/ubuntu/results"
 
 # --isaac-workstation-instance-type
 c["aws_default_isaac_workstation_instance_type"] = "g6e.2xlarge"

@@ -50,11 +50,11 @@ resource "azurerm_linux_virtual_machine" "vm_from_scratch" {
   }
 
   computer_name                   = "isaac-workstation"
-  admin_username                  = "ubuntu"
+  admin_username                  = var.os_username
   disable_password_authentication = true
 
   admin_ssh_key {
-    username   = "ubuntu"
+    username   = var.os_username
     public_key = var.ssh_key.public_key_openssh
   }
 
@@ -81,11 +81,11 @@ resource "azurerm_linux_virtual_machine" "vm_from_image" {
   source_image_id = "/subscriptions/4ca485f9-4cdf-4749-9d14-320dd780fc1c/resourceGroups/isa.PACKER/providers/Microsoft.Compute/images/isa.isaac_image"
 
   computer_name                   = "isaac-workstation"
-  admin_username                  = "ubuntu"
+  admin_username                  = var.os_username
   disable_password_authentication = true
 
   admin_ssh_key {
-    username   = "ubuntu"
+    username   = var.os_username
     public_key = var.ssh_key.public_key_openssh
   }
 

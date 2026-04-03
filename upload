@@ -86,7 +86,9 @@ def main(
             # - debug is enabled
             if instance_role != "all" or debug:
                 click.echo(
-                    colorize_info(f"* No {format_instance_role(instance_role_name)} instance found")
+                    colorize_info(
+                        f"* No {format_instance_role(instance_role_name)} instance found"
+                    )
                 )
             continue
 
@@ -107,7 +109,7 @@ def main(
 
         # make sure remote directory exists
         shell_command(
-            f"ssh -i {ssh_key_file} -o StrictHostKeyChecking=no ubuntu@{ip}"
+            f"ssh -i {ssh_key_file} -o StrictHostKeyChecking=no {config['default_ssh_user']}@{ip}"
             + f" \"[ ! -d '{remote_dir}' ] && mkdir -p '{remote_dir}'\"",
             verbose=debug,
             exit_on_error=False,
@@ -118,7 +120,7 @@ def main(
             "rsync -avz --progress --rsync-path 'rsync'"
             + (" --delete" if delete else "")
             + f" -e 'ssh -i {ssh_key_file} -o StrictHostKeyChecking=no'"
-            + f' "{uploads_dir}/" ubuntu@{ip}:"{remote_dir}"'
+            + f' "{uploads_dir}/" {config["default_ssh_user"]}@{ip}:"{remote_dir}"'
         )
 
         shell_command(
@@ -130,7 +132,7 @@ def main(
 
         # get size of output_dir
         output_dir_size = shell_command(
-            f"ssh -i {ssh_key_file} -o StrictHostKeyChecking=no ubuntu@{ip}"
+            f"ssh -i {ssh_key_file} -o StrictHostKeyChecking=no {config['default_ssh_user']}@{ip}"
             + f" \"du -hs '{remote_dir}'\"",
             verbose=debug,
             exit_on_error=True,

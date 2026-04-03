@@ -224,9 +224,7 @@ class DeployCommand(click.core.Command):
         )
 
         # --isaacsim
-        help = (
-            "Install Isaac Sim? Valid values: \"no\", or git ref at https://github.com/isaac-sim/IsaacSim"
-        )
+        help = 'Install Isaac Sim? Valid values: "no", or git ref at https://github.com/isaac-sim/IsaacSim'
         self.params.insert(
             len(self.params),
             click.core.Option(
@@ -239,9 +237,7 @@ class DeployCommand(click.core.Command):
         )
 
         # --isaaclab
-        help = (
-            "Install Isaac Lab? Valid values: \"no\", or git ref at https://github.com/isaac-sim/IsaacLab"
-        )
+        help = 'Install Isaac Lab? Valid values: "no", or git ref at https://github.com/isaac-sim/IsaacLab'
         self.params.insert(
             len(self.params),
             click.core.Option(
@@ -315,6 +311,17 @@ class DeployCommand(click.core.Command):
                 ("--ssh-port",),
                 default=config["default_ssh_port"],
                 help="SSH port for connecting to the deployed machines.",
+                show_default=True,
+            ),
+        )
+
+        # --ssh-user
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--ssh-user",),
+                default=config["default_ssh_user"],
+                help="OS username on the deployed instances.",
                 show_default=True,
             ),
         )

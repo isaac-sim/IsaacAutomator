@@ -81,7 +81,7 @@ def main(
         raise click.Abort()
 
     shell_command(
-        f"ssh -o StrictHostKeyChecking=no ubuntu@{vm_ip} "
+        f"ssh -o StrictHostKeyChecking=no {config['default_ssh_user']}@{vm_ip} "
         + f"-i {config['state_dir']}/{deployment_name}/key.pem",
         verbose=True,
     )

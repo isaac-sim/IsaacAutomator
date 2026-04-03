@@ -82,9 +82,13 @@ def main(
 
     for instance_role_name in instance_roles:
         if meta["params"][instance_role_name]:
-            ip = read_tf_output(deployment_name, f"{instance_role_name}_ip", verbose=debug)
+            ip = read_tf_output(
+                deployment_name, f"{instance_role_name}_ip", verbose=debug
+            )
             ssh_key_file = f"{config['state_dir']}/{deployment_name}/key.pem"
-            output_dir = f"{config['results_dir']}/{deployment_name}/{instance_role_name}"
+            output_dir = (
+                f"{config['results_dir']}/{deployment_name}/{instance_role_name}"
+            )
             os.makedirs(output_dir, exist_ok=True)
 
             # strip trailing slashes
@@ -93,7 +97,7 @@ def main(
 
             # make sure remote directory exists
             shell_command(
-                f"ssh -i {ssh_key_file} -o StrictHostKeyChecking=no ubuntu@{ip}"
+                f"ssh -i {ssh_key_file} -o StrictHostKeyChecking=no {config['default_ssh_user']}@{ip}"
                 + f" \"[ ! -d '{remote_dir}' ] && sudo mkdir -p '{remote_dir}'\"",
                 verbose=debug,
                 exit_on_error=False,
@@ -104,7 +108,7 @@ def main(
                 "rsync -avz --progress --rsync-path 'sudo rsync'"
                 + (" --delete" if delete else "")
                 + f" -e 'ssh -i {ssh_key_file} -o StrictHostKeyChecking=no'"
-                + f' ubuntu@{ip}:"{remote_dir}/" "{output_dir}"'
+                + f' {config["default_ssh_user"]}@{ip}:"{remote_dir}/" "{output_dir}"'
             )
 
             shell_command(

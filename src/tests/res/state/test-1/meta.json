@@ -54,6 +54,7 @@
         "terraform_dir": "/app/src/terraform",
         "app_image_name": "isaac_automator",
         "generic_driver_apt_package": "nvidia-driver-580-server",
+        "default_ssh_user": "ubuntu",
         "default_remote_uploads_dir": "/home/ubuntu/uploads",
         "default_remote_results_dir": "/home/ubuntu/results",
         "default_remote_workspace_dir": "/home/ubuntu/workspace",

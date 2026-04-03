@@ -4,7 +4,7 @@ locals {
   # boot_image     = "ubuntu-2004-focal-v20230302"
   boot_image     = "ubuntu-2204-jammy-v20251023"
   boot_disk_size = 255
-  os_username    = "ubuntu"
+  os_username    = var.os_username
 }
 
 resource "google_compute_instance" "default" {

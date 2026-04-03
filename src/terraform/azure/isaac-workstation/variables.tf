@@ -26,3 +26,8 @@ variable "from_image" {
 variable "ssh_port" {
   type = number
 }
+
+variable "os_username" {
+  type    = string
+  default = "ubuntu"
+}

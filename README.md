@@ -271,7 +271,7 @@ This functionality can be useful for running batch jobs, generating data on star
 
 The following folders are mapped to the running Isaac Sim container by default (container paths may differ for specific applications):
 
-- `/home/ubuntu/uploads` (host) --> `/uploads` (container) - user data uploaded to the deployment with the `./upload` command or automatically from the local `uploads/` folder
+- `/home/ubuntu/uploads` (host) --> `/uploads` (container) - user data uploaded to the deployment with the `./upload` command or automatically from the local `uploads/` folder (the `ubuntu` part of the path depends on the configured `default_ssh_user` in `src/python/config.py`)
 - `/home/ubuntu/results` (host) --> `/results` (container) - results of applications run on the deployment; you can download them from the deployed machine with the `./download` command
 - `/home/ubuntu/workspace` (host) --> `/workspace` (container) - workspace folder; can be used to exchange data between the host and the container
 
@@ -298,7 +298,7 @@ You can upload user data from the `uploads/` folder (in the project root) to the
 ./upload <deployment-name>
 ```
 
-Data will be uploaded to the `/home/ubuntu/uploads` directory by default, on all deployed instances. You can change this by passing the `--remote-dir` argument to the command. Run `./upload --help` to see more options.
+Data will be uploaded to the `/home/ubuntu/uploads` directory by default (the `ubuntu` part of the path depends on the configured `default_ssh_user`), on all deployed instances. You can change this by passing the `--remote-dir` argument to the command. Run `./upload --help` to see more options.
 
 ### Downloading Data
 
@@ -311,7 +311,7 @@ You can download user data to the `results/` folder (in the project root) from d
 ./download <deployment-name>
 ```
 
-Data will be downloaded from the `/home/ubuntu/results` directory by default. You can change this by passing the `--remote-dir` argument to the command. Run `./download --help` to see more options.
+Data will be downloaded from the `/home/ubuntu/results` directory by default (the `ubuntu` part of the path depends on the configured `default_ssh_user`). You can change this by passing the `--remote-dir` argument to the command. Run `./download --help` to see more options.
 
 ### Repairing
 

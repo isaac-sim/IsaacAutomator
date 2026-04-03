@@ -34,3 +34,8 @@ variable "isaac_workstation_enabled" {
   type = bool
 }
 
+variable "os_username" {
+  type    = string
+  default = "ubuntu"
+}
+

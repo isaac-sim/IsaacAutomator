@@ -29,3 +29,7 @@ variable "resource_group" {
 variable "key_pair" {
 }
 
+variable "os_username" {
+  type = string
+}
+

@@ -31,7 +31,7 @@
   lineinfile:
     path: /etc/gdm3/custom.conf
     state: present
-    line: "AutomaticLogin=ubuntu"
+    line: "AutomaticLogin={{ ansible_user }}"
     insertafter: "\\[daemon\\]"
   notify: reboot
 

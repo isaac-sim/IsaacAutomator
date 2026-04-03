@@ -55,3 +55,8 @@ variable "boot_disk_type" {
     error_message = "boot_disk_type must be one of: pd-ssd, hyperdisk-balanced."
   }
 }
+
+variable "os_username" {
+  type    = string
+  default = "ubuntu"
+}

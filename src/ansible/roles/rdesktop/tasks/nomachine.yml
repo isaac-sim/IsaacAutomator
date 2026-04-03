@@ -31,18 +31,18 @@
 
 - name: Create NX config dir
   file: >
-    path=/home/ubuntu/.nx/config
+    path=/home/{{ ansible_user }}/.nx/config
     state=directory
-    owner=ubuntu
-    group=ubuntu
+    owner={{ ansible_user }}
+    group={{ ansible_user }}
 
 - name: Link authorized keys to NX config
   file: >
-    src=/home/ubuntu/.ssh/authorized_keys
-    dest=/home/ubuntu/.nx/config/authorized.crt
+    src=/home/{{ ansible_user }}/.ssh/authorized_keys
+    dest=/home/{{ ansible_user }}/.nx/config/authorized.crt
     state=link
-    owner=ubuntu
-    group=ubuntu
+    owner={{ ansible_user }}
+    group={{ ansible_user }}
   notify: nx_restart
 
 # add env var DISPLAY to  /usr/lib/systemd/system/nxserver.service

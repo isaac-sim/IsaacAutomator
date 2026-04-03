@@ -55,6 +55,19 @@ class Deployer:
         # create state directory if it doesn't exist
         os.makedirs(self.config["state_dir"], exist_ok=True)
 
+        # override default_ssh_user from CLI param
+        if "ssh_user" in self.params:
+            self.config["default_ssh_user"] = self.params["ssh_user"]
+            self.config["default_remote_uploads_dir"] = (
+                f"/home/{self.config['default_ssh_user']}/uploads"
+            )
+            self.config["default_remote_results_dir"] = (
+                f"/home/{self.config['default_ssh_user']}/results"
+            )
+            self.config["default_remote_workspace_dir"] = (
+                f"/home/{self.config['default_ssh_user']}/workspace"
+            )
+
         # print complete command line
         if self.params["debug"]:
             click.echo(colorize_info("* Command:\n" + self.recreate_command_line()))
@@ -301,6 +314,7 @@ class Deployer:
                 #
                 "deployment_name": self.params["deployment_name"],
                 "ingress_cidrs": ingress_cidrs_actual,
+                "os_username": self.config["default_ssh_user"],
             }
         )
 
@@ -547,7 +561,7 @@ class Deployer:
     # generate ssh connection command for the user
     def ssh_connection_command(self, ip: str):
         r = f"ssh -i state/{self.params['deployment_name']}/key.pem "
-        r += f"-o StrictHostKeyChecking=no ubuntu@{ip}"
+        r += f"-o StrictHostKeyChecking=no {self.config['default_ssh_user']}@{ip}"
         if self.params["ssh_port"] != 22:
             r += f" -p {self.params['ssh_port']}"
         return r
@@ -572,7 +586,7 @@ class Deployer:
 3. In "Configuration" > "Use key-based authentication with a key you provide",
    select file "state/{deployment_name}/key.pem".
 4. Click "Connect" button.
-5. Enter "ubuntu" as a username when prompted.
+5. Enter "{self.config['default_ssh_user']}" as a username when prompted.
 """
 
         vnc_instruction = f"""* To connect to __app__ via VNC:

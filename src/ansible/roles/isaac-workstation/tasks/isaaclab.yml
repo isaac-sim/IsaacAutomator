@@ -26,8 +26,8 @@
   template: src={{ item }}
     dest="{{ isaaclab_dir }}/{{ item }}"
     mode=755
-    owner=ubuntu
-    group=ubuntu
+    owner={{ ansible_user }}
+    group={{ ansible_user }}
   with_items:
     - isaaclab.dockerfile
 
@@ -35,8 +35,8 @@
   template: src="{{ item }}"
     dest="{{ launch_scripts_dir }}/{{ item }}"
     mode=755
-    owner=ubuntu
-    group=ubuntu
+    owner={{ ansible_user }}
+    group={{ ansible_user }}
   with_items:
     - isaaclab.sh
 
@@ -45,8 +45,8 @@
   copy: src="/app/uploads/isaaclab.pem"
     dest="{{ isaaclab_dir }}/isaaclab.pem"
     mode=0600
-    owner=ubuntu
-    group=ubuntu
+    owner={{ ansible_user }}
+    group={{ ansible_user }}
   tags:
     - __upload_isaaclab_pem
   when: isaaclab_private_git != ""

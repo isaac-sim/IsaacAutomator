@@ -45,7 +45,7 @@
 
 - name: Clear VNC password
   file:
-    path: /home/ubuntu/.vnc/passwd
+    path: /home/{{ ansible_user }}/.vnc/passwd
     state: absent
 
 - name: Set VNC password
@@ -54,14 +54,14 @@
     responses:
       (?i).*password:.*: "{{ vnc_password }}\r"
       (?i)write.*: "y\r"
-    creates: /home/ubuntu/.vnc/passwd
-  become_user: ubuntu
+    creates: /home/{{ ansible_user }}/.vnc/passwd
+  become_user: "{{ ansible_user }}"
   tags:
     - skip_in_image
 
 - name: Cleanup VNC password
   file:
-    path: /home/ubuntu/.vnc/passwd
+    path: /home/{{ ansible_user }}/.vnc/passwd
     state: absent
   tags:
     - never

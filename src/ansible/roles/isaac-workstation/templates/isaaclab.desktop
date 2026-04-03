@@ -3,4 +3,4 @@ Type=Application
 Terminal=true
 Exec={{ launch_scripts_dir }}/isaaclab.sh
 Name=Isaac Lab
-Icon=/home/ubuntu/Pictures/isaacsim-icon-shell.png
+Icon=/home/{{ ansible_user }}/Pictures/isaacsim-icon-shell.png

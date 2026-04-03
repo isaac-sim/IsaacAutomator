@@ -26,15 +26,15 @@
   file:
     path: "{{ launch_scripts_dir}}"
     state: directory
-    owner: ubuntu
-    group: ubuntu
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
 
 - name: Launch scripts [2]
   template: src={{ item }}
     dest="{{ launch_scripts_dir }}/{{ item }}"
     mode=755
-    owner=ubuntu
-    group=ubuntu
+    owner={{ ansible_user }}
+    group={{ ansible_user }}
   with_items:
     - isaacsim.sh
     - isaacsim-shell.sh
@@ -45,7 +45,7 @@
   become_user: "{{ item }}"
   with_items:
     - root
-    - ubuntu
+    - "{{ ansible_user }}"
   timeout: 60 # for each item
   when: ngc_api_key != "none"
 
@@ -62,7 +62,7 @@
   become_user: "{{ item }}"
   with_items:
     - root
-    - ubuntu
+    - "{{ ansible_user }}"
   when: ngc_api_key != "none"
   tags:
     - never

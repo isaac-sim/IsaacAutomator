@@ -32,13 +32,14 @@ module "common" {
 }
 
 module "isaac_workstation" {
-  source     = "./isaac-workstation"
-  count      = var.isaac_workstation_enabled ? 1 : 0
-  prefix     = "${var.prefix}.${var.deployment_name}.isaac-workstation"
-  rg         = module.common.rg
-  subnet     = module.common.subnet
-  ssh_key    = module.common.ssh_key
-  vm_type    = var.isaac_workstation_instance_type
-  from_image = var.from_image
-  ssh_port   = var.ssh_port
+  source      = "./isaac-workstation"
+  count       = var.isaac_workstation_enabled ? 1 : 0
+  prefix      = "${var.prefix}.${var.deployment_name}.isaac-workstation"
+  rg          = module.common.rg
+  subnet      = module.common.subnet
+  ssh_key     = module.common.ssh_key
+  vm_type     = var.isaac_workstation_instance_type
+  from_image  = var.from_image
+  ssh_port    = var.ssh_port
+  os_username = var.os_username
 }

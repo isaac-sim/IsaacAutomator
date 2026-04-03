@@ -38,8 +38,8 @@
   group: name=docker
     state=present
 
-- name: Add user ubuntu to docker group
-  user: name=ubuntu
+- name: Add user {{ ansible_user }} to docker group
+  user: name={{ ansible_user }}
     groups=docker
     append=yes
     state=present
