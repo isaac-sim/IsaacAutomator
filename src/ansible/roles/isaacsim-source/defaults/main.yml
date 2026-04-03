@@ -14,7 +14,8 @@
 # limitations under the License.
 # endregion
 
-isaacsim_source_dir: /home/{{ ansible_user }}/IsaacSim
+isaacsim_source_dir: /home/{{ ansible_user }}/IsaacSim-source
+isaacsim_install_dir: /home/{{ ansible_user }}/IsaacSim
 isaacsim_git_checkpoint: main
 isaacsim_git_repo: https://github.com/isaac-sim/IsaacSim.git
 isaacsim_python: python3

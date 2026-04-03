@@ -97,3 +97,12 @@
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
     recurse: true
+
+- name: Create symlink to Isaac Sim build
+  file:
+    dest: "{{ isaacsim_source_dir }}/_build/linux-x86_64/release"
+    src: "{{ isaacsim_install_dir }}"
+    state: link
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  when: isaacsim_build_needed
