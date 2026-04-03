@@ -65,11 +65,12 @@
   when: isaacsim_build_needed
 
 - name: Build Isaac Sim
-  shell: ./build.sh --release
+  shell: ./build.sh --release 2>&1 | tee /tmp/isaacsim-build.log
   args:
     chdir: "{{ isaacsim_source_dir }}"
   become_user: "{{ ansible_user }}"
-  poll: 1
+  async: 7200
+  poll: 30
   when: isaacsim_build_needed
 
 - name: Write build tag
