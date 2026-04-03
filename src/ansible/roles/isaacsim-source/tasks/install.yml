@@ -48,7 +48,10 @@
 - name: Set isaacsim_build_needed flag
   set_fact:
     isaacsim_build_needed: "{{ isaacsim_build_tag is failed or (isaacsim_build_tag.stdout | trim) != isaacsim_current_commit.stdout }}"
-    debug: "isaacsim_build_needed: {{ isaacsim_build_needed }} (current: {{ isaacsim_current_commit.stdout }}, tag: {{ isaacsim_build_tag.stdout if isaacsim_build_tag is succeeded else 'none' }})"
+
+- name: Debug isaacsim_build_needed
+  debug:
+    msg: "isaacsim_build_needed: {{ isaacsim_build_needed }} (current: {{ isaacsim_current_commit.stdout }}, tag: {{ isaacsim_build_tag.stdout if isaacsim_build_tag is succeeded else 'none' }})"
 
 - name: Pull LFS files
   shell: git lfs pull
