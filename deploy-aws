@@ -137,8 +137,8 @@ class DeployAWSCommand(DeployCommand):
 
         # --instance-type
         self.params.insert(
-            # insert after --isaac option
-            self.param_index("isaacsim") + 1,
+            # insert before --isaacsim option
+            self.param_index("isaacsim"),
             click.core.Option(
                 ("--instance-type", "isaac_workstation_instance_type"),
                 prompt=colorize_prompt(
