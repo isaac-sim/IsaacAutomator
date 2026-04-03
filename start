@@ -68,7 +68,7 @@ def main(
 
     # go through instance roles
 
-    for instance_role in ["isaac"]:
+    for instance_role in ["isaac_workstation"]:
         vm_id = read_tf_output(deployment_name, f"{instance_role}_vm_id", verbose=debug)
         vm_ip = read_tf_output(deployment_name, f"{instance_role}_ip", verbose=debug)
 

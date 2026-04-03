@@ -132,7 +132,7 @@ def format_instance_role(instance_role):
     """
 
     formatted = {
-        "isaac": "Isaac Workstation",
+        "isaac_workstation": "Isaac Workstation",
     }
 
     if instance_role in formatted:
@@ -200,7 +200,9 @@ def get_my_public_ip(verbose=False):
         "dig +short +time=2 +tries=1 myip.opendns.com @208.67.220.220",
     ]
     for cmd in methods:
-        res = shell_command(cmd, verbose=verbose, capture_output=True, exit_on_error=False)
+        res = shell_command(
+            cmd, verbose=verbose, capture_output=True, exit_on_error=False
+        )
         if res.returncode == 0:
             ip = res.stdout.decode().strip()
             if ip:
@@ -208,9 +210,14 @@ def get_my_public_ip(verbose=False):
                     click.echo(colorize_info(f"* Public IP: {ip}"))
                 return ip
         if verbose:
-            click.echo(colorize_info(f"* Failed (exit {res.returncode}), trying next..."))
+            click.echo(
+                colorize_info(f"* Failed (exit {res.returncode}), trying next...")
+            )
 
-    click.echo(colorize_error("Warning: Could not determine public IP address, using 0.0.0.0"), err=True)
+    click.echo(
+        colorize_error("Warning: Could not determine public IP address, using 0.0.0.0"),
+        err=True,
+    )
     return "0.0.0.0"
 
 

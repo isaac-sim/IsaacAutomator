@@ -61,7 +61,7 @@ def main(
     # check what cloud is deployment for
     cloud = read_tf_output(deployment_name, "cloud", verbose=debug)
 
-    for instance_role in ["isaac"]:
+    for instance_role in ["isaac_workstation"]:
         vm_id = read_tf_output(deployment_name, f"{instance_role}_vm_id", verbose=debug)
         vm_ip = read_tf_output(deployment_name, f"{instance_role}_ip", verbose=debug)
 

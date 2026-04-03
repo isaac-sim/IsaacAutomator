@@ -32,7 +32,7 @@ from src.python.utils import (
     shell_command,
 )
 
-INSTANCE_ROLE_NAMES = ["isaac"]
+INSTANCE_ROLE_NAMES = ["isaac_workstation"]
 
 
 # callback to validate deployment name
@@ -61,7 +61,7 @@ def deployments_callback(ctx, param, value):
 )
 @click.option(
     "--instance-role",
-    default="isaac",
+    default="isaac_workstation",
     type=click.Choice(INSTANCE_ROLE_NAMES),
     help="Instance role",
 )
