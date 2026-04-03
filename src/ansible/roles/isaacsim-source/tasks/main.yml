@@ -16,7 +16,7 @@
 
 - name: Prerequisites
   import_tasks: prerequisites.yml
-  # tags: __isaacsim_source
+  tags: __isaacsim_source
 
 - name: Clone and install Isaac Sim
   import_tasks: install.yml
