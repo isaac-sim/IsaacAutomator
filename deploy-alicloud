@@ -135,8 +135,8 @@ class DeployAlicloudCommand(DeployCommand):
 
         # --instance-type
         self.params.insert(
-            # insert before --isaacsim option
-            self.param_index("isaacsim"),
+            # insert before --ingress-cidrs option
+            self.param_index("ingress_cidrs"),
             click.core.Option(
                 ("--instance-type", "isaac_workstation_instance_type"),
                 prompt=colorize_prompt(
