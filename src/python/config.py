@@ -68,7 +68,7 @@ c["gcp_default_isaac_workstation_gpu_count"] = 1
 c["alicloud_default_region"] = "us-east-1"
 
 # --prefix for the created cloud resources
-c["default_prefix"] = "isa"
+c["default_prefix"] = "isaacautomator"
 
 # --isaaclab
 c["default_isaaclab_git_checkpoint"] = "v3.0.0-beta"
