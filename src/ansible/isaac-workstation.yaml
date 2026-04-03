@@ -29,7 +29,7 @@
   gather_facts: true
   vars:
       in_china: False
-      application_name: isaac-workstation
+      instance_role: isaac-workstation
       prompt_ansi_color: "1;92" # lime green
   roles:
       - isaac-workstation
