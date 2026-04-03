@@ -58,7 +58,7 @@ def main(
     debug: bool,
     deployment_name: str,
 ):
-    # cleck what cloud is deployment for
+    # check what cloud is deployment for
     cloud = read_tf_output(deployment_name, "cloud", verbose=debug)
 
     for instance_role in ["isaac"]:
