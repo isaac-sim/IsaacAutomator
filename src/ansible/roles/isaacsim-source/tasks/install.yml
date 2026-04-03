@@ -22,6 +22,12 @@
     group: "{{ ansible_user }}"
     mode: 0755
 
+- name: Check existing build tag
+  shell: cat "{{ isaacsim_source_dir }}/.build-tag"
+  register: isaacsim_build_tag
+  ignore_errors: true
+  changed_when: false
+
 - name: Clone Isaac Sim repository
   git:
     repo: "{{ isaacsim_git_repo }}"
@@ -29,12 +35,26 @@
     version: "{{ isaacsim_git_checkpoint }}"
     force: true
   become_user: "{{ ansible_user }}"
+  when: isaacsim_build_tag is failed
+
+- name: Get current commit hash
+  shell: git rev-parse HEAD
+  args:
+    chdir: "{{ isaacsim_source_dir }}"
+  become_user: "{{ ansible_user }}"
+  register: isaacsim_current_commit
+  changed_when: false
+
+- name: Set build needed flag
+  set_fact:
+    isaacsim_build_needed: "{{ isaacsim_build_tag is failed or (isaacsim_build_tag.stdout | trim) != isaacsim_current_commit.stdout }}"
 
 - name: Pull LFS files
   shell: git lfs pull
   args:
     chdir: "{{ isaacsim_source_dir }}"
   become_user: "{{ ansible_user }}"
+  when: isaacsim_build_needed
 
 - name: Accept EULA
   file:
@@ -42,6 +62,7 @@
     state: touch
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
+  when: isaacsim_build_needed
 
 - name: Build Isaac Sim
   shell: ./build.sh --release
@@ -49,6 +70,15 @@
     chdir: "{{ isaacsim_source_dir }}"
   become_user: "{{ ansible_user }}"
   poll: 1
+  when: isaacsim_build_needed
+
+- name: Write build tag
+  copy:
+    content: "{{ isaacsim_current_commit.stdout }}"
+    dest: "{{ isaacsim_source_dir }}/.build-tag"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  when: isaacsim_build_needed
 
 - name: Set ownership of Isaac Sim directory
   file:
