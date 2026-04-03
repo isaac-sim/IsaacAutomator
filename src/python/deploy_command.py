@@ -225,8 +225,7 @@ class DeployCommand(click.core.Command):
 
         # --isaacsim
         help = (
-            "Install Isaac Sim? Valid values: 'no', "
-            + "or <git ref in github.com/isaac-sim/IsaacLab>"
+            "Install Isaac Sim? Valid values: \"no\", or git ref at https://github.com/isaac-sim/IsaacSim"
         )
         self.params.insert(
             len(self.params),
@@ -241,8 +240,7 @@ class DeployCommand(click.core.Command):
 
         # --isaaclab
         help = (
-            "Install Isaac Sim Lab? Valid values: 'no', "
-            + "or <git ref in github.com/isaac-sim/IsaacLab>"
+            "Install Isaac Lab? Valid values: \"no\", or git ref at https://github.com/isaac-sim/IsaacLab"
         )
         self.params.insert(
             len(self.params),
