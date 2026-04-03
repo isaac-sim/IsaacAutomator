@@ -114,6 +114,9 @@ RUN echo 'export HISTFILESIZE=20000' >> /root/.bashrc
 RUN echo 'shopt -s histappend' >> /root/.bashrc
 RUN echo 'export PROMPT_COMMAND="history -a; ${PROMPT_COMMAND}"' >> /root/.bashrc
 
+# bash completions
+RUN echo 'source /app/.completions' >> /root/.bashrc
+
 # customoize bash prompt
 RUN echo "export PS1='\[\033[01;33m\][Isaac Automator \[\033[00;33m\]\${VERSION}\[\033[01;33m\]]\[\033[00m\]\[\033[00m\]:\w\$ \[\033[00m\]'" >>  /root/.bashrc
 WORKDIR /app
