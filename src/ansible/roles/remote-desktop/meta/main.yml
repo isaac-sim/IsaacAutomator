@@ -16,7 +16,7 @@
 
 ---
 galaxy_info:
-  role_name: rdesktop
+  role_name: remote_desktop
   author: NVIDIA Corporation
   description: Enables remote desktop access
   standalone: false

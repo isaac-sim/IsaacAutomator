@@ -24,4 +24,4 @@ dependencies:
   - { role: system }
   - { role: docker }
   - { role: nvidia }
-  - { role: rdesktop }
+  - { role: remote-desktop }
