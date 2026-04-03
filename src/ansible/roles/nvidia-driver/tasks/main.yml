@@ -48,10 +48,3 @@
   reboot: post_reboot_delay=5 connect_timeout=3 reboot_timeout=600
   when: ecc_status.stdout == 'Enabled'
   tags: on_stop_start
-
-# nvidia-docker2
-
-- package_facts: manager=apt
-
-- import_tasks: nvidia-docker.yml
-  when: '"nvidia-docker2" not in ansible_facts.packages'

@@ -23,6 +23,6 @@ galaxy_info:
 dependencies:
   - { role: system }
   - { role: docker }
-  - { role: nvidia }
+  - { role: nvidia-driver }
   - { role: remote-desktop }
   - { role: isaacsim-source }

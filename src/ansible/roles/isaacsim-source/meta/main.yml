@@ -22,4 +22,4 @@ galaxy_info:
   standalone: false
 dependencies:
   - { role: system }
-  - { role: nvidia }
+  - { role: nvidia-driver }
