@@ -122,10 +122,14 @@ def main(
             )
             exit(1)
 
-        click.echo(colorize_result(f"* {format_instance_role(instance_role)} VM started."))
+        click.echo(
+            colorize_result(f"* {format_instance_role(instance_role)} VM started.")
+        )
 
         # run "on_stop_start" tags in ansible
-        click.echo(colorize_info(f"* Configuring {format_instance_role(instance_role)} VM..."))
+        click.echo(
+            colorize_info(f"* Configuring {format_instance_role(instance_role)} VM...")
+        )
         shell_command(
             f"ansible-playbook -i {config['state_dir']}/{deployment_name}/.inventory"
             + " isaac-workstation.yaml"

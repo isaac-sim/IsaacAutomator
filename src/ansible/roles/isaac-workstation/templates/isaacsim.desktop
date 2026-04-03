@@ -1,6 +1,0 @@
-[Desktop Entry]
-Type=Application
-Terminal=true
-Exec={{ launch_scripts_dir }}/isaacsim.sh
-Name=Isaac Sim
-Icon=/home/{{ ansible_user }}/Pictures/isaacsim-icon.png

@@ -16,9 +16,9 @@
 
 ---
 galaxy_info:
-  role_name: isaac-workstation
+  role_name: "isaac_workstation"
   author: NVIDIA Corporation
-  description: Isaac Sim installation
+  description: Isaac Workstation
   standalone: false
 dependencies:
   - { role: system }

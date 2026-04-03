@@ -14,32 +14,12 @@
 # limitations under the License.
 # endregion
 
-- name: Prerequisites
-  apt:
-    name: "{{ item }}"
-    state: latest
-  with_items:
-    - libvulkan-dev
-
 - name: Wallpaper
   import_tasks: wallpaper.yml
   tags: __isaac_wallpaper
 
-- name: Desktop Icon
-  import_tasks: icon.yml
-
-- name: Isaac App
-  import_tasks: isaac_app.yml
-  when: isaacsim_git_checkpoint != 'no'
-
 - name: Autorun
   import_tasks: autorun.yml
-  when: isaacsim_git_checkpoint != 'no'
-
-- name: Isaac Lab
-  import_tasks: isaaclab.yml
-  when: isaaclab_git_checkpoint != 'no'
-  tags: __isaaclab
 
 - name: Restart NX server
   meta: noop

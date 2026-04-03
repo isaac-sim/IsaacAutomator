@@ -16,22 +16,6 @@
 
 deployment_name:
 
-isaac_cache_dir: /home/{{ ansible_user }}/isaac
-
-# Isaac Sim
-isaacsim_git_checkpoint: no
-
-# Isaac Lab
-isaaclab_dir: /opt/isaaclab
-isaaclab_git_checkpoint: isaac-lab
-
-# directory to output results to
-results_dir: /home/{{ ansible_user }}/results
-workspace_dir: /home/{{ ansible_user }}/results
 uploads_dir: /home/{{ ansible_user }}/uploads
-
-omniverse_user:
-omniverse_password:
-nucleus_uri:
 
 launch_scripts_dir: /home/{{ ansible_user }}
