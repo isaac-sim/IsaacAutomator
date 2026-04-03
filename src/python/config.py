@@ -14,9 +14,9 @@
 # limitations under the License.
 # endregion
 
-from typing import Any, Dict
+from typing import Any
 
-c: Dict[str, Any] = {}
+c: dict[str, Any] = {}
 
 # paths
 c["app_dir"] = "/app"
