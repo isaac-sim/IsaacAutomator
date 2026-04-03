@@ -29,8 +29,8 @@
   gather_facts: true
   vars:
     in_china: False
-    application_name: isaac
-    prompt_ansi_color: 36 # cyan
+    application_name: isaac-workstation
+    prompt_ansi_color: 33 # yellow
   roles:
     - isaac-workstation
   handlers:
