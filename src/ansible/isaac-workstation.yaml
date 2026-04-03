@@ -18,21 +18,21 @@
   hosts: isaac-workstation
   gather_facts: false
   tasks:
-    - wait_for_connection: timeout=300
+      - wait_for_connection: timeout=300
   tags:
-    # packer checks connectivity beforehand
-    - skip_in_image
-    - on_stop_start
+      # packer checks connectivity beforehand
+      - skip_in_image
+      - on_stop_start
 
 - name: Deploy Isaac Sim
   hosts: isaac-workstation
   gather_facts: true
   vars:
-    in_china: False
-    application_name: isaac-workstation
-    prompt_ansi_color: 33 # yellow
+      in_china: False
+      application_name: isaac-workstation
+      prompt_ansi_color: "1;92" # lime green
   roles:
-    - isaac-workstation
+      - isaac-workstation
   handlers:
-    - include_tasks: roles/remote-desktop/handlers/main.yml
-    - include_tasks: roles/system/handlers/main.yml
+      - include_tasks: roles/remote-desktop/handlers/main.yml
+      - include_tasks: roles/system/handlers/main.yml
