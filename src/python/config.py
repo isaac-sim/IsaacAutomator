@@ -56,7 +56,7 @@ c["default_remote_uploads_dir"] = "/home/ubuntu/uploads"
 c["default_remote_results_dir"] = "/home/ubuntu/results"
 
 # --isaac-workstation-instance-type
-c["aws_default_isaac_workstation_instance_type"] = "g5.2xlarge"
+c["aws_default_isaac_workstation_instance_type"] = "g6e.2xlarge"
 # str, 1-index in DeployAzureCommand.AZURE_OVKIT_INSTANCE_TYPES
 c["azure_default_isaac_workstation_instance_type"] = "Standard_NV36ads_A10_v5"
 c["gcp_default_isaac_workstation_instance_type"] = "g2-standard-8"
