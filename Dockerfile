@@ -107,6 +107,13 @@ RUN ./aws/install
 # copy app code into container
 COPY . /app
 
+# store bash history in the state directory
+RUN echo 'export HISTFILE=/app/state/.bash_history' >> /root/.bashrc
+RUN echo 'export HISTSIZE=10000' >> /root/.bashrc
+RUN echo 'export HISTFILESIZE=20000' >> /root/.bashrc
+RUN echo 'shopt -s histappend' >> /root/.bashrc
+RUN echo 'export PROMPT_COMMAND="history -a; ${PROMPT_COMMAND}"' >> /root/.bashrc
+
 # customoize bash prompt
 RUN echo "export PS1='\[\033[01;33m\][Isaac Automator \[\033[00;33m\]\${VERSION}\[\033[01;33m\]]\[\033[00m\]\[\033[00m\]:\w\$ \[\033[00m\]'" >>  /root/.bashrc
 # set NGC_CLI_API_KEY to contents of NGC_API_KEY var (if it exists:
