@@ -4,7 +4,6 @@
 cloud="aws"
 ssh_port=22
 ansible_user="ubuntu"
-ngc_api_key="%ngc_api_key%"
 vnc_password="x8hleVTt0U"
 omniverse_user="omniverse"
 deployment_name="test-1"

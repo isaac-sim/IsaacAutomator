@@ -25,9 +25,6 @@ isaacsim_git_checkpoint: no
 isaaclab_dir: /opt/isaaclab
 isaaclab_git_checkpoint: isaac-lab
 
-# "none" skips login/pull
-ngc_api_key:
-
 # directory to output results to
 results_dir: /home/{{ ansible_user }}/results
 workspace_dir: /home/{{ ansible_user }}/results

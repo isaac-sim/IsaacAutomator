@@ -57,7 +57,6 @@
   args:
     chdir: "{{ launch_scripts_dir}}"
   become_user: "{{ ansible_user }}"
-  when: ngc_api_key != "none"
   tags:
     - skip_in_image
     - on_stop_start

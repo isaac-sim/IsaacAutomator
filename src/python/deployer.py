@@ -24,7 +24,6 @@ from pathlib import Path
 import click
 
 from src.python.debug import debug_break  # noqa
-from src.python.ngc import check_ngc_access
 from src.python.utils import (
     colorize_error,
     colorize_info,
@@ -185,55 +184,6 @@ class Deployer:
 
             # update meta info if deployment was destroyed
             self.save_meta()
-
-    def validate_ngc_api_key(self, image, restricted_image=False):
-        """
-        Check if NGC API key allows to log in and has access to appropriate NGC image
-        @param image: NGC image to check access to
-        @param restricted_image: If image is restricted to specific org/team?
-        """
-
-        debug = self.params["debug"]
-        ngc_api_key = self.params["ngc_api_key"]
-        ngc_api_key_check = self.params["ngc_api_key_check"]
-
-        # extract org and team from the image path
-
-        r = re.findall(
-            "^nvcr\\.io/([a-z0-9\\-_]+)/([a-z0-9\\-_]+/)?[a-z0-9\\-_]+:[a-z0-9\\-_.]+$",
-            image,
-        )
-
-        ngc_org, ngc_team = r[0]
-        ngc_team = ngc_team.rstrip("/")
-
-        if ngc_org == "nvidia":
-            click.echo(
-                colorize_info(
-                    "* Access to docker image can't be checked for NVIDIA org. But you'll be fine. Fingers crossed."
-                )
-            )
-            return
-
-        if debug:
-            click.echo(colorize_info(f'* Will check access to NGC Org: "{ngc_org}"'))
-            click.echo(colorize_info(f'* Will check access to NGC Team: "{ngc_team}"'))
-
-        if ngc_api_key_check and ngc_api_key != "none":
-            click.echo(colorize_info("* Validating NGC API key... "))
-            r = check_ngc_access(
-                ngc_api_key=ngc_api_key, org=ngc_org, team=ngc_team, verbose=debug
-            )
-            if r == 100:
-                raise Exception(colorize_error("NGC API key is invalid."))
-            # only check access to org/team if restricted image is deployed
-            elif restricted_image and (r == 101 or r == 102):
-                raise Exception(
-                    colorize_error(
-                        f'NGC API key is valid but you don\'t have access to image "{image}".'
-                    )
-                )
-            click.echo(colorize_info(("* NGC API Key is valid!")))
 
     def create_tfvars(self, tfvars: dict = {}):
         """

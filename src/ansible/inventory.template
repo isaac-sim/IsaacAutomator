@@ -5,7 +5,6 @@ cloud="{cloud}"
 in_china={in_china}
 ssh_port={ssh_port}
 ansible_user="{config[default_ssh_user]}"
-ngc_api_key="{ngc_api_key}"
 vnc_password="{vnc_password}"
 omniverse_user="{omniverse_user}"
 deployment_name="{deployment_name}"

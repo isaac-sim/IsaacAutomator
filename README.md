@@ -8,7 +8,6 @@ The result is a fully configured remote desktop cloud workstation that you can u
 
 - [Installation](#installation)
   - [Installing Docker](#installing-docker)
-  - [Obtaining NGC API Key](#obtaining-ngc-api-key)
   - [Building the Container](#building-the-container)
     - [Linux/macOS](#linuxmacos)
     - [Windows](#windows)
@@ -41,10 +40,6 @@ The result is a fully configured remote desktop cloud workstation that you can u
 ### Installing Docker
 
 Docker should be installed on your system. Visit <https://docs.docker.com/engine/install/> for installation instructions.
-
-### Obtaining NGC API Key
-
-An **NGC API Key** allows you to download Docker images from <https://ngc.nvidia.com/>. Obtain one at <https://ngc.nvidia.com/setup/api-key>.
 
 ### Building the Container
 

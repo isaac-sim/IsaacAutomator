@@ -54,31 +54,6 @@ class DeployCommand(click.core.Command):
 
         return value
 
-    @staticmethod
-    def ngc_api_key_callback(ctx, param, value):
-        """
-        Validate NGC API key
-        """
-
-        # fix click bug
-        if value is None:
-            return value
-
-        # allow "none" as a special value
-        if "none" == value:
-            return value
-
-        # check if it contains what's allowed
-        if not (
-            re.match("^[A-Za-z0-9]{32,}$", value)
-            or re.match(r"^nvapi-[A-Za-z0-9_\-+/]{64}$", value)
-        ):
-            raise click.BadParameter(
-                colorize_error("`Key contains invalid characters or is too short`.")
-            )
-
-        return value
-
     def ingress_cidrs_callback(ctx, param, value):
         """
         Called after parsing --ingress-cidrs option
@@ -258,30 +233,6 @@ class DeployCommand(click.core.Command):
                 default="",
                 help="[DEV] Private git repo for Isaac Sim Lab.",
                 hidden=True,
-            ),
-        )
-
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--ngc-api-key",),
-                type=str,
-                prompt=colorize_prompt(
-                    "* NGC API Key (can be obtained at https://ngc.nvidia.com/setup/api-key)"
-                ),
-                default=os.environ.get("NGC_CLI_API_KEY", ""),
-                show_default='"NGC_CLI_API_KEY" environment variable',
-                help="NGC API Key (can be obtained at https://ngc.nvidia.com/setup/api-key)",
-                callback=DeployCommand.ngc_api_key_callback,
-            ),
-        )
-
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--ngc-api-key-check/--no-ngc-api-key-check",),
-                default=True,
-                help="Skip NGC API key validity check.",
             ),
         )
 

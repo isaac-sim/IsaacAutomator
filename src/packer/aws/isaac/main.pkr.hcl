@@ -56,10 +56,6 @@ variable "image_name" {
   default = "$PREFIX.isaac_image.$VERSION"
 }
 
-variable "ngc_api_key" {
-  default = env("NGC_CLI_API_KEY")
-}
-
 variable skip_tags {
   default = "skip_in_image"
 }
@@ -138,7 +134,7 @@ build {
     ]
     extra_arguments = [
       "--skip-tags", "${var.skip_tags}",
-      "--extra-vars", "cloud='aws' deployment_name='aws_image' ngc_api_key='${var.ngc_api_key}' omniverse_user='' isaac_image='${var.isaac_image}'"
+      "--extra-vars", "cloud='aws' deployment_name='aws_image' omniverse_user='' isaac_image='${var.isaac_image}'"
     ]
   }
 }

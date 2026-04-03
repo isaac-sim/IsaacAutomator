@@ -69,10 +69,6 @@ variable "image_name" {
   default = "isaac_image"
 }
 
-variable "ngc_api_key" {
-  default = env("NGC_CLI_API_KEY")
-}
-
 variable skip_tags {
   default = "skip_in_image"
 }
@@ -122,7 +118,7 @@ build {
     ]
     extra_arguments = [
       "--skip-tags", "${var.skip_tags}",
-      "--extra-vars", "cloud='azure' deployment_name='azure_image' ngc_api_key='${var.ngc_api_key}'"
+      "--extra-vars", "cloud='azure' deployment_name='azure_image'"
     ]
   }
 

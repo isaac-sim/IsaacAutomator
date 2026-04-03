@@ -25,8 +25,6 @@ class Test_Deployer(unittest.TestCase):
                 "isaac": True,
                 "isaac_workstation_instance_type": "g5.2xlarge",
                 "isaac_image": "nvcr.io/nvidia/isaac-sim:2022.2.0",
-                "ngc_api_key": "__ngc_api_key__",
-                "ngc_api_key_check": True,
                 "vnc_password": "__vnc_password__",
                 "omniverse_user": "ovuser",
                 "omniverse_password": "__omniverse_password__",
