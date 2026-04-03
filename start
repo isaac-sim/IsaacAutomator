@@ -128,7 +128,7 @@ def main(
         click.echo(colorize_info(f"* Configuring {format_instance_role(instance_role)} VM..."))
         shell_command(
             f"ansible-playbook -i {config['state_dir']}/{deployment_name}/.inventory"
-            + f" {instance_role}.yml"
+            + " isaac-workstation.yaml"
             + " -t on_stop_start"
             + f" {'-vv' if debug else ''}",
             cwd=config["ansible_dir"],
