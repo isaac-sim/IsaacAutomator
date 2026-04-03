@@ -140,7 +140,7 @@ class DeployAlicloudCommand(DeployCommand):
             click.core.Option(
                 ("--instance-type", "isaac_workstation_instance_type"),
                 prompt=colorize_prompt(
-                    '* "Isaac Workstation" Instance Type. Supported types:\n\n'
+                    "* Instance Type. Supported types:\n\n"
                     + instance_types_table
                     + "\n See https://www.alibabacloud.com/help/en/ecs/user-guide/overview-of-instance-families "
                     + "for availability and pricing.\n"
@@ -148,7 +148,7 @@ class DeployAlicloudCommand(DeployCommand):
                 show_default=True,
                 default=config["alicloud_default_isaac_workstation_instance_type"],
                 callback=DeployAlicloudCommand.ovkit_instance_type_callback,
-                help='"Isaac Workstation" instance type. Currently supported: '
+                help="Instance type. Currently supported: "
                 + ", ".join(self.ALICLOUD_OVKIT_INSTANCE_TYPES.keys())
                 + ".",
             ),

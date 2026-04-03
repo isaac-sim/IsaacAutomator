@@ -141,14 +141,14 @@ class DeployAWSCommand(DeployCommand):
             click.core.Option(
                 ("--instance-type", "isaac_workstation_instance_type"),
                 prompt=colorize_prompt(
-                    '* "Isaac Workstation" Instance Type '
+                    "* Instance Type "
                     + "(https://docs.aws.amazon.com/dlami/latest/devguide/gpu.html, "
                     + "G5, G4dn and G6 instances are supported)"
                 ),
                 show_default=True,
                 default=config["aws_default_isaac_workstation_instance_type"],
                 callback=DeployAWSCommand.ovkit_instance_type_callback,
-                help='"Isaac Workstation" instance type. Currently supported: '
+                help="Instance type. Currently supported: "
                 + ", ".join(self.AWS_OVKIT_INSTANCE_TYPES)
                 + ".",
             ),

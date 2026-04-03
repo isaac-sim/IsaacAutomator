@@ -110,13 +110,13 @@ class DeployGCPCommand(DeployCommand):
             click.core.Option(
                 ("--instance-type", "isaac_workstation_instance_type"),
                 prompt=colorize_prompt(
-                    '* "Isaac Workstation" Instance Type '
+                    "* Instance Type "
                     + "(see https://cloud.google.com/compute/docs/general-purpose-machines for details)"
                 ),
                 type=click.Choice(self.GCP_OVKIT_INSTANCE_TYPES),
                 show_default=True,
                 default=config["gcp_default_isaac_workstation_instance_type"],
-                help='"Isaac Workstation" instance type.',
+                help="Instance type.",
             ),
         )
 
