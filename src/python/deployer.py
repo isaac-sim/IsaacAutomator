@@ -127,7 +127,7 @@ class Deployer:
                 command_line += separator + "--" + k + " "
 
                 if isinstance(v, str):
-                    command_line += "'" + shlex.quote(v) + "'"
+                    command_line += shlex.quote(v)
                 else:
                     command_line += str(v)
 
