@@ -49,7 +49,7 @@
   set_fact:
     isaacsim_build_needed: "{{ (isaacsim_build_tag.stdout | trim) != isaacsim_current_commit.stdout }}"
 
-- name: Debug isaacsim_build_needed
+- name: See if Isaac Sim needs to be (re)built
   debug:
     msg: "isaacsim_build_needed: {{ isaacsim_build_needed }} (current: {{ isaacsim_current_commit.stdout }}, tag: {{ isaacsim_build_tag.stdout | default('none', true) }})"
 
