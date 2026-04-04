@@ -235,7 +235,7 @@ To use the installed applications, connect to the deployed instance using noVNC 
 Isaac Sim is installed from source on the deployed instance. By default, it will automatically start when the cloud VM is deployed. Alternatively, click the "Isaac Sim" icon on the desktop, or run the following command in a terminal on the deployed instance:
 
 ```sh
-~/isaacsim.sh
+~/IsaacSim/isaac-sim.sh
 ```
 
 To install a specific version of Isaac Sim, provide a valid Git reference from <https://github.com/isaac-sim/IsaacSim> as the value of the `--isaacsim` parameter to the deployment command. Use `--isaacsim no` to skip Isaac Sim installation.
