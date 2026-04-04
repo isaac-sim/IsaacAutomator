@@ -14,15 +14,6 @@
 # limitations under the License.
 # endregion
 
----
-galaxy_info:
-  role_name: "isaac_workstation"
-  author: NVIDIA Corporation
-  description: Isaac Workstation
-  standalone: false
-dependencies:
-  - { role: system }
-  - { role: nvidia-driver }
-  - { role: remote-desktop }
-  - { role: isaacsim-source }
-  - { role: isaaclab-source }
+isaaclab_dir: /home/{{ ansible_user }}/IsaacLab
+isaaclab_git_checkpoint: main
+isaaclab_git_repo: https://github.com/isaac-sim/IsaacLab.git

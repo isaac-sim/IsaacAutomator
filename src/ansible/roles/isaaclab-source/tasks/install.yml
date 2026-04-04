@@ -1,0 +1,98 @@
+# region copyright
+# Copyright 2023-2026 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+- name: Create Isaac Lab directory
+  file:
+    path: "{{ isaaclab_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0755
+
+- name: Check existing install tag
+  shell: cat "{{ isaaclab_dir }}/.install-tag" 2>/dev/null || true
+  register: isaaclab_install_tag
+  changed_when: false
+
+- name: Clone Isaac Lab repository
+  git:
+    repo: "{{ isaaclab_git_repo }}"
+    dest: "{{ isaaclab_dir }}"
+    version: "{{ isaaclab_git_checkpoint }}"
+    force: true
+    depth: 1
+  become_user: "{{ ansible_user }}"
+  when: isaaclab_install_tag.stdout | trim == ''
+
+- name: Get current commit hash
+  shell: git rev-parse HEAD
+  args:
+    chdir: "{{ isaaclab_dir }}"
+  become_user: "{{ ansible_user }}"
+  register: isaaclab_current_commit
+  changed_when: false
+
+- name: Set isaaclab_install_needed flag
+  set_fact:
+    isaaclab_install_needed: "{{ (isaaclab_install_tag.stdout | trim) != isaaclab_current_commit.stdout }}"
+
+- name: Debug isaaclab_install_needed
+  debug:
+    msg: "isaaclab_install_needed: {{ isaaclab_install_needed }} (current: {{ isaaclab_current_commit.stdout }}, tag: {{ isaaclab_install_tag.stdout | default('none', true) }})"
+
+- name: Check if Isaac Sim source directory exists
+  stat:
+    path: "{{ isaacsim_install_dir }}"
+  register: isaacsim_dir_stat
+
+- name: Create symlink to Isaac Sim
+  file:
+    src: "{{ isaacsim_install_dir }}"
+    dest: "{{ isaaclab_dir }}/_isaac_sim"
+    state: link
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  when: isaacsim_dir_stat.stat.exists
+
+- name: Warn if Isaac Sim is not available
+  debug:
+    msg: "WARNING: Isaac Sim source directory {{ isaacsim_install_dir }} not found. Skipping _isaac_sim symlink."
+  when: not isaacsim_dir_stat.stat.exists
+
+- name: Install Isaac Lab
+  shell: ./isaaclab.sh --install 2>&1 | tee /tmp/isaaclab-install.log
+  args:
+    chdir: "{{ isaaclab_dir }}"
+  become_user: "{{ ansible_user }}"
+  async: 3600
+  poll: 30
+  when: isaaclab_install_needed
+
+- name: Write install tag
+  copy:
+    content: "{{ isaaclab_current_commit.stdout }}"
+    dest: "{{ isaaclab_dir }}/.install-tag"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  when: isaaclab_install_needed
+
+- name: Set ownership of Isaac Lab directory
+  file:
+    path: "{{ isaaclab_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    recurse: true

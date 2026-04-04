@@ -14,15 +14,7 @@
 # limitations under the License.
 # endregion
 
----
-galaxy_info:
-  role_name: "isaac_workstation"
-  author: NVIDIA Corporation
-  description: Isaac Workstation
-  standalone: false
-dependencies:
-  - { role: system }
-  - { role: nvidia-driver }
-  - { role: remote-desktop }
-  - { role: isaacsim-source }
-  - { role: isaaclab-source }
+- name: Clone and install Isaac Lab
+  import_tasks: install.yml
+  when: isaaclab_git_checkpoint != 'no'
+  tags: __isaaclab_source_install

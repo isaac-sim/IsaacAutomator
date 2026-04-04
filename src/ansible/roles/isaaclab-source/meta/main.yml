@@ -16,13 +16,10 @@
 
 ---
 galaxy_info:
-  role_name: "isaac_workstation"
+  role_name: isaaclab_source
   author: NVIDIA Corporation
-  description: Isaac Workstation
+  description: Install Isaac Lab from source
   standalone: false
 dependencies:
   - { role: system }
   - { role: nvidia-driver }
-  - { role: remote-desktop }
-  - { role: isaacsim-source }
-  - { role: isaaclab-source }
