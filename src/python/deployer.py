@@ -562,9 +562,11 @@ class Deployer:
 
 * To connect to Isaac Sim via SSH:
 
-{self.ssh_connection_command(self.tf_output('isaac_workstation_ip'))}
+./ssh {deployment_name}
 
-{nonvc_instruction}
+* To connect to Isaac Sim via noVNC:
+
+./novnc {deployment_name}
 
 {nomachine_instruction}""".replace(
                 "__app__", "Isaac Sim"
