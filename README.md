@@ -242,12 +242,12 @@ To install a specific version of Isaac Sim, provide a valid Git reference from <
 
 #### Isaac Lab
 
-[Isaac Lab](https://isaac-sim.github.io/IsaacLab/) can be pre-installed on deployed instances. To install a specific version of Isaac Lab, provide a valid Git reference from <https://github.com/isaac-sim/IsaacLab> as the value of the `--isaaclab` parameter to the deployment command. Use `--isaaclab no` to skip Isaac Lab installation.
+[Isaac Lab](https://isaac-sim.github.io/IsaacLab/) is installed from source on the deployed instance. To install a specific version of Isaac Lab, provide a valid Git reference from <https://github.com/isaac-sim/IsaacLab> as the value of the `--isaaclab` parameter to the deployment command. Use `--isaaclab no` to skip Isaac Lab installation.
 
-To run Isaac Lab, click the "Isaac Lab" icon on the desktop or run the following command in the terminal:
+To run Isaac Lab, use the following command in the terminal on the deployed instance:
 
 ```sh
-~/isaaclab.sh
+~/IsaacLab/isaaclab.sh
 ```
 
 ### Autorun Script
