@@ -22,12 +22,14 @@ import sys
 
 import click
 
+from src.python.aws import aws_validate_credentials
+from src.python.azure import azure_login
 from src.python.config import c as config
 from src.python.utils import (
-    colorize_error,
     colorize_info,
     deployments,
     format_cloud_name,
+    gcp_login,
     read_meta,
     read_tf_output,
     shell_command,
@@ -73,6 +75,15 @@ def main(
             f"* Repairing deployment '{deployment_name}' @ {format_cloud_name(cloud)}..."
         )
     )
+
+    # validate credentials
+    if cloud == "aws":
+        region = meta.get("input_params", {}).get("region", None)
+        aws_validate_credentials(deployment_name, region=region, verbose=debug)
+    elif cloud == "azure":
+        azure_login(verbose=debug)
+    elif cloud == "gcp":
+        gcp_login(verbose=debug)
 
     # run terraform
     if terraform:

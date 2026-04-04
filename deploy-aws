@@ -17,11 +17,11 @@
 # endregion
 
 import os
-import re
 import sys
 
 import click
 
+from src.python.aws import aws_validate_credentials
 from src.python.config import c as config
 from src.python.debug import debug_break, debug_start  # noqa
 from src.python.deploy_command import DeployCommand
@@ -100,38 +100,6 @@ class DeployAWSCommand(DeployCommand):
 
         return value
 
-    @staticmethod
-    def aws_access_key_id_callback(ctx, param, value):
-        """
-        Called after parsing --aws-access-key-id option
-        """
-
-        if not re.match("^[A-Z0-9]{20}$", value):
-            raise click.BadParameter(
-                colorize_error(
-                    "Invalid AWS Access Key ID. "
-                    + "It should be 20 characters long and contain only uppercase letters and digits."
-                )
-            )
-
-        return value
-
-    @staticmethod
-    def aws_secret_access_key_callback(ctx, param, value):
-        """
-        Called after parsing --aws-secret-access-key option
-        """
-
-        if not re.match("^[A-Za-z0-9/+]{40}$", value):
-            raise click.BadParameter(
-                colorize_error(
-                    "Invalid AWS Secret Access Key. "
-                    + "It should be 40 characters long and contain only letters, digits, '/' and '+' signs."
-                )
-            )
-
-        return value
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -171,43 +139,6 @@ class DeployAWSCommand(DeployCommand):
             ),
         )
 
-        # --aws-access-key-id
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--aws-access-key-id",),
-                prompt=colorize_prompt("* AWS Access Key ID"),
-                default=os.environ.get("AWS_ACCESS_KEY_ID", ""),
-                callback=DeployAWSCommand.aws_access_key_id_callback,
-                show_default="AWS_ACCESS_KEY_ID environment variable",
-            ),
-        )
-
-        # --aws-secret-access-key
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--aws-secret-access-key",),
-                prompt=colorize_prompt("* AWS Secret Access Key"),
-                default=os.environ.get("AWS_SECRET_ACCESS_KEY", ""),
-                callback=DeployAWSCommand.aws_secret_access_key_callback,
-                show_default="AWS_SECRET_ACCESS_KEY environment variable",
-            ),
-        )
-
-        # --aws-session-token
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--aws-session-token",),
-                prompt=colorize_prompt(
-                    "* AWS Session Token (if using temporary credentials, otherwise leave empty)"
-                ),
-                default=os.environ.get("AWS_SESSION_TOKEN", ""),
-                show_default="AWS_SESSION_TOKEN environment variable",
-            ),
-        )
-
         # defaults
 
         self.params[self.param_index("from_image")].default = config[
@@ -232,14 +163,17 @@ class AWSDeployer(Deployer):
         # ask what to do if deployment already exists
         self.ask_existing_behavior()
 
+        # update region in AWS config if specified
+        if self.params.get("region"):
+            from src.python.aws import aws_cli_set
+
+            aws_cli_set("region", self.params["region"], verbose=self.params["debug"])
+
         if self.existing_behavior != "run_ansible":
             # create tfvars file, deal with existing deployment
             self.create_tfvars(
                 {
                     "region": self.params["region"],
-                    "aws_access_key_id": self.params["aws_access_key_id"],
-                    "aws_secret_access_key": self.params["aws_secret_access_key"],
-                    "aws_session_token": self.params["aws_session_token"],
                 }
             )
 
@@ -275,7 +209,11 @@ def main(**params):
 
 if __name__ == "__main__":
     if os.path.exists("/.dockerenv"):
-        # we're in docker, run command
+        # set DEBUG env var if --debug option is used, so that pre-click code can also see debug mode
+        debug = "--debug" in sys.argv or os.environ.get("DEBUG", "0") == "1"
+        # validate AWS credentials and prompt for new ones if needed
+        aws_validate_credentials(verbose=debug)
+        # run command
         main()
     else:
         # we're outside, start docker container first

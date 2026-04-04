@@ -108,6 +108,9 @@ RUN case "$(dpkg --print-architecture)" in \
     esac
 RUN unzip awscliv2.zip
 RUN ./aws/install
+# store aws credentials in a persistent location
+RUN ln -s /app/state/.aws /root/.aws
+RUN echo "mkdir -p /app/state/.aws" >> /root/.bashrc
 
 # copy app code into container
 COPY . /app

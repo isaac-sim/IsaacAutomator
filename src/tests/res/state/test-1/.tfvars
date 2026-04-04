@@ -1,6 +1,4 @@
 region                = "us-east-1"
-aws_access_key_id     = "%aws-access-key-id%"
-aws_secret_access_key = "%aws_secret_access_key%"
 isaac_workstation_enabled         = "true"
 isaac_workstation_instance_type   = "g5.2xlarge"
 prefix                = "isa"

@@ -11,9 +11,8 @@ terraform {
 provider "aws" {
   region = var.region
 
-  access_key = var.aws_access_key_id
-  secret_key = var.aws_secret_access_key
-  token      = var.aws_session_token
+  # credentials are provided via AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY,
+  # and AWS_SESSION_TOKEN environment variables (from state/.aws/)
 
   default_tags {
     tags = {

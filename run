@@ -8,12 +8,11 @@ if [[ $(docker images -q "$TAG" 2> /dev/null) == '' ]]; then
   "${SELF_DIR}/build"
 fi
 
-# forward env vars if they are set
+# Forward some env vars if they are set.
+# We dont want to forward aws/gcp/azure creds because we store them in state/ dir
+# so our deployment is completely isolated from the host and self-sufficient.
 ENV_ARGS=()
-for var in NGC_API_KEY NGC_KEY DEBUG \
-           AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY \
-           AZURE_SP_CLIENT_ID AZURE_SP_CLIENT_SECRET AZURE_SUBSCRIPTION_ID AZURE_TENANT_ID \
-           ALIYUN_ACCESS_KEY ALIYUN_SECRET_KEY; do
+for var in ALIYUN_ACCESS_KEY ALIYUN_SECRET_KEY; do
   if [[ -n "${!var}" ]]; then
     ENV_ARGS+=(-e "${var}=${!var}")
   fi

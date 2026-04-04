@@ -23,6 +23,7 @@ from pathlib import Path
 
 import click
 
+from src.python.aws import aws_validate_credentials
 from src.python.azure import azure_login
 from src.python.config import c as config
 from src.python.debug import debug_break  # noqa
@@ -33,6 +34,7 @@ from src.python.utils import (
     deployments,
     format_cloud_name,
     gcp_login,
+    read_meta,
     shell_command,
 )
 
@@ -60,16 +62,9 @@ from src.python.utils import (
     help="Destroy without confirmation?",
     prompt=colorize_prompt("Are you sure?"),
 )
-@click.option(
-    "--login/--no-login",
-    default=True,
-    show_default=True,
-    help="Login to Azure?",
-)
 def main(
     yes: bool,
     debug: bool,
-    login: bool,
     dryrun: bool,
     deployment_name: str,
 ):
@@ -101,12 +96,15 @@ def main(
     if cloud == "none":
         print(colorize_info(f'* No cloud resources found for "{deployment_name}"'))
 
-    # login if needed
-    if login:
-        if "azure" == cloud:
-            azure_login(verbose=debug)
-        elif "gcp" == cloud:
-            gcp_login(verbose=debug)
+    # validate credentials
+    if "azure" == cloud:
+        azure_login(verbose=debug)
+    elif "gcp" == cloud:
+        gcp_login(verbose=debug)
+    elif "aws" == cloud:
+        meta = read_meta(deployment_name, debug)
+        region = meta.get("input_params", {}).get("region", None)
+        aws_validate_credentials(deployment_name, region=region, verbose=debug)
 
     if cloud != "none":
         # do `terraform init` in case we didn't map /app dir

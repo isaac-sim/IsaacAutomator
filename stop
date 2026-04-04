@@ -28,7 +28,11 @@ from src.python.alicloud import (
     alicloud_get_instance_status,
     alicloud_stop_instance,
 )
-from src.python.aws import aws_configure_cli, aws_get_instance_status, aws_stop_instance
+from src.python.aws import (
+    aws_validate_credentials,
+    aws_get_instance_status,
+    aws_stop_instance,
+)
 from src.python.azure import azure_login, azure_stop_instance
 from src.python.config import c as config
 from src.python.utils import (
@@ -38,6 +42,7 @@ from src.python.utils import (
     deployments,
     format_instance_role,
     format_cloud_name,
+    read_meta,
     read_tf_output,
     shell_command,
 )
@@ -61,6 +66,14 @@ def main(
     # check what cloud is deployment for
     cloud = read_tf_output(deployment_name, "cloud", verbose=debug)
 
+    # validate credentials before any cloud operations
+    if "aws" == cloud:
+        meta = read_meta(deployment_name, debug)
+        region = meta.get("input_params", {}).get("region", None)
+        aws_validate_credentials(deployment_name, region=region, verbose=debug)
+    elif "azure" == cloud:
+        azure_login(verbose=debug)
+
     for instance_role in ["isaac_workstation"]:
         vm_id = read_tf_output(deployment_name, f"{instance_role}_vm_id", verbose=debug)
         vm_ip = read_tf_output(deployment_name, f"{instance_role}_ip", verbose=debug)
@@ -79,8 +92,6 @@ def main(
         if "azure" == cloud:
             click.echo()  # extra newline
             extra_info = " On Azure stopped VMs still count towards the quota."
-            # login to azure if needed
-            azure_login(verbose=debug)
             # stop
             azure_stop_instance(vm_id, verbose=debug)
 
@@ -98,8 +109,6 @@ def main(
                 time.sleep(2)
 
         elif "aws" == cloud:
-            # configure aws cli
-            aws_configure_cli(deployment_name, verbose=debug)
             # stop
             aws_stop_instance(vm_id, verbose=debug)
             # wait for vm to stop
