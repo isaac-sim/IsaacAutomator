@@ -23,12 +23,18 @@
   kernel_blacklist: name=nouveau
     state=present
 
+- name: NVIDIA GPU Driver / Remove old kernel packages to prevent DKMS build failures
+  shell: apt-get autoremove --purge -y
+  args:
+    executable: /bin/bash
+
 - name: NVIDIA GPU Driver / Install pre-requisites
   apt: name={{ item }}
     state=latest
     update_cache=yes
   with_items:
     - xserver-xorg
+    - "linux-headers-{{ ansible_kernel }}"
     - "{{ generic_driver_apt_package }}"
 
 - name: NVIDIA GPU Driver / Enable persistent mode
