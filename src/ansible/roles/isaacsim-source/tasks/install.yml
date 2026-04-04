@@ -105,4 +105,23 @@
     state: link
     force: yes
     owner: "{{ ansible_user }}"
+
+- name: Run post_install.sh
+  shell: ./post_install.sh 2>&1 | tee /tmp/isaacsim-post-install.log
+  args:
+    chdir: "/home/{{ ansible_user }}/IsaacSim"
+  become_user: "{{ ansible_user }}"
+  when: isaacsim_build_needed
+
+- name: Copy Isaac Sim desktop icon to Desktop
+  copy:
+    src: "/home/{{ ansible_user }}/.local/share/applications/IsaacSim.desktop"
+    dest: "/home/{{ ansible_user }}/Desktop/IsaacSim.desktop"
+    remote_src: yes
+    owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
+    mode: "0755"
+
+- name: Set launch permissions for Isaac Sim desktop icon
+  shell: gio set "/home/{{ ansible_user }}/Desktop/IsaacSim.desktop" metadata::trusted true
+  become_user: "{{ ansible_user }}"
