@@ -19,6 +19,4 @@ galaxy_info:
   role_name: nvidia_driver
   author: NVIDIA Corporation
   description: NVIDIA driver
-  standalone: false
-dependencies:
-  - { role: system }
+  standalone: true
