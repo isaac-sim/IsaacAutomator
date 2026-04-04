@@ -23,19 +23,40 @@
   kernel_blacklist: name=nouveau
     state=present
 
-- name: NVIDIA GPU Driver / Remove old kernel packages to prevent DKMS build failures
-  shell: apt-get autoremove --purge -y
+- name: NVIDIA GPU Driver / Remove non-running kernel packages to prevent DKMS build failures
+  shell: |
+    CURRENT_KERNEL=$(uname -r)
+    dpkg -l 'linux-image-*' 'linux-headers-*' 'linux-modules-*' 2>/dev/null \
+      | awk '/^ii/{print $2}' \
+      | grep -v "$CURRENT_KERNEL" \
+      | grep -v 'linux-headers-generic' \
+      | grep -v 'linux-image-generic' \
+      | xargs -r apt-get remove --purge -y || true
+    apt-get autoremove --purge -y
   args:
     executable: /bin/bash
 
-- name: NVIDIA GPU Driver / Install pre-requisites
-  apt: name={{ item }}
-    state=latest
-    update_cache=yes
-  with_items:
-    - xserver-xorg
-    - "linux-headers-{{ ansible_kernel }}"
-    - "{{ generic_driver_apt_package }}"
+- name: NVIDIA GPU Driver / Install build dependencies
+  apt:
+    name:
+      - build-essential
+      - gcc-12
+      - dkms
+      - xserver-xorg
+      - "linux-headers-{{ ansible_kernel }}"
+    state: latest
+    update_cache: yes
+
+- name: NVIDIA GPU Driver / Set gcc-12 as default for DKMS kernel module builds
+  shell: ln -sf /usr/bin/gcc-12 /usr/bin/gcc
+  args:
+    executable: /bin/bash
+
+- name: NVIDIA GPU Driver / Install driver package
+  apt:
+    name: "{{ generic_driver_apt_package }}"
+    state: latest
+    update_cache: yes
 
 - name: NVIDIA GPU Driver / Enable persistent mode
   shell: nvidia-smi -pm ENABLED
