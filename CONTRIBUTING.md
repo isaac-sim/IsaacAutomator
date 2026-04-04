@@ -17,24 +17,20 @@
 
 Pre-built VM images are created using [Packer](https://www.packer.io/) and can be used to accelerate deployment of the app instances by skipping the time-consuming installation and configuration steps. To use pre-built images, add `--from-image` flag to the `deploy-*` commands.
 
-```sh
-
 #### AWS
 
-Refer to [../src/packer/aws/README.md](src/packer/aws/README.md) for pre-requisites. Then:
+Refer to [src/packer/aws/README.md](src/packer/aws/README.md) for pre-requisites. Then:
 
 ```sh
 packer build -force /app/src/packer/aws/isaac
-...
 ```
 
 #### Azure
 
-Refer to [../src/packer/azure/README.md](src/packer/azure/README.md) for pre-requisites. Then:
+Refer to [src/packer/azure/README.md](src/packer/azure/README.md) for pre-requisites. Then:
 
 ```sh
 packer build -force /app/src/packer/azure/isaac
-...
 ```
 
 ## Issue Tracking
@@ -78,7 +74,7 @@ Project includes settings and recommended extensions for [Visual Studio Code](ht
 
 - All OSS components must contain accompanying documentation (READMEs) describing the functionality, dependencies, and known issues.
 
-- Accompanying tests are highly desireable and recommended. If the test is not possible or not feasible to implement, please provide a sample usage information.
+- Accompanying tests are highly desirable and recommended. If the test is not possible or not feasible to implement, please provide a sample usage information.
 
 - Make sure that you can contribute your work to open source (no license and/or patent conflict is introduced by your code). You will need to [`sign`](#signing-your-work) your commit.
 

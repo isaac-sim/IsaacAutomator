@@ -1,6 +1,6 @@
 ![Isaac Automator](src/banner.png)
 
-# Isaac Automator (v3)
+# Isaac Automator (v4)
 
 Isaac Automator allows quick deployment of Isaac Sim and Isaac Lab to public clouds (AWS, GCP, Azure, and Alibaba Cloud are currently supported).
 
@@ -212,7 +212,7 @@ GPU-accelerated instances with NVIDIA A100, A10, and T4 GPUs are supported. You 
 
 ### Connecting to Deployed Instances
 
-Deployed Isaac Sim instances can be accessed via:
+Deployed instances can be accessed via:
 
 - SSH
 - noVNC (browser-based VNC client)
@@ -222,7 +222,9 @@ Look for the connection instructions at the end of the deployment command output
 
 You can view available arguments with the `--help` switch for the start scripts. In most cases, you won't need to change the defaults.
 
-Tip: You can use the `./connect <deployment-name>` helper command to connect to the deployed instance via SSH.
+Use `./ssh <deployment-name>` to connect to the deployed instance via SSH.
+
+Use `./novnc <deployment-name>` to open the noVNC web client for the deployed instance.
 
 ### Running Applications
 
@@ -230,21 +232,17 @@ To use the installed applications, connect to the deployed instance using noVNC 
 
 #### Isaac Sim
 
-Isaac Sim will automatically start when the cloud VM is deployed. Alternatively, click the "Isaac Sim" icon on the desktop, or run the following command in a terminal on the deployed instance:
+Isaac Sim is installed from source on the deployed instance. By default, it will automatically start when the cloud VM is deployed. Alternatively, click the "Isaac Sim" icon on the desktop, or run the following command in a terminal on the deployed instance:
 
 ```sh
 ~/isaacsim.sh
 ```
 
-To get a shell inside the Isaac Sim container, click the "Isaac Sim Shell" icon on the desktop. Alternatively, run the following command in a terminal on the deployed instance:
-
-```sh
-~/isaacsim-shell.sh
-```
+To install a specific version of Isaac Sim, provide a valid Git reference from <https://github.com/isaac-sim/IsaacSim> as the value of the `--isaacsim` parameter to the deployment command. Use `--isaacsim no` to skip Isaac Sim installation.
 
 #### Isaac Lab
 
-[Isaac Lab](https://isaac-sim.github.io/IsaacLab/) can be pre-installed on deployed instances. To install a specific version of Isaac Lab, provide a valid Git reference from <https://isaac-sim.github.io/IsaacLab/> as the value of the `--lab` parameter to the deployment command.
+[Isaac Lab](https://isaac-sim.github.io/IsaacLab/) can be pre-installed on deployed instances. To install a specific version of Isaac Lab, provide a valid Git reference from <https://github.com/isaac-sim/IsaacLab> as the value of the `--isaaclab` parameter to the deployment command. Use `--isaaclab no` to skip Isaac Lab installation.
 
 To run Isaac Lab, click the "Isaac Lab" icon on the desktop or run the following command in the terminal:
 
@@ -264,11 +262,11 @@ This functionality can be useful for running batch jobs, generating data on star
 
 ### Mapped Folders
 
-The following folders are mapped to the running Isaac Sim container by default (container paths may differ for specific applications):
+The following folders on the deployed instance are used by default (the `ubuntu` part of these paths depends on the configured `default_ssh_user` in `src/python/config.py`):
 
-- `/home/ubuntu/uploads` (host) --> `/uploads` (container) - user data uploaded to the deployment with the `./upload` command or automatically from the local `uploads/` folder (the `ubuntu` part of the path depends on the configured `default_ssh_user` in `src/python/config.py`)
-- `/home/ubuntu/results` (host) --> `/results` (container) - results of applications run on the deployment; you can download them from the deployed machine with the `./download` command
-- `/home/ubuntu/workspace` (host) --> `/workspace` (container) - workspace folder; can be used to exchange data between the host and the container
+- `/home/ubuntu/uploads` - user data uploaded to the deployment with the `./upload` command or automatically from the local `uploads/` folder
+- `/home/ubuntu/results` - results of applications run on the deployment; you can download them with the `./download` command
+- `/home/ubuntu/workspace` - workspace folder for exchanging data
 
 ### Pausing and Resuming
 
@@ -340,13 +338,11 @@ _Please note that information about the deployed cloud resources is stored in th
 
 ### Persisting Modifications to the Isaac Sim/Lab Environment
 
-It's common to require that modifications to the Isaac Lab and Isaac Sim source code, as well as installed custom components, persist across instance shutdowns, restarts, and redeployments.
+Isaac Sim and Isaac Lab are installed from source on the deployed instance. Modifications to the source code persist across instance stop/start cycles since they are written directly to the VM's filesystem.
 
-To achieve that, you can do the following:
+For changes that need to be applied automatically on every deployment or restart, modify the [`uploads/autorun.sh`](uploads/autorun.sh) script. This script runs each time the instance is deployed or started (see [Autorun Script](#autorun-script)).
 
-Go to the `/uploads/` directory in the repo and find the `autorun.sh` file.
-
-Modify its contents like so (this example customizes the Isaac Lab environment):
+For example, you can use `autorun.sh` to install additional Python packages, apply patches, or run setup scripts:
 
 ```sh
 #!/bin/sh
@@ -357,23 +353,8 @@ Modify its contents like so (this example customizes the Isaac Lab environment):
 
 SELF_DIR="$(dirname $0)"
 
-docker image tag isaaclab:latest isaaclab:stock
-docker build -t isaaclab:latest -f "${SELF_DIR}/isaaclab-custom.dockerfile" "${SELF_DIR}"
-```
-
-Now, create `isaaclab-custom.dockerfile` in the same `uploads/` directory with your changes and the first line being:
-
-```dockerfile
-FROM isaaclab:stock
-```
-
-Every time you deploy or start an instance (using `./start`), the `uploads/` directory will be uploaded and `autorun.sh` executed, which will build the customized Isaac Lab environment.
-
-Alternatively, you can push your custom Docker image to a registry and pull it from the autorun script, tagging it `isaaclab:latest`, like so:
-
-```sh
-docker pull your-custom-image
-docker tag your-custom-image isaaclab:latest
+# example: install additional packages into the Isaac Lab environment
+pip install some-package
 ```
 
 ### Updating Expired AWS Credentials
