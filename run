@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SELF_DIR="$(realpath "$(dirname "${BASH_SOURCE}")")"
+SELF_DIR="$(cd "$(dirname "${BASH_SOURCE}")" && pwd -P)"
 TAG="isaac_automator"
 
 # build image if it doesn't exist
@@ -19,7 +19,29 @@ for var in NGC_API_KEY NGC_KEY DEBUG \
   fi
 done
 
-# check if we're on mac
+# clean up stale URL file
+OPEN_URL_FILE="${SELF_DIR}/.open-url"
+rm -f "${OPEN_URL_FILE}"
+
+# background watcher: poll for .open-url and open it on the host immediately
+(
+  while true; do
+    if [[ -f "${OPEN_URL_FILE}" ]]; then
+      URL=$(cat "${OPEN_URL_FILE}")
+      rm -f "${OPEN_URL_FILE}"
+      if [[ -n "${URL}" ]]; then
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+          open "${URL}"
+        else
+          xdg-open "${URL}" > /dev/null 2>&1 &
+        fi
+      fi
+    fi
+    sleep 1
+  done
+) &
+WATCHER_PID=$!
+
 if [[ "$OSTYPE" == "darwin"* ]]; then
   # we're on mac - enable emulation
   docker run --platform linux/x86_64 -it --rm --network host \
@@ -28,12 +50,13 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     "$TAG" "${*:-bash}"
 else
   # we're not on mac
-  # pass X11 for browser access
-  xhost +local: > /dev/null 2>&1 || true
   docker run -it --rm --network host \
     -v "${SELF_DIR}":/app \
-    -e DISPLAY="${DISPLAY}" \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
     "${ENV_ARGS[@]}" \
     "$TAG" "${*:-bash}"
 fi
+
+# stop the background watcher
+kill "${WATCHER_PID}" 2>/dev/null
+wait "${WATCHER_PID}" 2>/dev/null
+rm -f "${OPEN_URL_FILE}"

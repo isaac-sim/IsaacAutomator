@@ -18,7 +18,6 @@ RUN apt-get update && apt-get install -qy \
     lsb-release \
     python3-pip \
     apt-utils \
-    xdg-utils \
     dnsutils \
     expect \
     gnupg \
