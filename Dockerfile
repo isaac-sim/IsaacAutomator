@@ -18,11 +18,12 @@ RUN apt-get update && apt-get install -qy \
     lsb-release \
     python3-pip \
     apt-utils \
+    xdg-utils \
+    dnsutils \
     expect \
     gnupg \
     unzip \
     rsync \
-    dnsutils \
     curl \
     nano \
     wget \
@@ -31,6 +32,11 @@ RUN apt-get update && apt-get install -qy \
 
 # hashicorp sources
 RUN apt-get install -yq software-properties-common
+
+# firefox (snap version doesn't work in docker)
+RUN add-apt-repository -y ppa:mozillateam/ppa && \
+    apt-get update && \
+    apt-get install -yq firefox-esr
 
 RUN wget -O- https://apt.releases.hashicorp.com/gpg | \
     gpg --dearmor | \

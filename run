@@ -14,5 +14,11 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   docker run --platform linux/x86_64 -it --rm -v "${SELF_DIR}":/app "$TAG" "${*:-bash}"
 else
   # we're not on mac
-  docker run -it --rm -v "${SELF_DIR}":/app "$TAG" "${*:-bash}"
+  # pass X11 for browser access
+  xhost +local: > /dev/null 2>&1 || true
+  docker run -it --rm \
+    -v "${SELF_DIR}":/app \
+    -e DISPLAY="${DISPLAY}" \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    "$TAG" "${*:-bash}"
 fi

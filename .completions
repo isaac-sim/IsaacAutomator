@@ -27,7 +27,7 @@ _isaac_automator_complete() {
 }
 
 # register for ./command and command forms
-for cmd in destroy connect start stop repair upload download; do
+for cmd in destroy ssh novnc start stop repair upload download; do
     complete -o default -F _isaac_automator_complete "./$cmd"
     complete -o default -F _isaac_automator_complete "$cmd"
 done
