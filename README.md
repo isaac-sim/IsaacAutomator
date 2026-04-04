@@ -20,6 +20,8 @@ The result is a fully configured remote desktop cloud workstation that you can u
     - [GCP](#gcp)
     - [Azure](#azure)
     - [Alibaba Cloud](#alibaba-cloud)
+    - [Common Deploy Options](#common-deploy-options)
+    - [Complete Options Reference](#complete-options-reference)
   - [Connecting to Deployed Instances](#connecting-to-deployed-instances)
   - [Running Applications](#running-applications)
     - [Isaac Sim](#isaac-sim)
@@ -210,6 +212,198 @@ Tip: Run `./deploy-alicloud --help` to see more options.
 
 GPU-accelerated instances with NVIDIA A100, A10, and T4 GPUs are supported. You can find the complete list of instance types, availability, and pricing at <https://www.alibabacloud.com/help/en/ecs/user-guide/gpu-accelerated-compute-optimized-and-vgpu-accelerated-instance-families-1>. Please note that vGPU instances are not supported.
 
+#### Common Deploy Options
+
+All `deploy-*` commands share several options. Run `./deploy-<cloud> --help` to see the full list. Key options include:
+
+- `--existing` — What to do if a deployment with the same name already exists. Choices:
+  - `ask` (default) — prompt interactively
+  - `repair` — fix a broken deployment without changing parameters
+  - `modify` — update parameters and attempt to update existing cloud resources
+  - `replace` — delete old cloud resources first, then redeploy
+  - `run_ansible` — re-run software configuration (Ansible) only
+- `--instance-type` — Cloud VM instance type (each cloud has its own supported list and default).
+- `--isaacsim` / `--isaaclab` — Git ref for Isaac Sim / Isaac Lab version, or `no` to skip installation.
+- `--from-image` — Deploy from a pre-built VM image to speed up provisioning (not supported on GCP).
+- `--in-china` — Use local mirrors for deployments in China. Choices: `auto` (default), `yes`, `no`.
+- `--prefix` — Prefix for created cloud resource names (default: `isaacautomator`).
+- `--ingress-cidrs` — CIDR blocks for allowed ingress traffic, comma-separated. Use `myip` for your current public IP, or `myip/16`, `myip/24` for subnets.
+
+GCP additionally supports `--isaac-workstation-gpu-count` (choices: `1`, `2`, `4`, `8`; default: `1`) to control the number of GPUs attached to the instance:
+
+- N1 instances: up to 4x NVIDIA T4
+- G2 instances: up to 8x NVIDIA L4
+- G4 instances: up to 8x NVIDIA RTX PRO 6000
+
+<details>
+<summary>deploy-aws options</summary>
+
+#### Complete Options Reference
+
+```
+Options:
+  --debug / --no-debug          Enable debug output.  [default: no-debug]
+  --prefix TEXT                 Prefix for all cloud resources.  [default: isaacautomator]
+  --from-image / --not-from-image
+                                Deploy from pre-built image, from bare OS
+                                otherwise.  [default: not-from-image]
+  --in-china [auto|yes|no]      Is deployment in China? (Local mirrors will be
+                                used.)  [default: auto]
+  --deployment-name TEXT        Name of the deployment.  [default: <random>]
+  --ingress-cidrs TEXT          CIDR blocks for ingress traffic, comma
+                                separated. "myip" for your public IP.
+                                [default: 0.0.0.0/0]
+  --existing [ask|repair|modify|replace|run_ansible]
+                                What to do if deployment already exists.
+                                [default: ask]
+  --isaacsim TEXT               Git ref at github.com/isaac-sim/IsaacSim, or
+                                "no".  [default: v6.0.0-dev2]
+  --isaaclab TEXT               Git ref at github.com/isaac-sim/IsaacLab, or
+                                "no".  [default: v3.0.0-beta]
+  --vnc-password TEXT           Password for VNC access.  [default: <random>]
+  --system-user-password TEXT   System user password.  [default: <random>]
+  --ssh-port TEXT               SSH port.  [default: 22]
+  --ssh-user TEXT               OS username on the deployed instances.
+                                [default: ubuntu]
+  --upload / --no-upload        Upload user data from "uploads/" to cloud
+                                instances.  [default: upload]
+  --instance-type TEXT          Instance type (G4dn, G5, G6, G6e supported).
+                                [default: g6e.2xlarge]
+  --region TEXT                 AWS Region.  [default: us-east-1]
+  --aws-access-key-id TEXT      AWS Access Key ID.
+                                [default: AWS_ACCESS_KEY_ID env var]
+  --aws-secret-access-key TEXT  AWS Secret Access Key.
+                                [default: AWS_SECRET_ACCESS_KEY env var]
+  --aws-session-token TEXT      AWS Session Token (temporary credentials).
+                                [default: AWS_SESSION_TOKEN env var]
+```
+
+</details>
+
+<details>
+<summary>deploy-gcp options</summary>
+
+```
+Options:
+  --debug / --no-debug          Enable debug output.  [default: no-debug]
+  --prefix TEXT                 Prefix for all cloud resources.  [default: isaacautomator]
+  --in-china [auto|yes|no]      Is deployment in China? (Local mirrors will be
+                                used.)  [default: auto]
+  --deployment-name TEXT        Name of the deployment.  [default: <random>]
+  --zone TEXT                   GCP zone (see cloud.google.com/compute/docs/
+                                gpus/gpu-regions-zones).
+                                [default: us-central1-a]
+  --project TEXT                GCP Project ID.  [default: from gcloud config]
+  --ingress-cidrs TEXT          CIDR blocks for ingress traffic, comma
+                                separated. "myip" for your public IP.
+                                [default: 0.0.0.0/0]
+  --existing [ask|repair|modify|replace|run_ansible]
+                                What to do if deployment already exists.
+                                [default: ask]
+  --isaacsim TEXT               Git ref at github.com/isaac-sim/IsaacSim, or
+                                "no".  [default: v6.0.0-dev2]
+  --isaaclab TEXT               Git ref at github.com/isaac-sim/IsaacLab, or
+                                "no".  [default: v3.0.0-beta]
+  --vnc-password TEXT           Password for VNC access.  [default: <random>]
+  --system-user-password TEXT   System user password.  [default: <random>]
+  --ssh-port TEXT               SSH port.  [default: 22]
+  --ssh-user TEXT               OS username on the deployed instances.
+                                [default: ubuntu]
+  --upload / --no-upload        Upload user data from "uploads/" to cloud
+                                instances.  [default: upload]
+  --instance-type [g2-standard-4|g2-standard-8|...|n1-standard-4|...|g4-standard-48|...]
+                                Instance type.  [default: g2-standard-8]
+  --isaac-workstation-gpu-count [1|2|4|8]
+                                Number of GPUs. N1: NVIDIA T4, G2: NVIDIA L4,
+                                G4: NVIDIA RTX PRO 6000.  [default: 1]
+
+Note: --from-image is not supported on GCP.
+```
+
+</details>
+
+<details>
+<summary>deploy-azure options</summary>
+
+```
+Options:
+  --debug / --no-debug          Enable debug output.  [default: no-debug]
+  --prefix TEXT                 Prefix for all cloud resources.  [default: isaacautomator]
+  --from-image / --not-from-image
+                                Deploy from pre-built image, from bare OS
+                                otherwise.  [default: not-from-image]
+  --in-china [auto|yes|no]      Is deployment in China? (Local mirrors will be
+                                used.)  [default: auto]
+  --deployment-name TEXT        Name of the deployment.  [default: <random>]
+  --region TEXT                 Azure region.  [default: westus3]
+  --ingress-cidrs TEXT          CIDR blocks for ingress traffic, comma
+                                separated. "myip" for your public IP.
+                                [default: 0.0.0.0/0]
+  --existing [ask|repair|modify|replace|run_ansible]
+                                What to do if deployment already exists.
+                                [default: ask]
+  --isaacsim TEXT               Git ref at github.com/isaac-sim/IsaacSim, or
+                                "no".  [default: v6.0.0-dev2]
+  --isaaclab TEXT               Git ref at github.com/isaac-sim/IsaacLab, or
+                                "no".  [default: v3.0.0-beta]
+  --vnc-password TEXT           Password for VNC access.  [default: <random>]
+  --system-user-password TEXT   System user password.  [default: <random>]
+  --ssh-port TEXT               SSH port.  [default: 22]
+  --ssh-user TEXT               OS username on the deployed instances.
+                                [default: ubuntu]
+  --upload / --no-upload        Upload user data from "uploads/" to cloud
+                                instances.  [default: upload]
+  --instance-type TEXT          VM type (T4 and A10 supported).
+                                [default: Standard_NV36ads_A10_v5]
+  --login / --no-login          Login into Azure before deploying.
+                                [default: login]
+  --resource-group TEXT         Azure resource group (created if empty).
+                                [default: ""]
+```
+
+</details>
+
+<details>
+<summary>deploy-alicloud options</summary>
+
+```
+Options:
+  --debug / --no-debug          Enable debug output.  [default: no-debug]
+  --prefix TEXT                 Prefix for all cloud resources.  [default: isaacautomator]
+  --in-china [auto|yes|no]      Is deployment in China? (Local mirrors will be
+                                used.)  [default: auto]
+  --deployment-name TEXT        Name of the deployment.  [default: <random>]
+  --ingress-cidrs TEXT          CIDR blocks for ingress traffic, comma
+                                separated. "myip" for your public IP.
+                                [default: 0.0.0.0/0]
+  --existing [ask|repair|modify|replace|run_ansible]
+                                What to do if deployment already exists.
+                                [default: ask]
+  --isaacsim TEXT               Git ref at github.com/isaac-sim/IsaacSim, or
+                                "no".  [default: v6.0.0-dev2]
+  --isaaclab TEXT               Git ref at github.com/isaac-sim/IsaacLab, or
+                                "no".  [default: v3.0.0-beta]
+  --vnc-password TEXT           Password for VNC access.  [default: <random>]
+  --system-user-password TEXT   System user password.  [default: <random>]
+  --ssh-port TEXT               SSH port.  [default: 22]
+  --ssh-user TEXT               OS username on the deployed instances.
+                                [default: ubuntu]
+  --upload / --no-upload        Upload user data from "uploads/" to cloud
+                                instances.  [default: upload]
+  --aliyun-access-key TEXT      Alibaba Cloud Access Key.
+                                [default: ALIYUN_ACCESS_KEY env var]
+  --aliyun-secret-key TEXT      Alibaba Cloud Secret Key.
+                                [default: ALIYUN_SECRET_KEY env var]
+  --region TEXT                 Alibaba Cloud Region ID.
+                                [default: us-east-1]
+  --instance-type TEXT          Instance type.
+                                [default: ecs.gn7i-c16g1.4xlarge]
+
+Note: --from-image is not supported on Alibaba Cloud.
+```
+
+</details>
+
 ### Connecting to Deployed Instances
 
 Deployed instances can be accessed via:
@@ -244,10 +438,10 @@ To install a specific version of Isaac Sim, provide a valid Git reference from <
 
 [Isaac Lab](https://isaac-sim.github.io/IsaacLab/) is installed from source on the deployed instance. To install a specific version of Isaac Lab, provide a valid Git reference from <https://github.com/isaac-sim/IsaacLab> as the value of the `--isaaclab` parameter to the deployment command. Use `--isaaclab no` to skip Isaac Lab installation.
 
-To run Isaac Lab, use the following command in the terminal on the deployed instance:
+To run Isaac Lab CLI, use the following command in the terminal on the deployed instance:
 
 ```sh
-~/IsaacLab/isaaclab.sh
+~/IsaacLab/isaaclab.sh [options]
 ```
 
 ### Autorun Script
@@ -262,11 +456,11 @@ This functionality can be useful for running batch jobs, generating data on star
 
 ### Mapped Folders
 
-The following folders on the deployed instance are used by default (the `ubuntu` part of these paths depends on the configured `default_ssh_user` in `src/python/config.py`):
+The following folders on the deployed instance are used by default:
 
-- `/home/ubuntu/uploads` - user data uploaded to the deployment with the `./upload` command or automatically from the local `uploads/` folder
-- `/home/ubuntu/results` - results of applications run on the deployment; you can download them with the `./download` command
-- `/home/ubuntu/workspace` - workspace folder for exchanging data
+- `~/uploads` - user data uploaded to the deployment with the `./upload` command or automatically from the local `uploads/` folder
+- `~/results` - results of applications run on the deployment; you can download them with the `./download` command
+- `~/workspace` - workspace folder for exchanging data
 
 ### Pausing and Resuming
 
@@ -291,7 +485,7 @@ You can upload user data from the `uploads/` folder (in the project root) to the
 ./upload <deployment-name>
 ```
 
-Data will be uploaded to the `/home/ubuntu/uploads` directory by default (the `ubuntu` part of the path depends on the configured `default_ssh_user`), on all deployed instances. You can change this by passing the `--remote-dir` argument to the command. Run `./upload --help` to see more options.
+Data will be uploaded to the `/home/ubuntu/uploads` directory by default (the `ubuntu` part of the path depends on the configured `default_ssh_user`), on all deployed instances. You can change this by passing the `--remote-dir` argument to the command. By default, files deleted locally are also deleted on the remote side during sync; use `--no-delete` to keep remote files that no longer exist locally. Run `./upload --help` to see more options.
 
 ### Downloading Data
 
@@ -304,7 +498,7 @@ You can download user data to the `results/` folder (in the project root) from d
 ./download <deployment-name>
 ```
 
-Data will be downloaded from the `/home/ubuntu/results` directory by default (the `ubuntu` part of the path depends on the configured `default_ssh_user`). You can change this by passing the `--remote-dir` argument to the command. Run `./download --help` to see more options.
+Data will be downloaded from the `/home/ubuntu/results` directory by default (the `ubuntu` part of the path depends on the configured `default_ssh_user`). You can change this by passing the `--remote-dir` argument to the command. By default, local files not present on the remote side are deleted during sync; use `--no-delete` to keep them. Run `./download --help` to see more options.
 
 ### Repairing
 
