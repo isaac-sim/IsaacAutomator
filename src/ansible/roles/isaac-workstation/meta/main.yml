@@ -22,7 +22,6 @@ galaxy_info:
   standalone: false
 dependencies:
   - { role: system }
-  - { role: docker }
   - { role: nvidia-driver }
   - { role: remote-desktop }
   - { role: isaacsim-source }
