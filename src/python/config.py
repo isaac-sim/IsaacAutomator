@@ -51,9 +51,6 @@ c["default_ssh_port"] = 22
 c["azure_default_from_image"] = False
 c["aws_default_from_image"] = False
 
-# --omniverse-user
-c["default_omniverse_user"] = "omniverse"
-
 # --isaac-workstation-instance-type
 c["aws_default_isaac_workstation_instance_type"] = "g6e.2xlarge"
 # str, 1-index in DeployAzureCommand.AZURE_OVKIT_INSTANCE_TYPES

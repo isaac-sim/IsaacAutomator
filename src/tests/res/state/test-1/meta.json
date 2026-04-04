@@ -1,5 +1,5 @@
 {
-    "command": "src/tests/deployer.test.py --no-debug --prefix 'isa' --not-from-image --deployment-name 'test-1' --existing 'ask' --in-china 'no' --region 'us-east-1' --isaac --isaac-instance-type 'g5.2xlarge' --isaac-image 'nvcr.io/nvidia/isaac-sim:2022.2.0' --vnc-password '__vnc_password__' --omniverse-user 'ovuser' --omniverse-password '__omniverse_password__' --ssh-port 22 --upload --aws-access-key-id '__aws_access_key_id__' --aws-secret-access-key '__aws_secret_access_key__' --ingress-cidrs 'auto'",
+    "command": "src/tests/deployer.test.py --no-debug --prefix 'isa' --not-from-image --deployment-name 'test-1' --existing 'ask' --in-china 'no' --region 'us-east-1' --isaac --isaac-instance-type 'g5.2xlarge' --isaac-image 'nvcr.io/nvidia/isaac-sim:2022.2.0' --vnc-password '__vnc_password__' --ssh-port 22 --upload --aws-access-key-id '__aws_access_key_id__' --aws-secret-access-key '__aws_secret_access_key__' --ingress-cidrs 'auto'",
     "input_params": {
         "debug": false,
         "prefix": "isa",
@@ -12,8 +12,6 @@
         "isaac_workstation_instance_type": "g5.2xlarge",
         "isaac_image": "nvcr.io/nvidia/isaac-sim:2022.2.0",
         "vnc_password": "__vnc_password__",
-        "omniverse_user": "ovuser",
-        "omniverse_password": "__omniverse_password__",
         "ssh_port": 22,
         "upload": true,
         "aws_access_key_id": "__aws_access_key_id__",
@@ -32,8 +30,6 @@
         "isaac_workstation_instance_type": "g5.2xlarge",
         "isaac_image": "nvcr.io/nvidia/isaac-sim:2022.2.0",
         "vnc_password": "__vnc_password__",
-        "omniverse_user": "ovuser",
-        "omniverse_password": "__omniverse_password__",
         "ssh_port": 22,
         "upload": true,
         "aws_access_key_id": "__aws_access_key_id__",
@@ -58,7 +54,7 @@
         "default_ssh_port": 22,
         "azure_default_from_image": false,
         "aws_default_from_image": false,
-        "default_omniverse_user": "omniverse",
+
         "aws_default_isaac_workstation_instance_type": "g5.2xlarge",
         "azure_default_isaac_workstation_instance_type": "Standard_NV36ads_A10_v5",
         "gcp_default_isaac_workstation_instance_type": "g2-standard-8",

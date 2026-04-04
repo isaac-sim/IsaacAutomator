@@ -26,8 +26,6 @@ class Test_Deployer(unittest.TestCase):
                 "isaac_workstation_instance_type": "g5.2xlarge",
                 "isaac_image": "nvcr.io/nvidia/isaac-sim:2022.2.0",
                 "vnc_password": "__vnc_password__",
-                "omniverse_user": "ovuser",
-                "omniverse_password": "__omniverse_password__",
                 "ssh_port": 22,
                 "upload": True,
                 "aws_access_key_id": "__aws_access_key_id__",

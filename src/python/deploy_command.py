@@ -290,26 +290,4 @@ class DeployCommand(click.core.Command):
             ),
         )
 
-        default_nucleus_admin_password = pwgen(10)
 
-        # --omniverse-user
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--omniverse-user",),
-                default=config["default_omniverse_user"],
-                help="Username for accessing content on the Nucleus server.",
-                show_default=True,
-            ),
-        )
-
-        # --omniverse-password
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--omniverse-password",),
-                default=default_nucleus_admin_password,
-                help="Password for accessing content on the Nucleus server.",
-                show_default="<randomly generated>",
-            ),
-        )

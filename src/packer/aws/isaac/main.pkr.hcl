@@ -134,7 +134,7 @@ build {
     ]
     extra_arguments = [
       "--skip-tags", "${var.skip_tags}",
-      "--extra-vars", "cloud='aws' deployment_name='aws_image' omniverse_user='' isaac_image='${var.isaac_image}'"
+      "--extra-vars", "cloud='aws' deployment_name='aws_image' isaac_image='${var.isaac_image}'"
     ]
   }
 }
