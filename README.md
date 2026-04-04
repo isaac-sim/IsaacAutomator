@@ -4,8 +4,9 @@
 
 Isaac Automator allows quick deployment of Isaac Sim and Isaac Lab to public clouds (AWS, GCP, Azure, and Alibaba Cloud are currently supported).
 
-The result is a fully configured remote desktop cloud workstation that you can use to develop and test robotic applications within minutes and on a budget. Isaac Automator supports a variety of GPU instances and stop/start functionality to save on cloud costs and provides tools to aid your workflow (uploading and downloading data, autorun, deployment management, etc.).
+The result is a fully configured deployed Isaac Workstation — a remote desktop cloud VM that you can use to develop and test robotic applications within minutes and on a budget. Isaac Automator supports a variety of GPU instances and stop/start functionality to save on cloud costs and provides tools to aid your workflow (uploading and downloading data, autorun, deployment management, etc.).
 
+- [TLDR ;)](#tldr-)
 - [Installation](#installation)
   - [Installing Docker](#installing-docker)
   - [Building the Container](#building-the-container)
@@ -15,14 +16,15 @@ The result is a fully configured remote desktop cloud workstation that you can u
   - [Running Isaac Automator](#running-isaac-automator)
     - [Linux/macOS](#linuxmacos-1)
     - [Windows](#windows-1)
-  - [Deploying Instances](#deploying-instances)
+  - [Deploying an Isaac Workstation](#deploying-an-isaac-workstation)
     - [AWS](#aws)
     - [GCP](#gcp)
     - [Azure](#azure)
     - [Alibaba Cloud](#alibaba-cloud)
     - [Common Deploy Options](#common-deploy-options)
     - [Complete Options Reference](#complete-options-reference)
-  - [Connecting to Deployed Instances](#connecting-to-deployed-instances)
+  - [Credential Management](#credential-management)
+  - [Connecting to Deployed Isaac Workstation](#connecting-to-deployed-isaac-workstation)
   - [Running Applications](#running-applications)
     - [Isaac Sim](#isaac-sim)
     - [Isaac Lab](#isaac-lab)
@@ -34,8 +36,19 @@ The result is a fully configured remote desktop cloud workstation that you can u
   - [Repairing](#repairing)
   - [Destroying](#destroying)
 - [Tips](#tips)
-  - [Persisting Modifications to the Isaac Sim/Lab Environment](#persisting-modifications-to-the-isaac-simlab-environment)
-  - [Updating Expired AWS Credentials](#updating-expired-aws-credentials)
+  - [Persisting Modifications to the deployed Isaac Workstation](#persisting-modifications-to-the-deployed-isaac-workstation)
+
+## TLDR ;)
+
+```sh
+./build                       # build the Isaac Automator container (one-time)
+./run                         # enter the container
+./deploy-aws                  # deploy an Isaac Sim Workstation (follow the prompts)
+./novnc <deployment-name>     # open the remote desktop in your browser
+./destroy <deployment-name>   # tear down the deployment when done
+```
+
+Replace `deploy-aws` with `deploy-gcp`, `deploy-azure`, or `deploy-alicloud` for other clouds. See sections below for details.
 
 ## Installation
 
@@ -107,7 +120,7 @@ docker run --platform linux/x86_64 -it --rm -v .:/app isaac_automator bash
 ./somecommand
 ```
 
-### Deploying Instances
+### Deploying an Isaac Workstation
 
 #### AWS
 
@@ -141,20 +154,19 @@ If you have completed the above steps or already have your permissions and crede
 ./deploy-aws
 ```
 
+On the first run (or when credentials expire), you will be prompted to enter your AWS credentials (via `aws configure`). The credentials are stored in `state/.aws/` and persist across Isaac Automator restarts.
+
 Tip: Run `./deploy-aws --help` to see more options.
 
-##### Using Temporary Credentials
-
-If you are using temporary credentials that may expire and prevent you from deleting the deployment or stopping/starting the instance (e.g., from `aws sts assume-role`), you can manually edit the `/app/state/<deployment-name>/.tfvars` file in the Automator container, like so:
-
-```sh
-# inside container:
-nano /app/state/<deployment_name>/.tfvars
-```
-
-Then set the `aws_access_key_id`, `aws_secret_key`, and `aws_session_token` variables to the new values.
-
 #### GCP
+
+<details>
+  <summary>Setting Up GCP Access</summary>
+
+  You will be prompted to log in with your Google account (`gcloud auth login`) during the first deployment. The credentials are stored in `state/.gcp/` and persist across container restarts.
+
+  Make sure you have a GCP project with Compute Engine API enabled and sufficient GPU quota in the target zone.
+</details>
 
 ```sh
 # enter Isaac Automator container
@@ -167,6 +179,22 @@ Tip: Run `./deploy-gcp --help` to see more options.
 
 #### Azure
 
+<details>
+  <summary>Setting Up Azure Access</summary>
+
+  You will be prompted to log in with your Azure account (`az login`) during the first deployment. The credentials are stored in `state/.azure/` and persist across container restarts.
+
+  If you have multiple subscriptions, select the desired one before deploying:
+
+  ```sh
+  # inside container:
+  az login
+  az account show --output table       # list subscriptions
+  az account set --subscription "<subscription_name>"
+  ./deploy-azure --no-login
+  ```
+</details>
+
 If you have a single subscription:
 
 ```sh
@@ -174,19 +202,6 @@ If you have a single subscription:
 ./run
 # inside container:
 ./deploy-azure
-```
-
-If you have multiple subscriptions:
-
-```sh
- # enter Isaac Automator container
-./run
-
-# inside container:
-az login # login
-az account show --output table # list subscriptions
-az account set --subscription "<subscription_name>"
-./deploy-azure --no-login
 ```
 
 Tip: Run `./deploy-azure --help` to see more options.
@@ -270,12 +285,10 @@ Options:
   --instance-type TEXT          Instance type (G4dn, G5, G6, G6e supported).
                                 [default: g6e.2xlarge]
   --region TEXT                 AWS Region.  [default: us-east-1]
-  --aws-access-key-id TEXT      AWS Access Key ID.
-                                [default: AWS_ACCESS_KEY_ID env var]
-  --aws-secret-access-key TEXT  AWS Secret Access Key.
-                                [default: AWS_SECRET_ACCESS_KEY env var]
-  --aws-session-token TEXT      AWS Session Token (temporary credentials).
-                                [default: AWS_SESSION_TOKEN env var]
+
+Note: AWS credentials are managed via `aws configure` and stored in
+`state/.aws/`. You will be prompted to enter them on first run or when
+they expire.
 ```
 
 </details>
@@ -404,9 +417,22 @@ Note: --from-image is not supported on Alibaba Cloud.
 
 </details>
 
-### Connecting to Deployed Instances
+### Credential Management
 
-Deployed instances can be accessed via:
+Each cloud provider's credentials are stored inside the `state/` directory so they persist across container restarts:
+
+| Cloud         | Storage Location      | How Credentials Are Set                                                          |
+| ------------- | --------------------- | -------------------------------------------------------------------------------- |
+| AWS           | `state/.aws/`         | `aws configure` — prompted automatically when credentials are missing or expired |
+| GCP           | `state/.gcp/`         | `gcloud auth login` — prompted during the first deployment                       |
+| Azure         | `state/.azure/`       | `az login` — prompted during the first deployment                                |
+| Alibaba Cloud | Environment variables | `ALIYUN_ACCESS_KEY` and `ALIYUN_SECRET_KEY` — passed from the host via `./run`   |
+
+All commands that interact with cloud resources (`deploy-*`, `start`, `stop`, `destroy`, `repair`) validate credentials before proceeding and prompt you to re-authenticate if they are invalid or expired.
+
+### Connecting to Deployed Isaac Workstation
+
+Deployed Isaac Workstation can be accessed via:
 
 - SSH
 - noVNC (browser-based VNC client)
@@ -422,11 +448,11 @@ Use `./novnc <deployment-name>` to open the noVNC web client for the deployed in
 
 ### Running Applications
 
-To use the installed applications, connect to the deployed instance using noVNC or NoMachine. You can find the connection instructions at the end of the deployment command output. Additionally, this information is saved in the `state/<deployment-name>/info.txt` file.
+To use the installed applications, connect to the deployed Isaac Workstation using noVNC or NoMachine. You can find the connection instructions at the end of the deployment command output. Additionally, this information is saved in the `state/<deployment-name>/info.txt` file.
 
 #### Isaac Sim
 
-Isaac Sim is installed from source on the deployed instance. By default, it will automatically start when the cloud VM is deployed. Alternatively, click the "Isaac Sim" icon on the desktop, or run the following command in a terminal on the deployed instance:
+Isaac Sim is installed from source on the deployed Isaac Workstation. By default, it will automatically start when the instance is deployed. Alternatively, click the "Isaac Sim" icon on the desktop, or run the following command in a terminal on the deployed vm:
 
 ```sh
 ~/IsaacSim/isaac-sim.sh
@@ -436,7 +462,7 @@ To install a specific version of Isaac Sim, provide a valid Git reference from <
 
 #### Isaac Lab
 
-[Isaac Lab](https://isaac-sim.github.io/IsaacLab/) is installed from source on the deployed instance. To install a specific version of Isaac Lab, provide a valid Git reference from <https://github.com/isaac-sim/IsaacLab> as the value of the `--isaaclab` parameter to the deployment command. Use `--isaaclab no` to skip Isaac Lab installation.
+[Isaac Lab](https://isaac-sim.github.io/IsaacLab/) is installed from source on the Isaac Workstation. To install a specific version of Isaac Lab, provide a valid Git reference from <https://github.com/isaac-sim/IsaacLab> as the value of the `--isaaclab` parameter to the deployment command. Use `--isaaclab no` to skip Isaac Lab installation.
 
 To run Isaac Lab CLI, use the following command in the terminal on the deployed instance:
 
@@ -530,11 +556,11 @@ _Please note that information about the deployed cloud resources is stored in th
 
 ## Tips
 
-### Persisting Modifications to the Isaac Sim/Lab Environment
+### Persisting Modifications to the deployed Isaac Workstation
 
-Isaac Sim and Isaac Lab are installed from source on the deployed instance. Modifications to the source code persist across instance stop/start cycles since they are written directly to the VM's filesystem.
+Isaac Workstation local data is persistent and survives `./stop`/`.start` cycles.
 
-For changes that need to be applied automatically on every deployment or restart, modify the [`uploads/autorun.sh`](uploads/autorun.sh) script. This script runs each time the instance is deployed or started (see [Autorun Script](#autorun-script)).
+For changes that need to be re-applied automatically on every deployment or `./start`, modify the [`uploads/autorun.sh`](uploads/autorun.sh) script. This script runs each time the instance is deployed or started (see [Autorun Script](#autorun-script)).
 
 For example, you can use `autorun.sh` to install additional Python packages, apply patches, or run setup scripts:
 
@@ -548,16 +574,5 @@ For example, you can use `autorun.sh` to install additional Python packages, app
 SELF_DIR="$(dirname $0)"
 
 # example: install additional packages into the Isaac Lab environment
-pip install some-package
-```
-
-### Updating Expired AWS Credentials
-
-If you are using temporary AWS credentials that expire (e.g., from `aws sts assume-role`), you may be unable to stop, start, or destroy the deployed instance after the credentials expire. To fix this, you can manually edit the `state/<deployment-name>/.tfvars` file in the Automator container, updating the `aws_access_key_id`, `aws_secret_key`, and `aws_session_token` variables to the new values.
-
-You can do this by running the following command:
-
-```sh
-# inside container:
-nano /app/state/<deployment_name>/.tfvars
+pip install torch
 ```
