@@ -34,7 +34,7 @@
 # set hostname
 
 - set_fact:
-    hostname: "{{ (application_name + '-' + deployment_name) | replace('_', '-') }}"
+    hostname: "{{ (instance_role + '-' + deployment_name) | replace('_', '-') }}"
 
 - debug:
     msg: "hostname: {{ hostname }}"
