@@ -138,7 +138,11 @@ class DeployAlicloudCommand(DeployCommand):
             # insert before --ingress-cidrs option
             self.param_index("ingress_cidrs"),
             click.core.Option(
-                ("--instance-type", "isaac_workstation_instance_type"),
+                (
+                    "--instance-type",
+                    "--isaac-workstation-instance-type",
+                    "isaac_workstation_instance_type",
+                ),
                 prompt=colorize_prompt(
                     "* Instance Type. Supported types:\n\n"
                     + instance_types_table
