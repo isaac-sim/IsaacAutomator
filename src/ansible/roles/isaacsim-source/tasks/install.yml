@@ -33,6 +33,7 @@
     dest: "{{ isaacsim_source_dir }}"
     version: "{{ isaacsim_git_checkpoint }}"
     force: true
+    depth: 1
   become_user: "{{ ansible_user }}"
   when: isaacsim_build_tag.stdout | trim == ''
 
