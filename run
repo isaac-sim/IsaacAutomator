@@ -8,17 +8,32 @@ if [[ $(docker images -q "$TAG" 2> /dev/null) == '' ]]; then
   "${SELF_DIR}/build"
 fi
 
+# forward env vars if they are set
+ENV_ARGS=()
+for var in NGC_API_KEY NGC_KEY DEBUG \
+           AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY \
+           AZURE_SP_CLIENT_ID AZURE_SP_CLIENT_SECRET AZURE_SUBSCRIPTION_ID AZURE_TENANT_ID \
+           ALIYUN_ACCESS_KEY ALIYUN_SECRET_KEY; do
+  if [[ -n "${!var}" ]]; then
+    ENV_ARGS+=(-e "${var}=${!var}")
+  fi
+done
+
 # check if we're on mac
 if [[ "$OSTYPE" == "darwin"* ]]; then
   # we're on mac - enable emulation
-  docker run --platform linux/x86_64 -it --rm -v "${SELF_DIR}":/app "$TAG" "${*:-bash}"
+  docker run --platform linux/x86_64 -it --rm --network host \
+    -v "${SELF_DIR}":/app \
+    "${ENV_ARGS[@]}" \
+    "$TAG" "${*:-bash}"
 else
   # we're not on mac
   # pass X11 for browser access
   xhost +local: > /dev/null 2>&1 || true
-  docker run -it --rm \
+  docker run -it --rm --network host \
     -v "${SELF_DIR}":/app \
     -e DISPLAY="${DISPLAY}" \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
+    "${ENV_ARGS[@]}" \
     "$TAG" "${*:-bash}"
 fi
