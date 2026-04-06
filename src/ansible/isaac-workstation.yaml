@@ -24,7 +24,7 @@
       - skip_in_image
       - on_stop_start
 
-- name: Deploy Isaac Sim
+- name: Deploy Isaac Workstation
   hosts: isaac-workstation
   gather_facts: true
   vars:
