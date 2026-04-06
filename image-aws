@@ -241,7 +241,8 @@ def build_ami(params, config):
     ]
 
     if image_name:
-        packer_vars.append(f'-var=image_name="{image_name}"')
+        full_image_name = f"isaacautomator.isaacworkstation.{image_name}"
+        packer_vars.append(f'-var=image_name="{full_image_name}"')
 
     force_flag = "-force" if existing == "overwrite" else ""
     packer_cmd = (
