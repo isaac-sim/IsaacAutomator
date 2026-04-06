@@ -29,9 +29,9 @@ from src.python.utils import (
     colorize_info,
     colorize_prompt,
     colorize_result,
+    get_my_public_ip,
     read_meta,
     shell_command,
-    get_my_public_ip,
     subnet_from_ip,
 )
 

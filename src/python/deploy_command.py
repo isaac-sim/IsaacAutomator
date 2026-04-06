@@ -304,5 +304,3 @@ class DeployCommand(click.core.Command):
                 + f"instances (to \"{config['default_remote_uploads_dir']}\")?",
             ),
         )
-
-

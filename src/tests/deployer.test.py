@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
 import unittest
+from pathlib import Path
 
 from src.python.config import c
 from src.python.deployer import Deployer
-
-from pathlib import Path
 
 
 class Test_Deployer(unittest.TestCase):
