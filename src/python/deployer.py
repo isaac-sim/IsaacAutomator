@@ -525,69 +525,42 @@ class Deployer:
         Save info to file (_state_dir_/_deployment_name_/info.txt)
         """
 
-        isaac = True
+        dn = self.params["deployment_name"]
+        ip = self.tf_output("isaac_workstation_ip")
+        user = self.config["default_ssh_user"]
+        banner = f"* Isaac Workstation is deployed at {ip} *"
 
-        vnc_password = self.params["vnc_password"]
-        deployment_name = self.params["deployment_name"]
+        instructions = f"""{'*' * len(banner)}
+{banner}
+{'*' * len(banner)}
 
-        # templates
-        nomachine_instruction = f"""* To connect to __app__ via NoMachine:
+* To connect via SSH:
+
+./ssh {dn}
+
+* To connect via noVNC (opens in browser):
+
+./novnc {dn}
+
+* To connect via NoMachine:
 
 0. Download NoMachine client at https://downloads.nomachine.com/, install and launch it.
 1. Click "Add" button.
-2. Enter Host: "__ip__".
+2. Enter Host: "{ip}".
 3. In "Configuration" > "Use key-based authentication with a key you provide",
-   select file "state/{deployment_name}/key.pem".
+   select file "state/{dn}/key.pem".
 4. Click "Connect" button.
-5. Enter "{self.config['default_ssh_user']}" as a username when prompted.
+5. Enter "{user}" as a username when prompted.
 """
 
-        vnc_instruction = f"""* To connect to __app__ via VNC:
-
-- IP: __ip__
-- Port: 5900
-- Password: {vnc_password}"""
-
-        nonvc_instruction = f"""* To connect to __app__ via noVNC:
-
-1. Open http://__ip__:6080/vnc.html?host=__ip__&port=6080 in your browser.
-2. Click "Connect" and use password \"{vnc_password}\""""
-
-        # print connection info
-
-        instructions_file = f"{self.config['state_dir']}/{deployment_name}/info.txt"
-        instructions = ""
-
-        if isaac:
-            instructions += f"""{'*' * (29+len(self.tf_output('isaac_workstation_ip')))}
-* Isaac Sim is deployed at {self.tf_output('isaac_workstation_ip')} *
-{'*' * (29+len(self.tf_output('isaac_workstation_ip')))}
-
-* To connect to Isaac Sim via SSH:
-
-./ssh {deployment_name}
-
-* To connect to Isaac Sim via noVNC:
-
-./novnc {deployment_name}
-
-{nomachine_instruction}""".replace(
-                "__app__", "Isaac Sim"
-            ).replace(
-                "__ip__", self.tf_output("isaac_workstation_ip")
-            )
-
-        # extra text
-        if len(extra_text) > 0:
+        if extra_text:
             instructions += extra_text + "\n"
 
-        # print instructions for the user
         if print_text:
             click.echo(colorize_result("\n" + instructions))
 
-        # create <dn>/ directory if it doesn't exist
+        instructions_file = f"{self.config['state_dir']}/{dn}/info.txt"
         Path(instructions_file).parent.mkdir(parents=True, exist_ok=True)
-        # write file
         Path(instructions_file).write_text(instructions)
 
         return instructions
