@@ -29,12 +29,13 @@ The result is a fully configured deployed Isaac Workstation — a remote desktop
     - [Isaac Sim](#isaac-sim)
     - [Isaac Lab](#isaac-lab)
   - [Autorun Script](#autorun-script)
-  - [Mapped Folders](#mapped-folders)
+  - [Standard Folders](#standard-folders)
   - [Pausing and Resuming](#pausing-and-resuming)
   - [Uploading Data](#uploading-data)
   - [Downloading Data](#downloading-data)
   - [Repairing](#repairing)
   - [Destroying](#destroying)
+  - [Speeding Up Deployment with Pre-Built Images](#speeding-up-deployment-with-pre-built-images)
 - [Tips](#tips)
   - [Persisting Modifications to the deployed Isaac Workstation](#persisting-modifications-to-the-deployed-isaac-workstation)
 
@@ -43,9 +44,10 @@ The result is a fully configured deployed Isaac Workstation — a remote desktop
 ```sh
 ./build                       # build the Isaac Automator container (one-time)
 ./run                         # enter the container
-./deploy-aws                  # deploy an Isaac Sim Workstation (follow the prompts)
+./deploy-aws                  # deploy an Isaac Workstation (follow the prompts)
 ./novnc <deployment-name>     # open the remote desktop in your browser
 ./destroy <deployment-name>   # tear down the deployment when done
+./image-aws                   # build a pre-built AWS AMI with Packer
 ```
 
 Replace `deploy-aws` with `deploy-gcp`, `deploy-azure`, or `deploy-alicloud` for other clouds. See sections below for details.
@@ -229,7 +231,15 @@ GPU-accelerated instances with NVIDIA A100, A10, and T4 GPUs are supported. You 
 
 #### Common Deploy Options
 
-All `deploy-*` commands share several options. Run `./deploy-<cloud> --help` to see the full list. Key options include:
+All `deploy-*` commands accept the deployment name as an optional positional argument:
+
+```sh
+./deploy-aws my-deployment
+# equivalent to:
+./deploy-aws --deployment-name my-deployment
+```
+
+Run `./deploy-<cloud> --help` to see the full list of options. Key options include:
 
 - `--existing` — What to do if a deployment with the same name already exists. Choices:
   - `ask` (default) — prompt interactively
@@ -480,13 +490,14 @@ Every time the cloud VM is deployed or started from a stopped state, the `autoru
 
 This functionality can be useful for running batch jobs, generating data on startup, or preparing the environment for the user.
 
-### Mapped Folders
+### Standard Folders
 
-The following folders on the deployed instance are used by default:
+Two folders are used for exchanging data between your local machine and the deployed instance:
 
-- `~/uploads` - user data uploaded to the deployment with the `./upload` command or automatically from the local `uploads/` folder
-- `~/results` - results of applications run on the deployment; you can download them with the `./download` command
-- `~/workspace` - workspace folder for exchanging data
+| Local (Isaac Automator) | Remote (Isaac Workstation) | Purpose                                                                                     |
+| ----------------------- | -------------------------- | ------------------------------------------------------------------------------------------- |
+| `uploads/`              | `~/uploads`                | Data you send to the instance. Synced automatically on deploy, or manually with `./upload`. |
+| `results/`              | `~/results`                | Data you pull back from the instance with `./download`.                                     |
 
 ### Pausing and Resuming
 
@@ -550,9 +561,32 @@ To destroy a deployment, run the following command:
 ./destroy <deployment-name>
 ```
 
-You will be prompted to enter the deployment name to destroy.
-
 _Please note that information about the deployed cloud resources is stored in the `state/` directory. Do not delete this directory._
+
+### Speeding Up Deployment with Pre-Built Images
+
+_At the moment, only `./image-aws` command is implemented. Versions for other clouds are in the works._
+
+You can build pre-built AWS AMIs to speed up future deployments (using the `--from-image` flag). The `image-aws` command wraps Packer and handles AWS credential management automatically:
+
+```sh
+# enter Isaac Automator container
+./run
+# inside container:
+./image-aws
+```
+
+The AMI name defaults to the current date and is automatically prefixed with `isaacautomator.isaacworkstation.`. When deploying with `--from-image`, Terraform picks the most recent AMI matching this prefix.
+
+Key options:
+
+- The image name can be passed as a positional argument: `./image-aws my-image-name`
+- `--instance-type` — Instance type for the Packer build (G4dn, G5, G6, G6e supported; default: `g6e.2xlarge`)
+- `--region` — AWS Region, can be entered as `us-east-1` or `US East 1` (default: `us-east-1`)
+- `--existing` — What to do if an AMI with the same name already exists: `overwrite` or `fail` (default: `fail`)
+- `--isaacsim` / `--isaaclab` — Git refs for the versions to bake into the image
+
+Tip: Run `./image-aws --help` to see all options.
 
 ## Tips
 

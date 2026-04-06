@@ -19,11 +19,13 @@ Pre-built VM images are created using [Packer](https://www.packer.io/) and can b
 
 #### AWS
 
-Refer to [src/packer/aws/README.md](src/packer/aws/README.md) for pre-requisites. Then:
+Use the `image-aws` command, which handles AWS credential management and Packer configuration automatically:
 
 ```sh
-packer build -force /app/src/packer/aws/isaac-workstation.pkr.hcl
+./image-aws
 ```
+
+Run `./image-aws --help` to see all options. See the [Building Pre-Built VM Images (AWS)](README.md#building-pre-built-vm-images-aws) section in the README for details.
 
 #### Azure
 
