@@ -134,7 +134,12 @@ class DeployAWSCommand(DeployCommand):
                 ("--region",),
                 show_default=True,
                 default="US East 1",
-                prompt=colorize_prompt("* AWS Region"),
+                help="AWS Region. Can be entered as 'us-east-1' or 'US East 1'."
+                " See https://aws.amazon.com/about-aws/global-infrastructure/regions_az/",
+                prompt=colorize_prompt(
+                    "* AWS Region (e.g. us-east-1 or US East 1,"
+                    " see https://aws.amazon.com/about-aws/global-infrastructure/regions_az/)"
+                ),
                 callback=lambda ctx, param, value: value.lower().replace(" ", "-"),
             ),
         )
