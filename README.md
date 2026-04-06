@@ -47,7 +47,6 @@ The result is a fully configured deployed Isaac Workstation — a remote desktop
 ./deploy-aws                  # deploy an Isaac Workstation (follow the prompts)
 ./novnc <deployment-name>     # open the remote desktop in your browser
 ./destroy <deployment-name>   # tear down the deployment when done
-./image-aws                   # build a pre-built AWS AMI with Packer
 ```
 
 Replace `deploy-aws` with `deploy-gcp`, `deploy-azure`, or `deploy-alicloud` for other clouds. See sections below for details.
