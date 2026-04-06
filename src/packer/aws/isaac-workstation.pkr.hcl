@@ -57,7 +57,7 @@ variable "aws_session_token" {
 }
 
 variable "image_name" {
-  default = "$PREFIX.isaac_image.$VERSION"
+  default = "$PREFIX.$VERSION"
 }
 
 variable skip_tags {
@@ -109,7 +109,7 @@ data "amazon-ami" "isaac_workstation_ami" {
 }
 
 locals {
-  expanded_image_name = replace(replace(var.image_name, "$VERSION", var.version), "$PREFIX", "isaac_automator.packer")
+  expanded_image_name = replace(replace(var.image_name, "$VERSION", var.version), "$PREFIX", "isaacautomator.isaacworkstation")
 }
 
 source "amazon-ebs" "isaac-workstation" {

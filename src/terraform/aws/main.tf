@@ -45,7 +45,7 @@ module "isaac_workstation" {
   ssh_port          = var.ssh_port
   deployment_name   = var.deployment_name
   ingress_cidrs     = var.ingress_cidrs
-  prebuilt_ami_name = "${var.prefix}.packer.isaac_image.*"
+  prebuilt_ami_name = "${var.prefix}.isaacworkstation.*"
 
   iam_instance_profile = null
 
