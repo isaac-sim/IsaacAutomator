@@ -40,6 +40,9 @@
     - skip_in_image
 - debug:
     msg: "ECC status: {{ ecc_status.stdout }}"
+  tags:
+    - on_stop_start
+    - skip_in_image
 #
 - name: Disable ECC
   shell: nvidia-smi --ecc-config=0
