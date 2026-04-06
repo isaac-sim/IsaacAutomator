@@ -33,3 +33,8 @@ variable "isaac_workstation_instance_type" {
 variable "ingress_cidrs" {
   type = list(string)
 }
+
+variable "os_username" {
+  default = "ubuntu"
+  type    = string
+}
