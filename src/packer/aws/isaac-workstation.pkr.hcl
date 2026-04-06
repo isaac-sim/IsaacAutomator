@@ -167,4 +167,14 @@ build {
       "--extra-vars", "cloud='aws' deployment_name='aws_image' isaacsim_git_checkpoint='${var.isaacsim}' isaaclab_git_checkpoint='${var.isaaclab}' vnc_password='${var.vnc_password}' system_user_password='${var.system_user_password}' in_china=${var.in_china} generic_driver_apt_package='nvidia-driver-580-server' uploads_dir='/home/ubuntu/uploads' results_dir='/home/ubuntu/results' workspace_dir='/home/ubuntu/workspace'"
     ]
   }
+
+  provisioner "shell" {
+    inline = [
+      "sudo rm -rf /tmp/* /var/tmp/*",
+      "sudo journalctl --vacuum-size=10M",
+      "sudo dd if=/dev/zero of=/EMPTY bs=1M || true",
+      "sudo rm -f /EMPTY",
+      "sync"
+    ]
+  }
 }
