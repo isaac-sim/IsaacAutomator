@@ -124,6 +124,7 @@ source "amazon-ebs" "isaac-workstation" {
   encrypt_boot  = false
 
   force_delete_snapshot = true
+  snapshot_timeout      = "2h"
 
   run_volume_tags = {
     Name       = "${local.expanded_image_name}.run_volume"
