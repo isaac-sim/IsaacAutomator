@@ -461,7 +461,7 @@ class Deployer:
 
     def run_all_ansible(self):
         # run ansible for isaac
-        click.echo(colorize_info("* Running Ansible for Isaac Sim Workstation..."))
+        click.echo(colorize_info("* Running Ansible for Isaac Workstation..."))
         self.run_ansible(
             playbook_name="isaac-workstation",
             cwd=f"{self.config['ansible_dir']}",
