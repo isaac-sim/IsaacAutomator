@@ -12,6 +12,7 @@ ENV PYTHONPATH=/app:/app/lib:/app/src:/app/py:/app/python:/app/cli:/app/utils:/a
 
 # misc
 RUN apt-get update && apt-get install -qy \
+    software-properties-common \
     apt-transport-https \
     ca-certificates \
     openssh-client \
@@ -19,7 +20,6 @@ RUN apt-get update && apt-get install -qy \
     python3-pip \
     apt-utils \
     dnsutils \
-    expect \
     gnupg \
     unzip \
     rsync \
@@ -30,13 +30,6 @@ RUN apt-get update && apt-get install -qy \
     jq
 
 # hashicorp sources
-RUN apt-get install -yq software-properties-common
-
-# firefox (snap version doesn't work in docker)
-RUN add-apt-repository -y ppa:mozillateam/ppa && \
-    apt-get update && \
-    apt-get install -yq firefox-esr
-
 RUN wget -O- https://apt.releases.hashicorp.com/gpg | \
     gpg --dearmor | \
     tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
@@ -75,15 +68,6 @@ ENV ANSIBLE_FORCE_COLOR=true
 ENV ANSIBLE_CONFIG="/app/src/ansible/ansible.cfg"
 RUN pip install --break-system-packages ansible
 RUN ansible-galaxy collection install community.docker
-
-# ngc cli: https://docs.ngc.nvidia.com/cli/script.html
-RUN  case "$(dpkg --print-architecture)" in \
-    amd64) \
-    wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/4.8.2/files/ngccli_linux.zip -O /opt/ngccli_linux.zip && unzip /opt/ngccli_linux.zip -d /opt ;; \
-    arm64) \
-    wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/4.8.2/files/ngccli_arm64.zip -O /opt/ngccli_arm64.zip && unzip /opt/ngccli_arm64.zip -d /opt ;; \
-    esac
-RUN echo 'export PATH="$PATH:/opt/ngc-cli"' >> ~/.bashrc
 
 # gcloud
 # @see https://cloud.google.com/sdk/docs/install
@@ -131,4 +115,4 @@ WORKDIR /app
 
 ENTRYPOINT [ "/bin/sh", "-c" ]
 
-ENV VERSION="v4.0.0-alpha1"
+ENV VERSION="v4.0.0-alpha2"
