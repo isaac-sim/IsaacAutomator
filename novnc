@@ -84,7 +84,7 @@ def main(
     meta = read_meta(deployment_name, verbose=debug)
     vnc_password = meta["input_params"].get("vnc_password", "")
 
-    url = f"http://{vm_ip}:6080/vnc.html?host={vm_ip}&port=6080&password={vnc_password}"
+    url = f"http://{vm_ip}:6080/vnc.html?host={vm_ip}&port=6080&password={vnc_password}&resize=scale"
     click.echo(colorize_info(f"* noVNC URL: {url}"))
 
     if os.path.exists("/.dockerenv"):
