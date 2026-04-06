@@ -111,7 +111,7 @@ def main(
         # (the case when prebuilt image is used)
         click.echo(colorize_info("* Initializing terraform modules..."))
         shell_command(
-            f"terraform init -upgrade -no-color -input=false {' > /dev/null' if not debug else ''}",
+            f"terraform init -upgrade -no-color -input=false -reconfigure -backend-config=\"path={tfstate_file}\" {' > /dev/null' if not debug else ''}",
             verbose=debug,
             cwd=f"{config['terraform_dir']}/{cloud.lower()}",
         )
@@ -126,7 +126,7 @@ def main(
             )
 
             shell_command(
-                command=f'terraform plan -destroy -var-file="{tfvars_file}" -state="{tfstate_file}"',
+                command=f'terraform plan -destroy -var-file="{tfvars_file}"',
                 cwd=f"{config['terraform_dir']}/{cloud.lower()}",
                 exit_on_error=False,
                 verbose=debug,
@@ -142,7 +142,7 @@ def main(
             )
 
             shell_command(
-                command=f'terraform destroy -auto-approve -var-file="{tfvars_file}" -state="{tfstate_file}"',
+                command=f'terraform destroy -auto-approve -var-file="{tfvars_file}"',
                 cwd=f"{config['terraform_dir']}/{cloud.lower()}",
                 exit_on_error=True,
                 verbose=debug,

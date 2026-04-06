@@ -19,6 +19,7 @@
 
 import os
 import sys
+from pathlib import Path
 
 import click
 
@@ -88,14 +89,16 @@ def main(
     # run terraform
     if terraform:
         click.echo(colorize_info("* Re-running Terraform..."))
+        tfstate_file = Path(
+            f"{config['state_dir']}/{deployment_name}/.tfstate"
+        ).absolute()
         shell_command(
-            f"terraform init -upgrade -no-color -input=false {' > /dev/null' if not debug else ''}",
+            f"terraform init -upgrade -no-color -input=false -reconfigure -backend-config=\"path={tfstate_file}\" {' > /dev/null' if not debug else ''}",
             cwd=f"{config['terraform_dir']}/{cloud}",
             verbose=debug,
         )
         shell_command(
             "terraform apply -auto-approve "
-            + f"-state={config['state_dir']}/{deployment_name}/.tfstate "
             + f"-var-file={config['state_dir']}/{deployment_name}/.tfvars",
             cwd=f"{config['terraform_dir']}/{cloud}",
             verbose=debug,

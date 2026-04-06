@@ -386,9 +386,13 @@ class Deployer:
         cwd: directory where terraform scripts are located
         """
         debug = self.params["debug"]
+        deployment_name = self.params["deployment_name"]
+        tfstate_file = Path(
+            f"{self.config['state_dir']}/{deployment_name}/.tfstate"
+        ).absolute()
 
         shell_command(
-            f"terraform init -upgrade -no-color -input=false {' > /dev/null' if not debug else ''}",
+            f"terraform init -upgrade -no-color -input=false -reconfigure -backend-config=\"path={tfstate_file}\" {' > /dev/null' if not debug else ''}",
             verbose=debug,
             cwd=cwd,
         )
@@ -404,7 +408,6 @@ class Deployer:
 
         shell_command(
             "terraform apply -auto-approve "
-            + f"-state={self.config['state_dir']}/{deployment_name}/.tfstate "
             + f"-var-file={self.config['state_dir']}/{deployment_name}/.tfvars",
             cwd=cwd,
             verbose=debug,
