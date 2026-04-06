@@ -41,6 +41,21 @@ class DeployCommand(click.core.Command):
     Defines common cli options for "deploy-*" commands.
     """
 
+    def make_context(self, info_name, args, parent=None, **extra):
+        """
+        Allow deployment name as an unnamed first argument.
+        e.g. ./deploy-aws mydeployment is equivalent to ./deploy-aws --deployment-name mydeployment
+        """
+        args = list(args)
+        if (
+            args
+            and not args[0].startswith("-")
+            and "--deployment-name" not in args
+            and "--dn" not in args
+        ):
+            args = ["--deployment-name", args[0]] + args[1:]
+        return super().make_context(info_name, args, parent=parent, **extra)
+
     @staticmethod
     def deployment_name_callback(ctx, param, value):
         # validate
