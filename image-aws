@@ -18,6 +18,7 @@
 
 import os
 import sys
+from datetime import date
 
 import click
 
@@ -120,10 +121,14 @@ class ImageAWSCommand(DeployCommand):
             0,
             click.core.Option(
                 ("--image-name",),
-                show_default=True,
-                default="isaac-workstation-v1",
-                help="AMI name.",
-                prompt=colorize_prompt("* AMI name"),
+                show_default="<current date>",
+                default=lambda: date.today().strftime("%Y-%m-%d"),
+                help="AMI name. Will be prefixed with 'isaacautomator.isaacworkstation.'."
+                " When deploying with --from-image, Terraform picks the most recent AMI"
+                " matching this prefix.",
+                prompt=colorize_prompt(
+                    "* AMI name (will be prefixed with 'isaacautomator.isaacworkstation.')"
+                ),
             ),
         )
 
