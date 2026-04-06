@@ -35,15 +35,19 @@
 
 - set_fact:
     hostname: "{{ (instance_role + '-' + deployment_name) | replace('_', '-') }}"
+  tags: skip_in_image
 
 - debug:
     msg: "hostname: {{ hostname }}"
+  tags: skip_in_image
 
 - name: Set hostname [1]
   hostname:
     name: "{{ hostname }}"
+  tags: skip_in_image
 
 - name: Set hostname [2]
   lineinfile:
     path: /etc/hosts
     line: "127.0.0.1 {{ hostname }}"
+  tags: skip_in_image

@@ -22,7 +22,7 @@ Pre-built VM images are created using [Packer](https://www.packer.io/) and can b
 Refer to [src/packer/aws/README.md](src/packer/aws/README.md) for pre-requisites. Then:
 
 ```sh
-packer build -force /app/src/packer/aws/isaac
+packer build -force /app/src/packer/aws/isaac-workstation.pkr.hcl
 ```
 
 #### Azure

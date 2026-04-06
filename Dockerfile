@@ -46,7 +46,7 @@ COPY . /tmp/app
 RUN if [ "$WITH_PACKER" = "1" ]; then \
     apt-get install -yq packer; \
     (cd /tmp/app/src/packer/azure/isaac && packer init .) \
-    && (cd /tmp/app/src/packer/aws/isaac && packer init .) \
+    && (cd /tmp/app/src/packer/aws && packer init isaac-workstation.pkr.hcl) \
     else \
     echo "Skipping Packer installation"; \
     fi

@@ -1,0 +1,267 @@
+#!/usr/bin/env python3
+
+# region copyright
+# Copyright 2023-2026 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+import os
+import sys
+
+import click
+
+from src.python.aws import aws_load_credentials, aws_validate_credentials
+from src.python.config import c as config
+from src.python.debug import debug_break, debug_start  # noqa
+from src.python.deploy_command import DeployCommand
+from src.python.utils import (
+    colorize_error,
+    colorize_info,
+    colorize_prompt,
+    shell_command,
+)
+
+
+class ImageAWSCommand(DeployCommand):
+    """
+    Defines options specific for "image-aws" command.
+    """
+
+    # supported AWS instance types (same as deploy-aws)
+    AWS_OVKIT_INSTANCE_TYPES = [
+        "g4dn.2xlarge",
+        "g4dn.4xlarge",
+        "g4dn.8xlarge",
+        "g4dn.16xlarge",
+        "g4dn.12xlarge",
+        "g4dn.metal",
+        "g5.2xlarge",
+        "g5.4xlarge",
+        "g5.8xlarge",
+        "g5.16xlarge",
+        "g5.12xlarge",
+        "g5.24xlarge",
+        "g5.48xlarge",
+        "g6.2xlarge",
+        "g6.4xlarge",
+        "g6.8xlarge",
+        "g6.16xlarge",
+        "gr6.4xlarge",
+        "gr6.8xlarge",
+        "g6.12xlarge",
+        "g6.24xlarge",
+        "g6.48xlarge",
+        "g6e.xlarge",
+        "g6e.2xlarge",
+        "g6e.4xlarge",
+        "g6e.8xlarge",
+        "g6e.12xlarge",
+        "g6e.16xlarge",
+        "g6e.24xlarge",
+        "g6e.48xlarge",
+    ]
+
+    @staticmethod
+    def ovkit_instance_type_callback(ctx, param, value):
+        if "g5.xlarge" == value:
+            raise click.BadParameter(colorize_error("g5.xlarge is not supported. "))
+
+        if value not in ImageAWSCommand.AWS_OVKIT_INSTANCE_TYPES:
+            raise click.BadParameter(
+                colorize_error(
+                    f"Invalid instance type: {value}. Choose one of: "
+                    + ", ".join(ImageAWSCommand.AWS_OVKIT_INSTANCE_TYPES)
+                    + "."
+                )
+            )
+
+        return value
+
+    def make_context(self, info_name, args, parent=None, **extra):
+        """Allow image name as an unnamed first argument."""
+        args = list(args)
+        if args and not args[0].startswith("-") and "--image-name" not in args:
+            args = ["--image-name", args[0]] + args[1:]
+        return click.core.Command.make_context(
+            self, info_name, args, parent=parent, **extra
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # remove params not applicable to image building
+        self.params = [
+            p
+            for p in self.params
+            if p.name
+            not in (
+                "in_china",
+                "from_image",
+                "ingress_cidrs",
+                "vnc_password",
+                "upload",
+                "deployment_name",
+            )
+        ]
+
+        # --image-name (insert first so it's prompted before other options)
+        self.params.insert(
+            0,
+            click.core.Option(
+                ("--image-name",),
+                show_default=True,
+                default="isaac-workstation-v1",
+                help="AMI name.",
+                prompt=colorize_prompt("* AMI name"),
+            ),
+        )
+
+        # replace --existing with overwrite/fail
+        self.params = [p for p in self.params if p.name != "existing"]
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--existing",),
+                type=click.Choice(["overwrite", "fail"]),
+                default="fail",
+                show_default=True,
+                help="What to do if an AMI with the same name already exists:"
+                " 'overwrite' will delete the old AMI first,"
+                " 'fail' will abort the build.",
+            ),
+        )
+
+        # --instance-type
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                (
+                    "--instance-type",
+                    "--isaac-workstation-instance-type",
+                    "isaac_workstation_instance_type",
+                ),
+                prompt=colorize_prompt(
+                    "* Instance Type for Packer build "
+                    + "(G5, G4dn, G6 and G6e are supported, see https://docs.aws.amazon.com/dlami/latest/devguide/gpu.html)"
+                ),
+                show_default=True,
+                default=config["aws_default_isaac_workstation_instance_type"],
+                callback=ImageAWSCommand.ovkit_instance_type_callback,
+                help="Instance type for the Packer build instance. Currently supported: "
+                + ", ".join(self.AWS_OVKIT_INSTANCE_TYPES)
+                + ".",
+            ),
+        )
+
+        # --region
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--region",),
+                show_default=True,
+                default="US East 1",
+                help="AWS Region. Can be entered as 'us-east-1' or 'US East 1'."
+                " See https://aws.amazon.com/about-aws/global-infrastructure/regions_az/",
+                prompt=colorize_prompt(
+                    "* AWS Region (e.g. us-east-1 or US East 1,"
+                    " see https://aws.amazon.com/about-aws/global-infrastructure/regions_az/)"
+                ),
+                callback=lambda ctx, param, value: value.lower().replace(" ", "-"),
+            ),
+        )
+
+        # --image-name is already inserted above
+
+
+def build_ami(params, config):
+    """
+    Build AWS AMI using Packer.
+    """
+
+    debug = params["debug"]
+    region = params["region"]
+    instance_type = params["isaac_workstation_instance_type"]
+    isaacsim = params["isaacsim"]
+    isaaclab = params["isaaclab"]
+    system_user_password = params["system_user_password"]
+    image_name = params.get("image_name", "")
+    existing = params["existing"]
+
+    # use image name as deployment name
+    params["deployment_name"] = image_name or "aws-image"
+
+    # load AWS credentials
+    creds = aws_load_credentials(verbose=debug)
+
+    version = os.environ.get("VERSION", "")
+    if not version:
+        click.echo(colorize_error("Error: VERSION environment variable is not set."))
+        sys.exit(1)
+
+    # set AWS credentials as env vars for packer
+    os.environ["AWS_ACCESS_KEY_ID"] = creds["aws_access_key_id"]
+    os.environ["AWS_SECRET_ACCESS_KEY"] = creds["aws_secret_access_key"]
+    if creds.get("aws_session_token"):
+        os.environ["AWS_SESSION_TOKEN"] = creds["aws_session_token"]
+
+    packer_dir = f"{config['app_dir']}/src/packer/aws/isaac-workstation.pkr.hcl"
+
+    # initialize packer plugins
+    click.echo(colorize_info("* Initializing Packer..."))
+    shell_command(
+        f"packer init {packer_dir}",
+        verbose=debug,
+    )
+
+    # build packer command
+    packer_vars = [
+        f'-var=aws_region="{region}"',
+        f'-var=instance_type="{instance_type}"',
+        f'-var=version="{version}"',
+        f'-var=system_user_password="{system_user_password}"',
+        f'-var=isaacsim="{isaacsim}"',
+        f'-var=isaaclab="{isaaclab}"',
+        f"-var=in_china=false",
+    ]
+
+    if image_name:
+        packer_vars.append(f'-var=image_name="{image_name}"')
+
+    force_flag = "-force" if existing == "overwrite" else ""
+    packer_cmd = (
+        f"packer build {force_flag} " + " ".join(packer_vars) + f" {packer_dir}"
+    )
+
+    click.echo(colorize_info("* Building AWS AMI with Packer..."))
+
+    if debug:
+        click.echo(colorize_info(f"* Command: {packer_cmd}"))
+
+    shell_command(packer_cmd, verbose=debug)
+
+    click.echo(colorize_info("* AMI build complete!"))
+
+
+@click.command(cls=ImageAWSCommand)
+def main(**params):
+    build_ami(params, config)
+
+
+if __name__ == "__main__":
+    if os.path.exists("/.dockerenv"):
+        debug = "--debug" in sys.argv or os.environ.get("DEBUG", "0") == "1"
+        aws_validate_credentials(verbose=debug)
+        main()
+    else:
+        shell_command(f"./run '{' '.join(sys.argv)}'", verbose=True)

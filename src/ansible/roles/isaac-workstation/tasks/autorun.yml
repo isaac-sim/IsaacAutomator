@@ -33,6 +33,7 @@
   ignore_errors: true
   tags:
     - __autorun
+    - skip_in_image
 
 - name: Start Application
   shell: |

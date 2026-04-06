@@ -52,6 +52,10 @@ EOF
   }
 }
 
+variable "aws_session_token" {
+  default = env("AWS_SESSION_TOKEN")
+}
+
 variable "image_name" {
   default = "$PREFIX.isaac_image.$VERSION"
 }
@@ -68,11 +72,31 @@ variable "aws_region" {
   default = "us-east-1"
 }
 
-variable "isaac_image" {
-  default = "nvcr.io/nvidia/isaac-sim:2023.1.0-hotfix.1"
+variable "instance_type" {
+  default = "g6e.2xlarge"
 }
 
-data "amazon-ami" "isaac_instance_ami" {
+variable "isaacsim" {
+  default = "v6.0.0-dev2"
+}
+
+variable "isaaclab" {
+  default = "v3.0.0-beta"
+}
+
+variable "vnc_password" {
+  default = ""
+}
+
+variable "system_user_password" {
+  default = ""
+}
+
+variable "in_china" {
+  default = false
+}
+
+data "amazon-ami" "isaac_workstation_ami" {
   most_recent = true
   owners      = ["099720109477"] # Canonical
   region      = "${var.aws_region}"
@@ -80,7 +104,7 @@ data "amazon-ami" "isaac_instance_ami" {
   filters = {
     virtualization-type = "hvm"
     root-device-type    = "ebs"
-    name                = "ubuntu/images/*/ubuntu-*-20.04-amd64-server-*"
+    name                = "ubuntu/images/*/ubuntu-*-22.04-amd64-server-*"
   }
 }
 
@@ -88,13 +112,14 @@ locals {
   expanded_image_name = replace(replace(var.image_name, "$VERSION", var.version), "$PREFIX", "isaac_automator.packer")
 }
 
-source "amazon-ebs" "isaac" {
+source "amazon-ebs" "isaac-workstation" {
   ami_name      = "${local.expanded_image_name}"
   access_key    = "${var.aws_access_key_id}"
   secret_key    = "${var.aws_secret_access_key}"
-  instance_type = "g5.2xlarge"
+  token         = "${var.aws_session_token}"
+  instance_type = "${var.instance_type}"
   region        = "${var.aws_region}"
-  source_ami    = data.amazon-ami.isaac_instance_ami.id
+  source_ami    = data.amazon-ami.isaac_workstation_ami.id
   ssh_username  = "ubuntu"
   encrypt_boot  = false
 
@@ -123,7 +148,7 @@ source "amazon-ebs" "isaac" {
 }
 
 build {
-  sources = ["source.amazon-ebs.isaac"]
+  sources = ["source.amazon-ebs.isaac-workstation"]
 
   provisioner "ansible" {
     use_proxy     = false
@@ -134,7 +159,7 @@ build {
     ]
     extra_arguments = [
       "--skip-tags", "${var.skip_tags}",
-      "--extra-vars", "cloud='aws' deployment_name='aws_image' isaac_image='${var.isaac_image}'"
+      "--extra-vars", "cloud='aws' deployment_name='aws_image' isaacsim_git_checkpoint='${var.isaacsim}' isaaclab_git_checkpoint='${var.isaaclab}' vnc_password='${var.vnc_password}' system_user_password='${var.system_user_password}' in_china=${var.in_china}"
     ]
   }
 }
