@@ -1,5 +1,6 @@
 terraform {
   required_version = ">= 1.3.5"
+  backend "local" {}
   required_providers {
     google = {
       source  = "hashicorp/google"
