@@ -2,7 +2,7 @@
 
 # Isaac Automator (v4)
 
-Isaac Automator allows quick deployment of Isaac Sim and Isaac Lab to public clouds (AWS, GCP, Azure, and Alibaba Cloud are currently supported).
+Isaac Automator allows quick deployment of Isaac Sim, Isaac Lab, and Isaac Lab Arena to public clouds (AWS, GCP, Azure, and Alibaba Cloud are currently supported).
 
 The result is a fully configured deployed Isaac Workstation — a remote desktop cloud VM that you can use to develop and test robotic applications within minutes and on a budget. Isaac Automator supports a variety of GPU instances and stop/start functionality to save on cloud costs and provides tools to aid your workflow (uploading and downloading data, autorun, deployment management, etc.).
 
@@ -28,6 +28,7 @@ The result is a fully configured deployed Isaac Workstation — a remote desktop
   - [Running Applications](#running-applications)
     - [Isaac Sim](#isaac-sim)
     - [Isaac Lab](#isaac-lab)
+    - [Isaac Lab Arena](#isaac-lab-arena)
   - [Autorun Script](#autorun-script)
   - [Standard Folders](#standard-folders)
   - [Pausing and Resuming](#pausing-and-resuming)
@@ -247,7 +248,7 @@ Run `./deploy-<cloud> --help` to see the full list of options. Key options inclu
   - `replace` — delete old cloud resources first, then redeploy
   - `run_ansible` — re-run software configuration (Ansible) only
 - `--instance-type` — Cloud VM instance type (each cloud has its own supported list and default).
-- `--isaacsim` / `--isaaclab` — Git ref for Isaac Sim / Isaac Lab version, or `no` to skip installation.
+- `--isaacsim` / `--isaaclab` / `--isaaclab-arena` — Git ref for Isaac Sim / Isaac Lab / Isaac Lab Arena version, or `no` to skip installation.
 - `--from-image` — Deploy from a pre-built VM image to speed up provisioning (not supported on GCP).
 - `--in-china` — Use local mirrors for deployments in China. Choices: `auto` (default), `yes`, `no`.
 - `--prefix` — Prefix for created cloud resource names (default: `isaacautomator`).
@@ -284,6 +285,9 @@ Options:
                                 "no".  [default: v6.0.0-dev2]
   --isaaclab TEXT               Git ref at github.com/isaac-sim/IsaacLab, or
                                 "no".  [default: v3.0.0-beta]
+  --isaaclab-arena TEXT         Git ref at
+                                github.com/isaac-sim/IsaacLab-Arena, or
+                                "no".  [default: release/0.1.1]
   --vnc-password TEXT           Password for VNC access.  [default: <random>]
   --system-user-password TEXT   System user password.  [default: <random>]
   --ssh-port TEXT               SSH port.  [default: 22]
@@ -326,6 +330,9 @@ Options:
                                 "no".  [default: v6.0.0-dev2]
   --isaaclab TEXT               Git ref at github.com/isaac-sim/IsaacLab, or
                                 "no".  [default: v3.0.0-beta]
+  --isaaclab-arena TEXT         Git ref at
+                                github.com/isaac-sim/IsaacLab-Arena, or
+                                "no".  [default: release/0.1.1]
   --vnc-password TEXT           Password for VNC access.  [default: <random>]
   --system-user-password TEXT   System user password.  [default: <random>]
   --ssh-port TEXT               SSH port.  [default: 22]
@@ -368,6 +375,9 @@ Options:
                                 "no".  [default: v6.0.0-dev2]
   --isaaclab TEXT               Git ref at github.com/isaac-sim/IsaacLab, or
                                 "no".  [default: v3.0.0-beta]
+  --isaaclab-arena TEXT         Git ref at
+                                github.com/isaac-sim/IsaacLab-Arena, or
+                                "no".  [default: release/0.1.1]
   --vnc-password TEXT           Password for VNC access.  [default: <random>]
   --system-user-password TEXT   System user password.  [default: <random>]
   --ssh-port TEXT               SSH port.  [default: 22]
@@ -405,6 +415,9 @@ Options:
                                 "no".  [default: v6.0.0-dev2]
   --isaaclab TEXT               Git ref at github.com/isaac-sim/IsaacLab, or
                                 "no".  [default: v3.0.0-beta]
+  --isaaclab-arena TEXT         Git ref at
+                                github.com/isaac-sim/IsaacLab-Arena, or
+                                "no".  [default: release/0.1.1]
   --vnc-password TEXT           Password for VNC access.  [default: <random>]
   --system-user-password TEXT   System user password.  [default: <random>]
   --ssh-port TEXT               SSH port.  [default: 22]
@@ -478,6 +491,14 @@ To run Isaac Lab CLI, use the following command in the terminal on the deployed 
 ```sh
 ~/IsaacLab/isaaclab.sh [options]
 ```
+
+#### Isaac Lab Arena
+
+[Isaac Lab Arena](https://github.com/isaac-sim/IsaacLab-Arena) is an extension to Isaac Lab that provides multi-agent task environments and benchmarks. It is installed from source on the Isaac Workstation by default.
+
+To install a specific version, provide a valid Git reference from <https://github.com/isaac-sim/IsaacLab-Arena> as the value of the `--isaaclab-arena` parameter to the deployment command. Use `--isaaclab-arena no` to skip installation.
+
+Isaac Lab Arena is installed to `~/IsaacLab-Arena` on the deployed instance.
 
 ### Autorun Script
 
@@ -583,7 +604,7 @@ Key options:
 - `--instance-type` — Instance type for the Packer build (G4dn, G5, G6, G6e supported; default: `g6e.2xlarge`)
 - `--region` — AWS Region, can be entered as `us-east-1` or `US East 1` (default: `us-east-1`)
 - `--existing` — What to do if an AMI with the same name already exists: `overwrite` or `fail` (default: `fail`)
-- `--isaacsim` / `--isaaclab` — Git refs for the versions to bake into the image
+- `--isaacsim` / `--isaaclab` / `--isaaclab-arena` — Git refs for the versions to bake into the image
 
 Tip: Run `./image-aws --help` to see all options.
 
