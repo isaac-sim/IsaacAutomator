@@ -70,6 +70,9 @@ c["default_prefix"] = "isaacautomator"
 # --isaaclab
 c["default_isaaclab_git_checkpoint"] = "v3.0.0-beta"
 
+# --isaaclab-arena
+c["default_isaaclab_arena_git_checkpoint"] = "release/0.1.1"
+
 # --isaacsim
 c["default_isaacsim_git_checkpoint"] = "v6.0.0-dev2"
 

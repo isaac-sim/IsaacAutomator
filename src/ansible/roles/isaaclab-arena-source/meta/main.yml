@@ -16,14 +16,9 @@
 
 ---
 galaxy_info:
-  role_name: "isaac_workstation"
+  role_name: isaaclab_arena_source
   author: NVIDIA Corporation
-  description: Isaac Workstation
+  description: Install Isaac Lab Arena from source
   standalone: false
 dependencies:
   - { role: system }
-  - { role: nvidia-driver }
-  - { role: remote-desktop }
-  - { role: isaacsim-source }
-  - { role: isaaclab-source }
-  - { role: isaaclab-arena-source }

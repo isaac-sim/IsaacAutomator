@@ -1,0 +1,47 @@
+# region copyright
+# Copyright 2023-2026 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+- name: Create Isaac Lab Arena directory
+  file:
+    path: "{{ isaaclab_arena_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0755
+
+- name: Configure git to use HTTPS instead of SSH for github.com
+  shell: |
+    git config --global --unset-all 'url.https://github.com/.insteadOf' 2>/dev/null || true
+    git config --global --unset-all 'url."https://github.com/".insteadOf' 2>/dev/null || true
+    git config --global url.https://github.com/.insteadOf git@github.com:
+  become_user: "{{ ansible_user }}"
+  changed_when: false
+
+- name: Clone Isaac Lab Arena repository
+  shell: |
+    if [ -d "{{ isaaclab_arena_dir }}/.git" ]; then
+      cd "{{ isaaclab_arena_dir }}"
+      git fetch --depth 1 origin "{{ isaaclab_arena_git_checkpoint }}"
+      git checkout FETCH_HEAD
+      git submodule update --init --recursive --depth 1
+    else
+      git clone --depth 1 --recurse-submodules --shallow-submodules \
+        -b "{{ isaaclab_arena_git_checkpoint }}" \
+        "{{ isaaclab_arena_git_repo }}" "{{ isaaclab_arena_dir }}"
+    fi
+  become_user: "{{ ansible_user }}"
+  register: clone_result
+  changed_when: "'Already up to date' not in clone_result.stdout"

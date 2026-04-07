@@ -239,6 +239,19 @@ class DeployCommand(click.core.Command):
             ),
         )
 
+        # --isaaclab-arena
+        help = 'Install Isaac Lab Arena? Valid values: "no", or git ref at https://github.com/isaac-sim/IsaacLab-Arena'
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--isaaclab-arena",),
+                help=help,
+                default=config["default_isaaclab_arena_git_checkpoint"],
+                show_default=True,
+                prompt=colorize_prompt("* " + help),
+            ),
+        )
+
         # [DEV]
         # private git repo for Isaac Lab
         self.params.insert(
