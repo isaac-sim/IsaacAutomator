@@ -199,6 +199,7 @@ def build_ami(params, config):
     instance_type = params["isaac_workstation_instance_type"]
     isaacsim = params["isaacsim"]
     isaaclab = params["isaaclab"]
+    isaaclab_arena = params["isaaclab_arena"]
     system_user_password = params["system_user_password"]
     image_name = params.get("image_name", "")
     existing = params["existing"]
@@ -237,6 +238,7 @@ def build_ami(params, config):
         f'-var=system_user_password="{system_user_password}"',
         f'-var=isaacsim="{isaacsim}"',
         f'-var=isaaclab="{isaaclab}"',
+        f'-var=isaaclab_arena="{isaaclab_arena}"',
         f"-var=in_china=false",
     ]
 
