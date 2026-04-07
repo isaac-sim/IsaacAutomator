@@ -88,11 +88,3 @@
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
   when: isaaclab_install_needed
-
-- name: Set ownership of Isaac Lab directory
-  file:
-    path: "{{ isaaclab_dir }}"
-    state: directory
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    recurse: true
