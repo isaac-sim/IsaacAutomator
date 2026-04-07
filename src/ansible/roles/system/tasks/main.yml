@@ -81,3 +81,7 @@
   when: swap_enabled.stdout | int == 0
   tags:
     - skip_in_image
+
+# docker
+- import_tasks: docker.yml
+  tags: __system_docker
