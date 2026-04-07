@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # region copyright
-# Copyright 2023 NVIDIA Corporation
+# Copyright 2023-2026 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,9 +31,8 @@ from src.python.utils import (
     shell_command,
 )
 
-APP_NAMES = [
-    "isaac",
-    "ovami",
+INSTANCE_ROLE_NAMES = [
+    "isaac_workstation",
 ]
 
 
@@ -62,30 +61,34 @@ APP_NAMES = [
     help="Alow deleting when syncing results?",
 )
 @click.option(
-    "--app",
+    "--instance-role",
     default="all",
-    type=click.Choice(["all"] + APP_NAMES),
-    help="Application to download results from",
+    type=click.Choice(["all"] + INSTANCE_ROLE_NAMES),
+    help="Instance role to download results from",
 )
-@click.argument("app", required=False)
+@click.argument("instance_role", required=False)
 def main(
-    app: str,
+    instance_role: str,
     debug: bool,
     delete: bool,
     remote_dir: str,
     deployment_name: str,
 ):
-    # list of apps to download from
-    apps = APP_NAMES if app == "all" else [app]
+    # list of instance roles to download from
+    instance_roles = INSTANCE_ROLE_NAMES if instance_role == "all" else [instance_role]
 
     # read meta
     meta = read_meta(deployment_name, debug)
 
-    for app_name in apps:
-        if meta["params"][app_name]:
-            ip = read_tf_output(deployment_name, f"{app_name}_ip", verbose=debug)
+    for instance_role_name in instance_roles:
+        if meta["params"][instance_role_name]:
+            ip = read_tf_output(
+                deployment_name, f"{instance_role_name}_ip", verbose=debug
+            )
             ssh_key_file = f"{config['state_dir']}/{deployment_name}/key.pem"
-            output_dir = f"{config['results_dir']}/{deployment_name}/{app_name}"
+            output_dir = (
+                f"{config['results_dir']}/{deployment_name}/{instance_role_name}"
+            )
             os.makedirs(output_dir, exist_ok=True)
 
             # strip trailing slashes
@@ -94,7 +97,7 @@ def main(
 
             # make sure remote directory exists
             shell_command(
-                f"ssh -i {ssh_key_file} -o StrictHostKeyChecking=no ubuntu@{ip}"
+                f"ssh -i {ssh_key_file} -o StrictHostKeyChecking=no {config['default_ssh_user']}@{ip}"
                 + f" \"[ ! -d '{remote_dir}' ] && sudo mkdir -p '{remote_dir}'\"",
                 verbose=debug,
                 exit_on_error=False,
@@ -105,7 +108,7 @@ def main(
                 "rsync -avz --progress --rsync-path 'sudo rsync'"
                 + (" --delete" if delete else "")
                 + f" -e 'ssh -i {ssh_key_file} -o StrictHostKeyChecking=no'"
-                + f' ubuntu@{ip}:"{remote_dir}/" "{output_dir}"'
+                + f' {config["default_ssh_user"]}@{ip}:"{remote_dir}/" "{output_dir}"'
             )
 
             shell_command(

@@ -1,9 +1,6 @@
 region                = "us-east-1"
-ovami_enabled         = "false"
-aws_access_key_id     = "%aws-access-key-id%"
-aws_secret_access_key = "%aws_secret_access_key%"
-isaac_enabled         = "true"
-isaac_instance_type   = "g5.2xlarge"
+isaac_workstation_enabled         = "true"
+isaac_workstation_instance_type   = "g5.2xlarge"
 prefix                = "isa"
 ssh_port              = 22
 from_image            = "false"

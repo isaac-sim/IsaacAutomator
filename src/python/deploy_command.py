@@ -1,5 +1,5 @@
 # region copyright
-# Copyright 2023 NVIDIA Corporation
+# Copyright 2023-2026 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ Base deploy- command
 
 import os
 import re
+import sys
 
 import click
 import randomname
@@ -40,17 +41,20 @@ class DeployCommand(click.core.Command):
     Defines common cli options for "deploy-*" commands.
     """
 
-    @staticmethod
-    def isaac_callback(ctx, param, value):
+    def make_context(self, info_name, args, parent=None, **extra):
         """
-        Called after --isaac option is parsed
+        Allow deployment name as an unnamed first argument.
+        e.g. ./deploy-aws mydeployment is equivalent to ./deploy-aws --deployment-name mydeployment
         """
-        # disable isaac instance type selection if isaac is disabled
-        if value is False:
-            for p in ctx.command.params:
-                if p.name.startswith("isaac"):
-                    p.prompt = None
-        return value
+        args = list(args)
+        if (
+            args
+            and not args[0].startswith("-")
+            and "--deployment-name" not in args
+            and "--dn" not in args
+        ):
+            args = ["--deployment-name", args[0]] + args[1:]
+        return super().make_context(info_name, args, parent=parent, **extra)
 
     @staticmethod
     def deployment_name_callback(ctx, param, value):
@@ -62,64 +66,6 @@ class DeployCommand(click.core.Command):
                     + f" Length should be between 1 and 32 characters ({len(value)} provided)."
                 )
             )
-
-        return value
-
-    @staticmethod
-    def ngc_api_key_callback(ctx, param, value):
-        """
-        Validate NGC API key
-        """
-
-        # fix click bug
-        if value is None:
-            return value
-
-        # allow "none" as a special value
-        if "none" == value:
-            return value
-
-        # check if it contains what's allowed
-        if not (
-            re.match("^[A-Za-z0-9]{32,}$", value)
-            or re.match("^nvapi-[A-Za-z0-9_\-+/]{64}$", value)
-        ):
-            raise click.BadParameter(
-                colorize_error("`Key contains invalid characters or is too short`.")
-            )
-
-        return value
-
-    @staticmethod
-    def ngc_image_callback(ctx, param, value):
-        """
-        Called after parsing --isaac-image options are parsed
-        """
-
-        # ignore case
-        value = value.lower()
-
-        if not re.match(
-            "^nvcr\\.io/[a-z0-9\\-_]+/([a-z0-9\\-_]+/)?[a-z0-9\\-_]+:[a-z0-9\\-_.]+$",
-            value,
-        ):
-            raise click.BadParameter(
-                colorize_error(
-                    "Invalid image name. "
-                    + "Expected: nvcr.io/<org>/[<team>/]<image>:<tag>"
-                )
-            )
-
-        return value
-
-    @staticmethod
-    def oige_callback(ctx, param, value):
-        """
-        Called after parsing --oige option
-        """
-
-        if "" == value:
-            return config["default_oige_git_checkpoint"]
 
         return value
 
@@ -176,7 +122,7 @@ class DeployCommand(click.core.Command):
             len(self.params),
             click.core.Option(
                 ("--debug/--no-debug",),
-                default=False,
+                default=os.environ.get("DEBUG", "0") == "1",
                 show_default=True,
                 help="Enable debug output.",
             ),
@@ -234,7 +180,7 @@ class DeployCommand(click.core.Command):
         # ingress cidr blocks
         help = (
             "CIDR blocks for ingress traffic on the created VM, "
-            + f'comma separated. Type "myip" to use your public IP ({get_my_public_ip()}). '
+            + f'comma separated. Type "myip" to use your public IP ({get_my_public_ip(verbose="--debug" in sys.argv or os.environ.get("DEBUG", "0") == "1")}). '
             + "Add /8, /16, or /24 to specify the subnet mask."
         )
         self.params.insert(
@@ -267,58 +213,40 @@ class DeployCommand(click.core.Command):
             ),
         )
 
+        # --isaacsim
+        help = 'Install Isaac Sim? Valid values: "no", or git ref at https://github.com/isaac-sim/IsaacSim'
         self.params.insert(
             len(self.params),
             click.core.Option(
-                ("--isaac/--no-isaac",),
-                default=True,
-                show_default="yes",
-                prompt=colorize_prompt("* Deploy Isaac Sim?"),
-                callback=DeployCommand.isaac_callback,
-                help="Deploy Isaac Sim (BETA)?",
-            ),
-        )
-
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--isaac-image",),
-                default=config["default_isaac_image"],
-                prompt=colorize_prompt("* Isaac Sim docker image"),
-                show_default=True,
-                callback=DeployCommand.ngc_image_callback,
-                help="Isaac Sim docker image to use.",
-            ),
-        )
-
-        # --oige
-        help = (
-            "[DEPRECATED] Install Omni Isaac Gym Envs? Valid values: 'no', "
-            + "or <git ref in github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs>"
-        )
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--oige",),
+                ("--isaacsim",),
                 help=help,
-                default=config["default_oige_git_checkpoint"],
+                default=config["default_isaacsim_git_checkpoint"],
                 show_default=True,
                 prompt=colorize_prompt("* " + help),
-                callback=DeployCommand.oige_callback,
             ),
         )
 
         # --isaaclab
-        help = (
-            "Install Isaac Sim Lab? Valid values: 'no', "
-            + "or <git ref in github.com/isaac-sim/IsaacLab>"
-        )
+        help = 'Install Isaac Lab? Valid values: "no", or git ref at https://github.com/isaac-sim/IsaacLab'
         self.params.insert(
             len(self.params),
             click.core.Option(
                 ("--isaaclab",),
                 help=help,
                 default=config["default_isaaclab_git_checkpoint"],
+                show_default=True,
+                prompt=colorize_prompt("* " + help),
+            ),
+        )
+
+        # --isaaclab-arena
+        help = 'Install Isaac Lab Arena? Valid values: "no", or git ref at https://github.com/isaac-sim/IsaacLab-Arena'
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--isaaclab-arena",),
+                help=help,
+                default=config["default_isaaclab_arena_git_checkpoint"],
                 show_default=True,
                 prompt=colorize_prompt("* " + help),
             ),
@@ -333,30 +261,6 @@ class DeployCommand(click.core.Command):
                 default="",
                 help="[DEV] Private git repo for Isaac Sim Lab.",
                 hidden=True,
-            ),
-        )
-
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--ngc-api-key",),
-                type=str,
-                prompt=colorize_prompt(
-                    "* NGC API Key (can be obtained at https://ngc.nvidia.com/setup/api-key)"
-                ),
-                default=os.environ.get("NGC_CLI_API_KEY", ""),
-                show_default='"NGC_CLI_API_KEY" environment variable',
-                help="NGC API Key (can be obtained at https://ngc.nvidia.com/setup/api-key)",
-                callback=DeployCommand.ngc_api_key_callback,
-            ),
-        )
-
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--ngc-api-key-check/--no-ngc-api-key-check",),
-                default=True,
-                help="Skip NGC API key validity check.",
             ),
         )
 
@@ -390,6 +294,17 @@ class DeployCommand(click.core.Command):
             ),
         )
 
+        # --ssh-user
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--ssh-user",),
+                default=config["default_ssh_user"],
+                help="OS username on the deployed instances.",
+                show_default=True,
+            ),
+        )
+
         # --upload/--no-upload
         self.params.insert(
             len(self.params),
@@ -400,29 +315,5 @@ class DeployCommand(click.core.Command):
                 show_default=True,
                 help=f"Upload user data from \"{config['uploads_dir']}\" to cloud "
                 + f"instances (to \"{config['default_remote_uploads_dir']}\")?",
-            ),
-        )
-
-        default_nucleus_admin_password = pwgen(10)
-
-        # --omniverse-user
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--omniverse-user",),
-                default=config["default_omniverse_user"],
-                help="Username for accessing content on the Nucleus server.",
-                show_default=True,
-            ),
-        )
-
-        # --omniverse-password
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--omniverse-password",),
-                default=default_nucleus_admin_password,
-                help="Password for accessing content on the Nucleus server.",
-                show_default="<randomly generated>",
             ),
         )

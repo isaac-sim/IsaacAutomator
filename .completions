@@ -1,0 +1,33 @@
+# Bash completions for IsaacAutomator commands.
+
+_isaac_automator_deployments() {
+    local state_dir="./state"
+    if [[ -d "$state_dir" ]]; then
+        find "$state_dir" -maxdepth 1 -mindepth 1 -type d -not -name '.*' -printf '%f\n' | sort
+    fi
+}
+
+_isaac_automator_complete() {
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    local prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    # if completing the first positional argument (deployment name)
+    # skip flags (words starting with -)
+    local positional_index=0
+    for ((i=1; i<COMP_CWORD; i++)); do
+        local word="${COMP_WORDS[i]}"
+        if [[ "$word" != -* ]]; then
+            ((positional_index++))
+        fi
+    done
+
+    if [[ "$cur" != -* && $positional_index -eq 0 ]]; then
+        COMPREPLY=($(compgen -W "$(_isaac_automator_deployments)" -- "$cur"))
+    fi
+}
+
+# register for ./command and command forms
+for cmd in destroy ssh novnc start stop repair upload download; do
+    complete -o default -F _isaac_automator_complete "./$cmd"
+    complete -o default -F _isaac_automator_complete "$cmd"
+done

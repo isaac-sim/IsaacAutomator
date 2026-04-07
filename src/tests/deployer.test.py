@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
 import unittest
+from pathlib import Path
 
 from src.python.config import c
 from src.python.deployer import Deployer
-
-from pathlib import Path
 
 
 class Test_Deployer(unittest.TestCase):
@@ -20,19 +19,17 @@ class Test_Deployer(unittest.TestCase):
                 "from_image": False,
                 "deployment_name": "test-1",
                 "existing": "ask",
+                "in_china": "no",
                 "region": "us-east-1",
                 "isaac": True,
-                "isaac_instance_type": "g5.2xlarge",
+                "isaac_workstation_instance_type": "g5.2xlarge",
                 "isaac_image": "nvcr.io/nvidia/isaac-sim:2022.2.0",
-                "ngc_api_key": "__ngc_api_key__",
-                "ngc_api_key_check": True,
                 "vnc_password": "__vnc_password__",
-                "omniverse_user": "ovuser",
-                "omniverse_password": "__omniverse_password__",
                 "ssh_port": 22,
                 "upload": True,
                 "aws_access_key_id": "__aws_access_key_id__",
                 "aws_secret_access_key": "__aws_secret_access_key__",
+                "ingress_cidrs": "auto",
             },
             config=self.config,
         )

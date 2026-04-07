@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # region copyright
-# Copyright 2023 NVIDIA Corporation
+# Copyright 2023-2026 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,14 +27,13 @@ from src.python.utils import (
     colorize_info,
     colorize_result,
     deployments,
-    format_app_name,
+    format_instance_role,
     read_tf_output,
     shell_command,
 )
 
-APP_NAMES = [
-    "isaac",
-    "ovami",
+INSTANCE_ROLE_NAMES = [
+    "isaac_workstation",
 ]
 
 
@@ -63,31 +62,33 @@ APP_NAMES = [
     help="Alow deleting when syncing results?",
 )
 @click.option(
-    "--app",
+    "--instance-role",
     default="all",
-    type=click.Choice(["all"] + APP_NAMES),
-    help="Application to upload to.",
+    type=click.Choice(["all"] + INSTANCE_ROLE_NAMES),
+    help="Instance role to upload to.",
 )
-@click.argument("app", required=False)
+@click.argument("instance_role", required=False)
 def main(
-    app: str,
+    instance_role: str,
     debug: bool,
     delete: bool,
     remote_dir: str,
     deployment_name: str,
 ):
-    apps = APP_NAMES if app == "all" else [app]
+    instance_roles = INSTANCE_ROLE_NAMES if instance_role == "all" else [instance_role]
 
-    for app_name in apps:
-        ip = read_tf_output(deployment_name, f"{app_name}_ip", verbose=debug)
+    for instance_role_name in instance_roles:
+        ip = read_tf_output(deployment_name, f"{instance_role_name}_ip", verbose=debug)
 
         if ip in ["NA", ""]:
             # show "not found" message if:
-            # - app is explicitly specified
+            # - instance_role is explicitly specified
             # - debug is enabled
-            if app != "all" or debug:
+            if instance_role != "all" or debug:
                 click.echo(
-                    colorize_info(f"* No {format_app_name(app_name)} instance found")
+                    colorize_info(
+                        f"* No {format_instance_role(instance_role_name)} instance found"
+                    )
                 )
             continue
 
@@ -102,13 +103,13 @@ def main(
         click.echo(
             colorize_info(
                 f'* Uploading from "{uploads_dir}" to "{remote_dir}" @ '
-                + f"{format_app_name(app_name)} instance ({ip})..."
+                + f"{format_instance_role(instance_role_name)} instance ({ip})..."
             )
         )
 
         # make sure remote directory exists
         shell_command(
-            f"ssh -i {ssh_key_file} -o StrictHostKeyChecking=no ubuntu@{ip}"
+            f"ssh -i {ssh_key_file} -o StrictHostKeyChecking=no {config['default_ssh_user']}@{ip}"
             + f" \"[ ! -d '{remote_dir}' ] && mkdir -p '{remote_dir}'\"",
             verbose=debug,
             exit_on_error=False,
@@ -119,7 +120,7 @@ def main(
             "rsync -avz --progress --rsync-path 'rsync'"
             + (" --delete" if delete else "")
             + f" -e 'ssh -i {ssh_key_file} -o StrictHostKeyChecking=no'"
-            + f' "{uploads_dir}/" ubuntu@{ip}:"{remote_dir}"'
+            + f' "{uploads_dir}/" {config["default_ssh_user"]}@{ip}:"{remote_dir}"'
         )
 
         shell_command(
@@ -131,7 +132,7 @@ def main(
 
         # get size of output_dir
         output_dir_size = shell_command(
-            f"ssh -i {ssh_key_file} -o StrictHostKeyChecking=no ubuntu@{ip}"
+            f"ssh -i {ssh_key_file} -o StrictHostKeyChecking=no {config['default_ssh_user']}@{ip}"
             + f" \"du -hs '{remote_dir}'\"",
             verbose=debug,
             exit_on_error=True,
@@ -141,7 +142,7 @@ def main(
 
         click.echo(
             colorize_result(
-                f'* Uploaded {output_dir_size} to "{remote_dir}" @ {format_app_name(app_name)} instance ({ip})'
+                f'* Uploaded {output_dir_size} to "{remote_dir}" @ {format_instance_role(instance_role_name)} instance ({ip})'
             )
         )
 

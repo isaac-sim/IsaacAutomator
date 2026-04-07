@@ -1,6 +1,7 @@
 # Configure the Azure provider
 terraform {
   required_version = ">= 1.3.5"
+  backend "local" {}
 
   required_providers {
     azurerm = {
@@ -31,14 +32,15 @@ module "common" {
   resource_group_name = var.resource_group_name
 }
 
-module "isaac" {
-  source     = "./isaac"
-  count      = var.isaac_enabled ? 1 : 0
-  prefix     = "${var.prefix}.${var.deployment_name}.isaac"
-  rg         = module.common.rg
-  subnet     = module.common.subnet
-  ssh_key    = module.common.ssh_key
-  vm_type    = var.isaac_instance_type
-  from_image = var.from_image
-  ssh_port   = var.ssh_port
+module "isaac_workstation" {
+  source      = "./isaac-workstation"
+  count       = var.isaac_workstation_enabled ? 1 : 0
+  prefix      = "${var.prefix}.${var.deployment_name}.isaac-workstation"
+  rg          = module.common.rg
+  subnet      = module.common.subnet
+  ssh_key     = module.common.ssh_key
+  vm_type     = var.isaac_workstation_instance_type
+  from_image  = var.from_image
+  ssh_port    = var.ssh_port
+  os_username = var.os_username
 }

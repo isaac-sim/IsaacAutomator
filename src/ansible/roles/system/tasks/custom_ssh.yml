@@ -9,18 +9,23 @@
   with_items:
     - "22"
     - "{{ ssh_port }}"
+  tags: skip_in_image
 
 - name: Create ufw profile for the custom ssh port
   template: src=custom_ssh.ufwprofile
     dest=/etc/ufw/applications.d/custom_ssh
     mode=644
+  tags: skip_in_image
 
 - name: Allow incoming connections to the custom ssh port
   ufw: rule=allow name=custom_ssh
+  tags: skip_in_image
 
 - name: Restart sshd
   service: name=sshd state=restarted
+  tags: skip_in_image
 
 - name: Make Ansible to use new ssh port
   set_fact:
     ansible_port: "{{ ssh_port }}"
+  tags: skip_in_image

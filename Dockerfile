@@ -1,6 +1,6 @@
 # Dockerfile for runnig and distributing the app
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 ARG WITH_PACKER=1
 
@@ -12,13 +12,14 @@ ENV PYTHONPATH=/app:/app/lib:/app/src:/app/py:/app/python:/app/cli:/app/utils:/a
 
 # misc
 RUN apt-get update && apt-get install -qy \
+    software-properties-common \
     apt-transport-https \
     ca-certificates \
     openssh-client \
     lsb-release \
     python3-pip \
     apt-utils \
-    expect \
+    dnsutils \
     gnupg \
     unzip \
     rsync \
@@ -29,8 +30,6 @@ RUN apt-get update && apt-get install -qy \
     jq
 
 # hashicorp sources
-RUN apt-get install -yq software-properties-common
-
 RUN wget -O- https://apt.releases.hashicorp.com/gpg | \
     gpg --dearmor | \
     tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
@@ -47,7 +46,7 @@ COPY . /tmp/app
 RUN if [ "$WITH_PACKER" = "1" ]; then \
     apt-get install -yq packer; \
     (cd /tmp/app/src/packer/azure/isaac && packer init .) \
-    && (cd /tmp/app/src/packer/aws/isaac && packer init .) \
+    && (cd /tmp/app/src/packer/aws && packer init isaac-workstation.pkr.hcl) \
     else \
     echo "Skipping Packer installation"; \
     fi
@@ -61,29 +60,20 @@ RUN ln -s /app/state/.azure /root/.azure
 RUN echo "mkdir -p /app/state/.azure" >> /root/.bashrc
 
 # pip
-RUN pip install click randomname pwgen debugpy
+RUN pip install --break-system-packages click randomname pwgen debugpy
 
 # ansible
 ENV ANSIBLE_FORCE_COLOR=true
 # for some reason, the ansible.cfg file is not being picked up on Windows
 ENV ANSIBLE_CONFIG="/app/src/ansible/ansible.cfg"
-RUN pip install ansible
+RUN pip install --break-system-packages ansible
 RUN ansible-galaxy collection install community.docker
-
-# ngc cli: https://docs.ngc.nvidia.com/cli/script.html
-RUN  case "$(dpkg --print-architecture)" in \
-    amd64) \
-    wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/4.8.2/files/ngccli_linux.zip -O /opt/ngccli_linux.zip && unzip /opt/ngccli_linux.zip -d /opt ;; \
-    arm64) \
-    wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/4.8.2/files/ngccli_arm64.zip -O /opt/ngccli_arm64.zip && unzip /opt/ngccli_arm64.zip -d /opt ;; \
-    esac
-RUN echo 'export PATH="$PATH:/opt/ngc-cli"' >> ~/.bashrc
 
 # gcloud
 # @see https://cloud.google.com/sdk/docs/install
 RUN apt-get install -yq apt-transport-https ca-certificates gnupg
 RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-RUN curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
 RUN apt-get update && apt-get install -yq google-cloud-cli
 RUN mkdir -p /root/.config && ln -s /app/state/.gcp /root/.config/gcloud
 RUN echo "mkdir -p /app/state/.gcp" >> /root/.bashrc
@@ -102,17 +92,27 @@ RUN case "$(dpkg --print-architecture)" in \
     esac
 RUN unzip awscliv2.zip
 RUN ./aws/install
+# store aws credentials in a persistent location
+RUN ln -s /app/state/.aws /root/.aws
+RUN echo "mkdir -p /app/state/.aws" >> /root/.bashrc
 
 # copy app code into container
 COPY . /app
 
-# customoize bash prompt
-RUN echo "export PS1='\[\033[01;36m\][Isaac Automator \${VERSION}]\[\033[00m\]:\w\$ '" >>  /root/.bashrc
-# set NGC_CLI_API_KEY to contents of NGC_API_KEY var (if it exists:
-RUN echo "if [ -n \"\$NGC_API_KEY\" ]; then export NGC_CLI_API_KEY=\"\$NGC_API_KEY\"; fi" >> /root/.bashrc
+# store bash history in the state directory
+RUN echo 'export HISTFILE=/app/state/.bash_history' >> /root/.bashrc
+RUN echo 'export HISTSIZE=10000' >> /root/.bashrc
+RUN echo 'export HISTFILESIZE=20000' >> /root/.bashrc
+RUN echo 'shopt -s histappend' >> /root/.bashrc
+RUN echo 'export PROMPT_COMMAND="history -a; ${PROMPT_COMMAND}"' >> /root/.bashrc
 
+# bash completions
+RUN echo 'source /app/.completions' >> /root/.bashrc
+
+# customoize bash prompt
+RUN echo "export PS1='\[\033[01;33m\][Isaac Automator \[\033[00;33m\]\${VERSION}\[\033[01;33m\]]\[\033[00m\]\[\033[00m\]:\w\$ \[\033[00m\]'" >>  /root/.bashrc
 WORKDIR /app
 
 ENTRYPOINT [ "/bin/sh", "-c" ]
 
-ENV VERSION="v3.13.1"
+ENV VERSION="v4.0.0-beta2"

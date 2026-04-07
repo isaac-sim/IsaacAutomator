@@ -1,5 +1,5 @@
 # region copyright
-# Copyright 2023 NVIDIA Corporation
+# Copyright 2023-2026 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,15 +24,14 @@ from pathlib import Path
 import click
 
 from src.python.debug import debug_break  # noqa
-from src.python.ngc import check_ngc_access
 from src.python.utils import (
     colorize_error,
     colorize_info,
     colorize_prompt,
     colorize_result,
+    get_my_public_ip,
     read_meta,
     shell_command,
-    get_my_public_ip,
     subnet_from_ip,
 )
 
@@ -54,6 +53,19 @@ class Deployer:
 
         # create state directory if it doesn't exist
         os.makedirs(self.config["state_dir"], exist_ok=True)
+
+        # override default_ssh_user from CLI param
+        if "ssh_user" in self.params:
+            self.config["default_ssh_user"] = self.params["ssh_user"]
+            self.config["default_remote_uploads_dir"] = (
+                f"/home/{self.config['default_ssh_user']}/uploads"
+            )
+            self.config["default_remote_results_dir"] = (
+                f"/home/{self.config['default_ssh_user']}/results"
+            )
+            self.config["default_remote_workspace_dir"] = (
+                f"/home/{self.config['default_ssh_user']}/workspace"
+            )
 
         # print complete command line
         if self.params["debug"]:
@@ -115,7 +127,7 @@ class Deployer:
                 command_line += separator + "--" + k + " "
 
                 if isinstance(v, str):
-                    command_line += "'" + shlex.quote(v) + "'"
+                    command_line += shlex.quote(v)
                 else:
                     command_line += str(v)
 
@@ -173,55 +185,6 @@ class Deployer:
             # update meta info if deployment was destroyed
             self.save_meta()
 
-    def validate_ngc_api_key(self, image, restricted_image=False):
-        """
-        Check if NGC API key allows to log in and has access to appropriate NGC image
-        @param image: NGC image to check access to
-        @param restricted_image: If image is restricted to specific org/team?
-        """
-
-        debug = self.params["debug"]
-        ngc_api_key = self.params["ngc_api_key"]
-        ngc_api_key_check = self.params["ngc_api_key_check"]
-
-        # extract org and team from the image path
-
-        r = re.findall(
-            "^nvcr\\.io/([a-z0-9\\-_]+)/([a-z0-9\\-_]+/)?[a-z0-9\\-_]+:[a-z0-9\\-_.]+$",
-            image,
-        )
-
-        ngc_org, ngc_team = r[0]
-        ngc_team = ngc_team.rstrip("/")
-
-        if ngc_org == "nvidia":
-            click.echo(
-                colorize_info(
-                    "* Access to docker image can't be checked for NVIDIA org. But you'll be fine. Fingers crossed."
-                )
-            )
-            return
-
-        if debug:
-            click.echo(colorize_info(f'* Will check access to NGC Org: "{ngc_org}"'))
-            click.echo(colorize_info(f'* Will check access to NGC Team: "{ngc_team}"'))
-
-        if ngc_api_key_check and ngc_api_key != "none":
-            click.echo(colorize_info("* Validating NGC API key... "))
-            r = check_ngc_access(
-                ngc_api_key=ngc_api_key, org=ngc_org, team=ngc_team, verbose=debug
-            )
-            if r == 100:
-                raise Exception(colorize_error("NGC API key is invalid."))
-            # only check access to org/team if restricted image is deployed
-            elif restricted_image and (r == 101 or r == 102):
-                raise Exception(
-                    colorize_error(
-                        f'NGC API key is valid but you don\'t have access to image "{image}".'
-                    )
-                )
-            click.echo(colorize_info(("* NGC API Key is valid!")))
-
     def create_tfvars(self, tfvars: dict = {}):
         """
         - Check if deployment with this deployment_name exists and deal with it
@@ -248,7 +211,7 @@ class Deployer:
 
             # if no ingress CIDRs are specified, use my public IP
             if cidr in ("", "auto", "myip"):
-                cidr = get_my_public_ip() + "/32"
+                cidr = get_my_public_ip(verbose=debug) + "/32"
                 if debug:
                     click.echo(
                         colorize_info(
@@ -257,19 +220,19 @@ class Deployer:
                     )
             elif cidr in ("mynet", "myip/16"):
                 # if "mynet" is specified, use my public IP with /16 mask
-                cidr = subnet_from_ip(get_my_public_ip(), "16")
+                cidr = subnet_from_ip(get_my_public_ip(verbose=debug), "16")
                 if debug:
                     click.echo(
                         colorize_info(f"* Using CIDR block for my network: {cidr}")
                     )
             elif cidr in ("myip/24"):
-                cidr = subnet_from_ip(get_my_public_ip(), "24")
+                cidr = subnet_from_ip(get_my_public_ip(verbose=debug), "24")
                 if debug:
                     click.echo(
                         colorize_info(f"* Using CIDR block for my network: {cidr}")
                     )
             elif cidr in ("myip/8"):
-                cidr = subnet_from_ip(get_my_public_ip(), "8")
+                cidr = subnet_from_ip(get_my_public_ip(verbose=debug), "8")
                 if debug:
                     click.echo(
                         colorize_info(f"* Using CIDR block for my network: {cidr}")
@@ -284,13 +247,11 @@ class Deployer:
         # default values common for all clouds
         tfvars.update(
             {
-                "isaac_enabled": (
-                    self.params["isaac"] if "isaac" in self.params else False
-                ),
+                "isaac_workstation_enabled": True,
                 #
-                "isaac_instance_type": (
-                    self.params["isaac_instance_type"]
-                    if "isaac_instance_type" in self.params
+                "isaac_workstation_instance_type": (
+                    self.params["isaac_workstation_instance_type"]
+                    if "isaac_workstation_instance_type" in self.params
                     else "none"
                 ),
                 #
@@ -303,6 +264,7 @@ class Deployer:
                 #
                 "deployment_name": self.params["deployment_name"],
                 "ingress_cidrs": ingress_cidrs_actual,
+                "os_username": self.config["default_ssh_user"],
             }
         )
 
@@ -389,8 +351,7 @@ class Deployer:
 
         # get missing values from terraform
         for k in [
-            "isaac_ip",
-            "ovami_ip",
+            "isaac_workstation_ip",
             "cloud",
         ]:
             if k not in self.params or ansible_vars[k] is None:
@@ -425,9 +386,13 @@ class Deployer:
         cwd: directory where terraform scripts are located
         """
         debug = self.params["debug"]
+        deployment_name = self.params["deployment_name"]
+        tfstate_file = Path(
+            f"{self.config['state_dir']}/{deployment_name}/.tfstate"
+        ).absolute()
 
         shell_command(
-            f"terraform init -upgrade -no-color -input=false {' > /dev/null' if not debug else ''}",
+            f"terraform init -upgrade -no-color -input=false -reconfigure -backend-config=\"path={tfstate_file}\" {' > /dev/null' if not debug else ''}",
             verbose=debug,
             cwd=cwd,
         )
@@ -443,7 +408,6 @@ class Deployer:
 
         shell_command(
             "terraform apply -auto-approve "
-            + f"-state={self.config['state_dir']}/{deployment_name}/.tfstate "
             + f"-var-file={self.config['state_dir']}/{deployment_name}/.tfvars",
             cwd=cwd,
             verbose=debug,
@@ -490,26 +454,18 @@ class Deployer:
 
         shell_command(
             f"ansible-playbook -i {self.config['state_dir']}/{deployment_name}/.inventory "
-            + f"{playbook_name}.yml {tags} {skip_tags} {'-vv' if self.params['debug'] else ''}",
+            + f"{playbook_name}.yaml {tags} {skip_tags} {'-vv' if self.params['debug'] else ''}",
             cwd=cwd,
             verbose=debug,
         )
 
     def run_all_ansible(self):
         # run ansible for isaac
-        if "isaac" in self.params and self.params["isaac"]:
-
-            click.echo(colorize_info("* Running Ansible for Isaac Sim..."))
-            self.run_ansible(
-                playbook_name="isaac",
-                cwd=f"{self.config['ansible_dir']}",
-            )
-
-        # run ansible for ovami
-        # todo: move to ./deploy-aws
-        if "ovami" in self.params and self.params["ovami"]:
-            click.echo(colorize_info("* Running Ansible for OV AMI..."))
-            self.run_ansible(playbook_name="ovami", cwd=f"{self.config['ansible_dir']}")
+        click.echo(colorize_info("* Running Ansible for Isaac Workstation..."))
+        self.run_ansible(
+            playbook_name="isaac-workstation",
+            cwd=f"{self.config['ansible_dir']}",
+        )
 
     def tf_output(self, key: str, default: str = ""):
         """
@@ -558,7 +514,7 @@ class Deployer:
     # generate ssh connection command for the user
     def ssh_connection_command(self, ip: str):
         r = f"ssh -i state/{self.params['deployment_name']}/key.pem "
-        r += f"-o StrictHostKeyChecking=no ubuntu@{ip}"
+        r += f"-o StrictHostKeyChecking=no {self.config['default_ssh_user']}@{ip}"
         if self.params["ssh_port"] != 22:
             r += f" -p {self.params['ssh_port']}"
         return r
@@ -569,91 +525,42 @@ class Deployer:
         Save info to file (_state_dir_/_deployment_name_/info.txt)
         """
 
-        isaac = "isaac" in self.params and self.params["isaac"]
-        ovami = "ovami" in self.params and self.params["ovami"]
+        dn = self.params["deployment_name"]
+        ip = self.tf_output("isaac_workstation_ip")
+        user = self.config["default_ssh_user"]
+        banner = f"* Isaac Workstation is deployed at {ip} *"
 
-        vnc_password = self.params["vnc_password"]
-        deployment_name = self.params["deployment_name"]
+        instructions = f"""{'*' * len(banner)}
+{banner}
+{'*' * len(banner)}
 
-        # templates
-        nomachine_instruction = f"""* To connect to __app__ via NoMachine:
+* To connect via SSH:
+
+./ssh {dn}
+
+* To connect via noVNC (opens in browser):
+
+./novnc {dn}
+
+* To connect via NoMachine:
 
 0. Download NoMachine client at https://downloads.nomachine.com/, install and launch it.
 1. Click "Add" button.
-2. Enter Host: "__ip__".
+2. Enter Host: "{ip}".
 3. In "Configuration" > "Use key-based authentication with a key you provide",
-   select file "state/{deployment_name}/key.pem".
+   select file "state/{dn}/key.pem".
 4. Click "Connect" button.
-5. Enter "ubuntu" as a username when prompted.
+5. Enter "{user}" as a username when prompted.
 """
 
-        vnc_instruction = f"""* To connect to __app__ via VNC:
-
-- IP: __ip__
-- Port: 5900
-- Password: {vnc_password}"""
-
-        nonvc_instruction = f"""* To connect to __app__ via noVNC:
-
-1. Open http://__ip__:6080/vnc.html?host=__ip__&port=6080 in your browser.
-2. Click "Connect" and use password \"{vnc_password}\""""
-
-        # print connection info
-
-        instructions_file = f"{self.config['state_dir']}/{deployment_name}/info.txt"
-        instructions = ""
-
-        if isaac:
-            instructions += f"""{'*' * (29+len(self.tf_output('isaac_ip')))}
-* Isaac Sim is deployed at {self.tf_output('isaac_ip')} *
-{'*' * (29+len(self.tf_output('isaac_ip')))}
-
-* To connect to Isaac Sim via SSH:
-
-{self.ssh_connection_command(self.tf_output('isaac_ip'))}
-
-{nonvc_instruction}
-
-{nomachine_instruction}""".replace(
-                "__app__", "Isaac Sim"
-            ).replace(
-                "__ip__", self.tf_output("isaac_ip")
-            )
-
-        # todo: move to ./deploy-aws
-        if ovami:
-            instructions += f"""\n
-* OV AMI is deployed at {self.tf_output('ovami_ip')}
-
-* To connect to OV AMI via SSH:
-
-{self.ssh_connection_command(self.tf_output('ovami_ip'))}
-
-* To connect to OV AMI via NICE DCV:
-
-- IP: __ip__
-
-{vnc_instruction}
-
-{nomachine_instruction}
-
-""".replace(
-                "__app__", "OV AMI"
-            ).replace(
-                "__ip__", self.tf_output("ovami_ip")
-            )
-
-        # extra text
-        if len(extra_text) > 0:
+        if extra_text:
             instructions += extra_text + "\n"
 
-        # print instructions for the user
         if print_text:
             click.echo(colorize_result("\n" + instructions))
 
-        # create <dn>/ directory if it doesn't exist
+        instructions_file = f"{self.config['state_dir']}/{dn}/info.txt"
         Path(instructions_file).parent.mkdir(parents=True, exist_ok=True)
-        # write file
         Path(instructions_file).write_text(instructions)
 
         return instructions

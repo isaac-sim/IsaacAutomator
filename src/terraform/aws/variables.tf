@@ -13,40 +13,28 @@ variable "region" {
   type = string
 }
 
-variable "ovami_enabled" {
-  type = bool
-}
-
 variable "from_image" {
   default = false
   type    = bool
-}
-
-variable "aws_access_key_id" {
-  type = string
-}
-
-variable "aws_secret_access_key" {
-  type = string
-}
-
-variable "aws_session_token" {
-  type    = string
-  default = ""
 }
 
 variable "ssh_port" {
   type = number
 }
 
-variable "isaac_enabled" {
+variable "isaac_workstation_enabled" {
   type = bool
 }
 
-variable "isaac_instance_type" {
+variable "isaac_workstation_instance_type" {
   type = string
 }
 
 variable "ingress_cidrs" {
   type = list(string)
+}
+
+variable "os_username" {
+  default = "ubuntu"
+  type    = string
 }

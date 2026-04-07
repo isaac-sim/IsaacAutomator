@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # region copyright
-# Copyright 2023 NVIDIA Corporation
+# Copyright 2023-2026 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 # endregion
 
 import os
-import re
 import sys
 
 import click
 
+from src.python.aws import aws_validate_credentials
 from src.python.config import c as config
 from src.python.debug import debug_break, debug_start  # noqa
 from src.python.deploy_command import DeployCommand
@@ -68,19 +68,20 @@ class DeployAWSCommand(DeployCommand):
         "g6.24xlarge",
         "g6.48xlarge",
         # AWS L40S - https://aws.amazon.com/ec2/instance-types/g6e/
+        "g6e.xlarge",
         "g6e.2xlarge",
         "g6e.4xlarge",
         "g6e.8xlarge",
         "g6e.12xlarge",
         "g6e.16xlarge",
         "g6e.24xlarge",
-        "g6e.48xlarge"
+        "g6e.48xlarge",
     ]
 
     @staticmethod
     def ovkit_instance_type_callback(ctx, param, value):
         """
-        Called after parsing --isaac-instance-type option
+        Called after parsing --instance-type option
         """
 
         # warn of "g5.xlarge" being too small
@@ -99,56 +100,27 @@ class DeployAWSCommand(DeployCommand):
 
         return value
 
-    @staticmethod
-    def aws_access_key_id_callback(ctx, param, value):
-        """
-        Called after parsing --aws-access-key-id option
-        """
-
-        if not re.match("^[A-Z0-9]{20}$", value):
-            raise click.BadParameter(
-                colorize_error(
-                    "Invalid AWS Access Key ID. "
-                    + "It should be 20 characters long and contain only uppercase letters and digits."
-                )
-            )
-
-        return value
-
-    @staticmethod
-    def aws_secret_access_key_callback(ctx, param, value):
-        """
-        Called after parsing --aws-secret-access-key option
-        """
-
-        if not re.match("^[A-Za-z0-9/+]{40}$", value):
-            raise click.BadParameter(
-                colorize_error(
-                    "Invalid AWS Secret Access Key. "
-                    + "It should be 40 characters long and contain only letters, digits, '/' and '+' signs."
-                )
-            )
-
-        return value
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # --isaac-instance-type
+        # --instance-type
         self.params.insert(
-            # insert after --isaac option
-            self.param_index("isaac") + 1,
+            # insert before --ingress-cidrs option
+            self.param_index("ingress_cidrs"),
             click.core.Option(
-                ("--isaac-instance-type",),
+                (
+                    "--instance-type",
+                    "--isaac-workstation-instance-type",
+                    "isaac_workstation_instance_type",
+                ),
                 prompt=colorize_prompt(
-                    "* Isaac Sim Instance Type "
-                    + "(https://docs.aws.amazon.com/dlami/latest/devguide/gpu.html, "
-                    + "G5, G4dn and G6 instances are supported)"
+                    "* Instance Type "
+                    + "(G5, G4dn, G6 and G6e are supported, see https://docs.aws.amazon.com/dlami/latest/devguide/gpu.html)"
                 ),
                 show_default=True,
-                default=config["aws_default_isaac_instance_type"],
+                default=config["aws_default_isaac_workstation_instance_type"],
                 callback=DeployAWSCommand.ovkit_instance_type_callback,
-                help="Isaac Sim instance type. Currently supported: "
+                help="Instance type. Currently supported: "
                 + ", ".join(self.AWS_OVKIT_INSTANCE_TYPES)
                 + ".",
             ),
@@ -162,57 +134,13 @@ class DeployAWSCommand(DeployCommand):
                 ("--region",),
                 show_default=True,
                 default="US East 1",
-                prompt=colorize_prompt("* AWS Region"),
-                callback=lambda ctx, param, value: value.lower().replace(" ", "-"),
-            ),
-        )
-
-        # --aws-access-key-id
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--aws-access-key-id",),
-                prompt=colorize_prompt("* AWS Access Key ID"),
-                default=os.environ.get("AWS_ACCESS_KEY_ID", ""),
-                callback=DeployAWSCommand.aws_access_key_id_callback,
-                show_default="AWS_ACCESS_KEY_ID environment variable",
-            ),
-        )
-
-        # --aws-secret-access-key
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--aws-secret-access-key",),
-                prompt=colorize_prompt("* AWS Secret Access Key"),
-                default=os.environ.get("AWS_SECRET_ACCESS_KEY", ""),
-                callback=DeployAWSCommand.aws_secret_access_key_callback,
-                show_default="AWS_SECRET_ACCESS_KEY environment variable",
-            ),
-        )
-
-        # --aws-session-token
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--aws-session-token",),
+                help="AWS Region. Can be entered as 'us-east-1' or 'US East 1'."
+                " See https://aws.amazon.com/about-aws/global-infrastructure/regions_az/",
                 prompt=colorize_prompt(
-                    "* AWS Session Token (if using temporary credentials, otherwise leave empty)"
+                    "* AWS Region (e.g. us-east-1 or US East 1,"
+                    " see https://aws.amazon.com/about-aws/global-infrastructure/regions_az/)"
                 ),
-                default=os.environ.get("AWS_SESSION_TOKEN", ""),
-                show_default="AWS_SESSION_TOKEN environment variable",
-            ),
-        )
-
-        # --ovami
-        # deploy OV AMI instance?
-        self.params.insert(
-            len(self.params),
-            click.core.Option(
-                ("--ovami/--no-ovami",),
-                default=False,
-                prompt=False,
-                hidden=True,
+                callback=lambda ctx, param, value: value.lower().replace(" ", "-"),
             ),
         )
 
@@ -240,19 +168,17 @@ class AWSDeployer(Deployer):
         # ask what to do if deployment already exists
         self.ask_existing_behavior()
 
-        # check if ngc api key is valid and has access to Isaac Sim
-        if self.params["isaac"]:
-            self.validate_ngc_api_key(self.params["isaac_image"])
+        # update region in AWS config if specified
+        if self.params.get("region"):
+            from src.python.aws import aws_cli_set
+
+            aws_cli_set("region", self.params["region"], verbose=self.params["debug"])
 
         if self.existing_behavior != "run_ansible":
             # create tfvars file, deal with existing deployment
             self.create_tfvars(
                 {
                     "region": self.params["region"],
-                    "ovami_enabled": self.params["ovami"],
-                    "aws_access_key_id": self.params["aws_access_key_id"],
-                    "aws_secret_access_key": self.params["aws_secret_access_key"],
-                    "aws_session_token": self.params["aws_session_token"],
                 }
             )
 
@@ -288,7 +214,11 @@ def main(**params):
 
 if __name__ == "__main__":
     if os.path.exists("/.dockerenv"):
-        # we're in docker, run command
+        # set DEBUG env var if --debug option is used, so that pre-click code can also see debug mode
+        debug = "--debug" in sys.argv or os.environ.get("DEBUG", "0") == "1"
+        # validate AWS credentials and prompt for new ones if needed
+        aws_validate_credentials(verbose=debug)
+        # run command
         main()
     else:
         # we're outside, start docker container first

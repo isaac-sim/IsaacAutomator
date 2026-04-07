@@ -38,3 +38,7 @@ variable "ingress_cidrs" {
 variable "boot_disk_type" {
   type = string
 }
+
+variable "os_username" {
+  type = string
+}

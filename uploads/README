@@ -2,4 +2,4 @@ Contents of this folder will be automatically uploaded to each created cloud ins
 
 To manually run the upload:
 
-./upload --deployment-name <deployment_name>
+./upload <deployment_name>

@@ -1,0 +1,132 @@
+# region copyright
+# Copyright 2023-2026 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+- name: Create Isaac Sim source directory
+  file:
+    path: "{{ isaacsim_source_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0755
+
+- name: Check existing build tag
+  shell: cat "{{ isaacsim_source_dir }}/.build-tag" 2>/dev/null || true
+  register: isaacsim_build_tag
+  changed_when: false
+
+- name: Clone Isaac Sim repository
+  git:
+    repo: "{{ isaacsim_git_repo }}"
+    dest: "{{ isaacsim_source_dir }}"
+    version: "{{ isaacsim_git_checkpoint }}"
+    force: true
+    depth: 1
+  become_user: "{{ ansible_user }}"
+  when: isaacsim_build_tag.stdout | trim == ''
+
+- name: Get current commit hash
+  shell: git rev-parse HEAD
+  args:
+    chdir: "{{ isaacsim_source_dir }}"
+  become_user: "{{ ansible_user }}"
+  register: isaacsim_current_commit
+  changed_when: false
+
+- name: Detect if Isaac Sim build is needed
+  set_fact:
+    isaacsim_build_needed: "{{ (isaacsim_build_tag.stdout | trim) != isaacsim_current_commit.stdout }}"
+
+- name: Debug isaacsim_build_needed flag
+  debug:
+    msg: "isaacsim_build_needed: {{ isaacsim_build_needed }} (current: {{ isaacsim_current_commit.stdout }}, tag: {{ isaacsim_build_tag.stdout | default('none', true) }})"
+
+- name: Pull LFS files
+  shell: git lfs pull
+  args:
+    chdir: "{{ isaacsim_source_dir }}"
+  become_user: "{{ ansible_user }}"
+  when: isaacsim_build_needed
+
+- name: Accept EULA
+  file:
+    path: "{{ isaacsim_source_dir }}/.eula_accepted"
+    state: touch
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  when: isaacsim_build_needed
+
+- name: Remove previous build directory
+  file:
+    path: "{{ isaacsim_source_dir }}/_build"
+    state: absent
+  when: isaacsim_build_needed
+
+- name: Build Isaac Sim
+  shell: ./build.sh --release 2>&1 | tee /tmp/isaacsim-build.log
+  args:
+    chdir: "{{ isaacsim_source_dir }}"
+  become_user: "{{ ansible_user }}"
+  async: 7200
+  poll: 30
+  when: isaacsim_build_needed
+
+- name: Write build tag
+  copy:
+    content: "{{ isaacsim_current_commit.stdout }}"
+    dest: "{{ isaacsim_source_dir }}/.build-tag"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  when: isaacsim_build_needed
+
+- name: Set ownership of Isaac Sim directory
+  file:
+    path: "{{ isaacsim_source_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    recurse: true
+  when: isaacsim_build_needed
+
+- name: Create symlink to Isaac Sim build
+  file:
+    dest: "/home/{{ ansible_user }}/IsaacSim"
+    src: "{{ isaacsim_source_dir }}/_build/linux-x86_64/release"
+    state: link
+    force: yes
+    owner: "{{ ansible_user }}"
+  when: isaacsim_build_needed
+
+- name: Run post_install.sh
+  shell: ./post_install.sh 2>&1 | tee /tmp/isaacsim-post-install.log
+  args:
+    chdir: "/home/{{ ansible_user }}/IsaacSim"
+  become_user: "{{ ansible_user }}"
+  when: isaacsim_build_needed
+
+- name: Copy Isaac Sim desktop icon to Desktop
+  copy:
+    src: "/home/{{ ansible_user }}/.local/share/applications/IsaacSim.desktop"
+    dest: "/home/{{ ansible_user }}/Desktop/IsaacSim.desktop"
+    remote_src: yes
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+  when: isaacsim_build_needed
+
+- name: Set launch permissions for Isaac Sim desktop icon
+  shell: gio set "/home/{{ ansible_user }}/Desktop/IsaacSim.desktop" metadata::trusted true
+  become_user: "{{ ansible_user }}"
+  when: isaacsim_build_needed

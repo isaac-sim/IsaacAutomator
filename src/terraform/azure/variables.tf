@@ -15,11 +15,11 @@ variable "resource_group_name" {
   type = string
 }
 
-variable "isaac_enabled" {
+variable "isaac_workstation_enabled" {
   default = true
 }
 
-variable "isaac_instance_type" {
+variable "isaac_workstation_instance_type" {
   type = string
 }
 
@@ -30,5 +30,10 @@ variable "from_image" {
 
 variable "ssh_port" {
   type = number
+}
+
+variable "os_username" {
+  type    = string
+  default = "ubuntu"
 }
 

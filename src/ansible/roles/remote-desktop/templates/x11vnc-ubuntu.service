@@ -1,0 +1,22 @@
+# goes to /etc/systemd/system/x11vnc.service
+
+[Unit]
+Description=x11vnc Service
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User={{ ansible_user }}
+Group={{ ansible_user }}
+Environment=
+ExecStartPre=
+ExecStart=/usr/bin/x11vnc -auth /home/{{ ansible_user }}/.Xauthority -display :0 -rfbport 5900 -shared -usepw
+ExecStartPost=
+ExecStop=
+ExecReload=
+
+[Install]
+WantedBy=multi-user.target

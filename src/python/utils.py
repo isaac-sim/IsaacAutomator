@@ -1,5 +1,5 @@
 # region copyright
-# Copyright 2023 NVIDIA Corporation
+# Copyright 2023-2026 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -126,20 +126,19 @@ def read_tf_output(deployment_name, output, verbose=False):
     )
 
 
-def format_app_name(app_name):
+def format_instance_role(instance_role):
     """
-    Format app name for user output
+    Format instance role name for user output
     """
 
     formatted = {
-        "isaac": "Isaac Sim",
-        "ovami": "OV AMI",
+        "isaac_workstation": "Isaac Workstation",
     }
 
-    if app_name in formatted:
-        return formatted[app_name]
+    if instance_role in formatted:
+        return formatted[instance_role]
 
-    return app_name
+    return instance_role
 
 
 def format_cloud_name(cloud_name):
@@ -192,13 +191,34 @@ def get_my_public_ip(verbose=False):
     """
     Get the current public IP address
     """
-    res = shell_command(
-        "curl -s https://api.ipify.org",
-        capture_output=True,
-        exit_on_error=True,
-        verbose=verbose,
+    methods = [
+        "curl -sS --max-time 2 https://api.ipify.org",
+        "curl -sS --max-time 2 https://icanhazip.com",
+        "curl -sS --max-time 2 https://checkip.amazonaws.com",
+        # DNS-based via UDP port 53 — works even when HTTP is blocked
+        "dig +short +time=2 +tries=1 myip.opendns.com @208.67.222.222",
+        "dig +short +time=2 +tries=1 myip.opendns.com @208.67.220.220",
+    ]
+    for cmd in methods:
+        res = shell_command(
+            cmd, verbose=verbose, capture_output=True, exit_on_error=False
+        )
+        if res.returncode == 0:
+            ip = res.stdout.decode().strip()
+            if ip:
+                if verbose:
+                    click.echo(colorize_info(f"* Public IP: {ip}"))
+                return ip
+        if verbose:
+            click.echo(
+                colorize_info(f"* Failed (exit {res.returncode}), trying next...")
+            )
+
+    click.echo(
+        colorize_error("Warning: Could not determine public IP address, using 0.0.0.0"),
+        err=True,
     )
-    return res.stdout.decode().strip()
+    return "0.0.0.0"
 
 
 def subnet_from_ip(ip, mask):

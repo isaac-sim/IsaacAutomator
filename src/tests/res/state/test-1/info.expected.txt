@@ -1,17 +1,16 @@
-****************************************
-* Isaac Sim is deployed at 11.22.33.44 *
-****************************************
+************************************************
+* Isaac Workstation is deployed at 11.22.33.44 *
+************************************************
 
-* To connect to Isaac Sim via SSH:
+* To connect via SSH:
 
-ssh -i state/test-1/key.pem -o StrictHostKeyChecking=no ubuntu@11.22.33.44
+./ssh test-1
 
-* To connect to Isaac Sim via noVNC:
+* To connect via noVNC:
 
-1. Open http://11.22.33.44:6080/vnc.html?host=11.22.33.44&port=6080 in your browser.
-2. Click "Connect" and use password "__vnc_password__"
+./novnc test-1
 
-* To connect to Isaac Sim via NoMachine:
+* To connect via NoMachine:
 
 0. Download NoMachine client at https://downloads.nomachine.com/, install and launch it.
 1. Click "Add" button.

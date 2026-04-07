@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # region copyright
-# Copyright 2023 NVIDIA Corporation
+# Copyright 2023-2026 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,15 +19,18 @@
 
 import os
 import sys
+from pathlib import Path
 
 import click
 
+from src.python.aws import aws_validate_credentials
+from src.python.azure import azure_login
 from src.python.config import c as config
 from src.python.utils import (
-    colorize_error,
     colorize_info,
     deployments,
     format_cloud_name,
+    gcp_login,
     read_meta,
     read_tf_output,
     shell_command,
@@ -74,17 +77,28 @@ def main(
         )
     )
 
+    # validate credentials
+    if cloud == "aws":
+        region = meta.get("input_params", {}).get("region", None)
+        aws_validate_credentials(deployment_name, region=region, verbose=debug)
+    elif cloud == "azure":
+        azure_login(verbose=debug)
+    elif cloud == "gcp":
+        gcp_login(verbose=debug)
+
     # run terraform
     if terraform:
         click.echo(colorize_info("* Re-running Terraform..."))
+        tfstate_file = Path(
+            f"{config['state_dir']}/{deployment_name}/.tfstate"
+        ).absolute()
         shell_command(
-            f"terraform init -upgrade -no-color -input=false {' > /dev/null' if not debug else ''}",
+            f"terraform init -upgrade -no-color -input=false -reconfigure -backend-config=\"path={tfstate_file}\" {' > /dev/null' if not debug else ''}",
             cwd=f"{config['terraform_dir']}/{cloud}",
             verbose=debug,
         )
         shell_command(
             "terraform apply -auto-approve "
-            + f"-state={config['state_dir']}/{deployment_name}/.tfstate "
             + f"-var-file={config['state_dir']}/{deployment_name}/.tfvars",
             cwd=f"{config['terraform_dir']}/{cloud}",
             verbose=debug,
@@ -93,14 +107,12 @@ def main(
     # run ansible
     if ansible:
         click.echo(colorize_info("* Re-running Ansible..."))
-        for app in ["isaac", "ovami"]:
-            if meta["params"][app]:
-                shell_command(
-                    f"ansible-playbook -i {config['state_dir']}/{deployment_name}/.inventory "
-                    + f"{app}.yml {'-vv' if debug else ''}",
-                    cwd=f"{config['ansible_dir']}",
-                    verbose=debug,
-                )
+        shell_command(
+            f"ansible-playbook -i {config['state_dir']}/{deployment_name}/.inventory "
+            + f"isaac-workstation.yaml {'-vv' if debug else ''}",
+            cwd=f"{config['ansible_dir']}",
+            verbose=debug,
+        )
 
 
 if __name__ == "__main__":

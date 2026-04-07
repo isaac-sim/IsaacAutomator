@@ -1,5 +1,5 @@
 # region copyright
-# Copyright 2023 NVIDIA Corporation
+# Copyright 2023-2026 NVIDIA Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,8 +47,8 @@
   apt: name=htop
     state=latest
 
-- name: Add user ubuntu to sudo group
-  user: name=ubuntu
+- name: Add user {{ ansible_user }} to sudo group
+  user: name={{ ansible_user }}
     groups=sudo
     append=yes
     state=present
@@ -81,3 +81,7 @@
   when: swap_enabled.stdout | int == 0
   tags:
     - skip_in_image
+
+# docker
+- import_tasks: docker.yml
+  tags: __system_docker

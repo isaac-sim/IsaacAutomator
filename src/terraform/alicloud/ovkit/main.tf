@@ -49,7 +49,7 @@ resource "alicloud_instance" "default" {
   # create a new user, add public key, add user to sudoers
   user_data = base64encode(<<-EOF
     #!/bin/bash
-    USERNAME="ubuntu"
+    USERNAME="${var.os_username}"
     useradd -m -d /home/$USERNAME -s /bin/bash $USERNAME
     mkdir /home/$USERNAME/.ssh
     cat /root/.ssh/authorized_keys >> /home/$USERNAME/.ssh/authorized_keys

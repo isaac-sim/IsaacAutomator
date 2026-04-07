@@ -7,7 +7,7 @@ variable "region" {
 }
 
 variable "vpc_cidr_block" {
-  description = "CIDR block for the entire VPC. Will be split into /24 subnet for apps."
+  description = "CIDR block for the entire VPC. Will be split into /24 subnet for instance_role."
   default     = "10.1.0.0/16"
   type        = string
 }
