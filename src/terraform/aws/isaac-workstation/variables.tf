@@ -51,6 +51,12 @@ variable "ssh_port" {
   type = number
 }
 
+# when set, skips dynamic AMI lookup and uses this AMI directly
+variable "ami_id" {
+  default = ""
+  type    = string
+}
+
 # for general use, ["0.0.0.0/0"] is ok
 # but may be helpful for accounts with stricter security policies
 variable "ingress_cidrs" {

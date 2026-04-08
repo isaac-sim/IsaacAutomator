@@ -38,3 +38,9 @@ variable "os_username" {
   default = "ubuntu"
   type    = string
 }
+
+# when set, skips dynamic AMI lookup and uses this AMI directly
+variable "ami_id" {
+  default = ""
+  type    = string
+}

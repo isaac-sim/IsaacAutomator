@@ -110,6 +110,15 @@ def main(
             )
             terraform = True
 
+    # pin AMI for AWS to prevent instance replacement from newer base images
+    if cloud == "aws" and terraform:
+        current_ami = read_tf_output(
+            deployment_name, "isaac_workstation_ami_id", verbose=debug
+        )
+        if current_ami and current_ami != "NA":
+            tfvars_file = f"{config['state_dir']}/{deployment_name}/.tfvars"
+            _update_tfvars_value(tfvars_file, "ami_id", current_ami, debug)
+
     # run terraform
     if terraform:
         click.echo(colorize_info("* Re-running Terraform..."))
@@ -182,25 +191,40 @@ def _update_tfvars_ingress_cidrs(tfvars_file: str, cidrs: list, debug: bool):
     if not os.path.exists(tfvars_file):
         raise click.ClickException(f"tfvars file not found: {tfvars_file}")
 
+    new_value = str(cidrs).replace("'", '"')
+    _update_tfvars_value(tfvars_file, "ingress_cidrs", new_value, debug, raw=True)
+
+    click.echo(colorize_info(f"* Updated ingress CIDRs to: {cidrs}"))
+
+
+def _update_tfvars_value(
+    tfvars_file: str, key: str, value: str, debug: bool, raw: bool = False
+):
+    """Update or add a single value in a .tfvars file.
+    If raw=True, value is written as-is (for lists). Otherwise quoted as a string."""
+
+    if not os.path.exists(tfvars_file):
+        raise click.ClickException(f"tfvars file not found: {tfvars_file}")
+
     lines = Path(tfvars_file).read_text().splitlines()
     new_lines = []
     found = False
+    formatted = value if raw else f'"{value}"'
 
     for line in lines:
-        if line.strip().startswith("ingress_cidrs"):
-            new_value = str(cidrs).replace("'", '"')
-            new_lines.append(f"ingress_cidrs = {new_value}")
+        if line.strip().startswith(key + " ") or line.strip().startswith(key + "="):
+            new_lines.append(f"{key} = {formatted}")
             found = True
         else:
             new_lines.append(line)
 
     if not found:
-        new_value = str(cidrs).replace("'", '"')
-        new_lines.append(f"ingress_cidrs = {new_value}")
+        new_lines.append(f"{key} = {formatted}")
 
     Path(tfvars_file).write_text("\n".join(new_lines) + "\n")
 
-    click.echo(colorize_info(f"* Updated ingress CIDRs to: {cidrs}"))
+    if debug:
+        click.echo(colorize_info(f"* Updated {key} = {formatted} in {tfvars_file}"))
 
 
 if __name__ == "__main__":
