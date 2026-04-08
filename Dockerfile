@@ -41,8 +41,9 @@ RUN apt-get update
 # terraform
 RUN apt-get install -qy terraform
 
-# install packer & plugins
-COPY . /tmp/app
+# install packer & plugins (only copy the files needed for packer init)
+COPY src/packer/azure/isaac/main.pkr.hcl /tmp/app/src/packer/azure/isaac/
+COPY src/packer/aws/isaac-workstation.pkr.hcl /tmp/app/src/packer/aws/
 RUN if [ "$WITH_PACKER" = "1" ]; then \
     apt-get install -yq packer; \
     (cd /tmp/app/src/packer/azure/isaac && packer init .) \
@@ -100,11 +101,11 @@ RUN echo "mkdir -p /app/state/.aws" >> /root/.bashrc
 COPY . /app
 
 # store bash history in the state directory
-RUN echo 'export HISTFILE=/app/state/.bash_history' >> /root/.bashrc
-RUN echo 'export HISTSIZE=10000' >> /root/.bashrc
-RUN echo 'export HISTFILESIZE=20000' >> /root/.bashrc
-RUN echo 'shopt -s histappend' >> /root/.bashrc
-RUN echo 'export PROMPT_COMMAND="history -a; ${PROMPT_COMMAND}"' >> /root/.bashrc
+RUN echo 'export HISTFILE=/app/state/.bash_history' >> /root/.bashrc && \
+    echo 'export HISTSIZE=10000' >> /root/.bashrc && \
+    echo 'export HISTFILESIZE=20000' >> /root/.bashrc && \
+    echo 'shopt -s histappend' >> /root/.bashrc && \
+    echo 'export PROMPT_COMMAND="history -a; ${PROMPT_COMMAND}"' >> /root/.bashrc
 
 # bash completions
 RUN echo 'source /app/.completions' >> /root/.bashrc
