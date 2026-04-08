@@ -215,9 +215,11 @@ def build_ami(params, config):
         click.echo(colorize_error("Error: VERSION environment variable is not set."))
         sys.exit(1)
 
-    # set AWS credentials as env vars for packer
-    os.environ["AWS_ACCESS_KEY_ID"] = creds["aws_access_key_id"]
-    os.environ["AWS_SECRET_ACCESS_KEY"] = creds["aws_secret_access_key"]
+    # set AWS credentials as env vars for packer (only if using explicit credentials)
+    if creds.get("aws_access_key_id"):
+        os.environ["AWS_ACCESS_KEY_ID"] = creds["aws_access_key_id"]
+    if creds.get("aws_secret_access_key"):
+        os.environ["AWS_SECRET_ACCESS_KEY"] = creds["aws_secret_access_key"]
     if creds.get("aws_session_token"):
         os.environ["AWS_SESSION_TOKEN"] = creds["aws_session_token"]
 
