@@ -16,3 +16,11 @@ output "isaac_workstation_vm_id" {
   value = try(var.isaac_workstation_enabled ? module.isaac_workstation[0].vm_id : "NA", "NA")
 }
 
+output "isaac_workstation_ami_id" {
+  value = try(var.isaac_workstation_enabled ? module.isaac_workstation[0].ami_id : "NA", "NA")
+}
+
+output "isaac_workstation_ami_name" {
+  value = try(var.isaac_workstation_enabled ? module.isaac_workstation[0].ami_name : "NA", "NA")
+}
+

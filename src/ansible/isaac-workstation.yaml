@@ -15,7 +15,7 @@
 # endregion
 
 - name: Wait for the instance to become available
-  hosts: isaac-workstation
+  hosts: isaac_workstation
   gather_facts: false
   tasks:
       - wait_for_connection: timeout=300
@@ -25,7 +25,7 @@
       - on_stop_start
 
 - name: Deploy Isaac Workstation
-  hosts: isaac-workstation
+  hosts: isaac_workstation
   gather_facts: true
   vars:
       in_china: False

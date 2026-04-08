@@ -531,6 +531,12 @@ You can stop and restart instances to save on cloud costs. To do so, run the fol
 ./start <deployment-name>
 ```
 
+By default, `./start` re-runs necessary Ansible steps (such as ECC disabling, etc) after starting the VM. If you're in a rush, use `--quick` to skip that and only run the autorun script:
+
+```sh
+./start <deployment-name> --quick
+```
+
 ### Uploading Data
 
 You can upload user data from the `uploads/` folder (in the project root) to the deployment by running the following command:
@@ -568,6 +574,17 @@ If, for some reason, the deployment cloud resources or software configuration be
 ./repair <deployment-name> --no-ansible
 # just run ansible to try fixing the software configuration
 ./repair <deployment-name> --no-terraform
+```
+
+You can also use `./repair` to update the ingress CIDR blocks (firewall rules) on an existing deployment:
+
+```sh
+# restrict access to your current IP
+./repair <deployment-name> --ingress-cidrs myip
+# allow a /16 subnet
+./repair <deployment-name> --ingress-cidrs myip/16
+# specify explicit CIDR blocks
+./repair <deployment-name> --ingress-cidrs "10.0.0.0/8,192.168.1.0/24"
 ```
 
 ### Destroying

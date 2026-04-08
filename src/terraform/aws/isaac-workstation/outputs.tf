@@ -6,3 +6,11 @@ output "public_ip" {
 output "vm_id" {
   value = aws_instance.instance.id
 }
+
+output "ami_id" {
+  value = aws_instance.instance.ami
+}
+
+output "ami_name" {
+  value = data.aws_ami.ami.name
+}

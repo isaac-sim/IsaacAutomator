@@ -18,6 +18,7 @@
 
 
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -27,13 +28,16 @@ from src.python.aws import aws_validate_credentials
 from src.python.azure import azure_login
 from src.python.config import c as config
 from src.python.utils import (
+    colorize_error,
     colorize_info,
     deployments,
     format_cloud_name,
     gcp_login,
+    get_my_public_ip,
     read_meta,
     read_tf_output,
     shell_command,
+    subnet_from_ip,
 )
 
 
@@ -62,11 +66,18 @@ from src.python.utils import (
     show_default=True,
     help="Run ansible?",
 )
+@click.option(
+    "--ingress-cidrs",
+    default=None,
+    show_default=True,
+    help='Update ingress CIDR blocks (comma-separated). Use "myip" for current IP, "myip/16", "myip/24" for subnets.',
+)
 def main(
     debug: bool,
     deployment_name: str,
     terraform: bool,
     ansible: bool,
+    ingress_cidrs: str,
 ):
     meta = read_meta(deployment_name, debug)
     cloud = read_tf_output(deployment_name, "cloud", verbose=debug)
@@ -85,6 +96,34 @@ def main(
         azure_login(verbose=debug)
     elif cloud == "gcp":
         gcp_login(verbose=debug)
+
+    # update ingress CIDRs in tfvars if requested
+    if ingress_cidrs is not None:
+        resolved_cidrs = _resolve_ingress_cidrs(ingress_cidrs, debug)
+        tfvars_file = f"{config['state_dir']}/{deployment_name}/.tfvars"
+        _update_tfvars_ingress_cidrs(tfvars_file, resolved_cidrs, debug)
+        if not terraform:
+            click.echo(
+                colorize_info(
+                    "* --ingress-cidrs requires Terraform, enabling --terraform."
+                )
+            )
+            terraform = True
+
+    # pin AMI for AWS to prevent instance replacement from newer base images
+    if cloud == "aws" and terraform:
+        current_ami = read_tf_output(
+            deployment_name, "isaac_workstation_ami_id", verbose=debug
+        )
+        ami_name = read_tf_output(
+            deployment_name, "isaac_workstation_ami_name", verbose=debug
+        )
+        if current_ami and current_ami != "NA":
+            click.echo(
+                colorize_info(f"* Pinning base image: {current_ami} ({ami_name})")
+            )
+            tfvars_file = f"{config['state_dir']}/{deployment_name}/.tfvars"
+            _update_tfvars_value(tfvars_file, "ami_id", current_ami, debug)
 
     # run terraform
     if terraform:
@@ -113,6 +152,85 @@ def main(
             cwd=f"{config['ansible_dir']}",
             verbose=debug,
         )
+
+
+def _resolve_ingress_cidrs(ingress_cidrs_str: str, debug: bool) -> list:
+    """Resolve special CIDR values (myip, myip/16, etc.) to actual CIDRs."""
+
+    cidrs = [x.strip().lower() for x in ingress_cidrs_str.split(",") if x.strip()]
+
+    # validate
+    for cidr in cidrs:
+        if cidr not in (
+            "auto",
+            "myip",
+            "myip/8",
+            "myip/16",
+            "myip/24",
+            "mynet",
+        ) and not re.match(r"^\d{1,3}(\.\d{1,3}){3}/\d{1,2}$", cidr):
+            raise click.BadParameter(colorize_error(f"Invalid CIDR block: {cidr}"))
+
+    resolved = []
+    for cidr in cidrs:
+        if cidr in ("auto", "myip"):
+            cidr = get_my_public_ip(verbose=debug) + "/32"
+        elif cidr in ("mynet", "myip/16"):
+            cidr = subnet_from_ip(get_my_public_ip(verbose=debug), "16")
+        elif cidr == "myip/24":
+            cidr = subnet_from_ip(get_my_public_ip(verbose=debug), "24")
+        elif cidr == "myip/8":
+            cidr = subnet_from_ip(get_my_public_ip(verbose=debug), "8")
+        resolved.append(cidr)
+
+    resolved = list(set(resolved))
+
+    if debug:
+        click.echo(colorize_info(f"* Resolved ingress CIDRs: {resolved}"))
+
+    return resolved
+
+
+def _update_tfvars_ingress_cidrs(tfvars_file: str, cidrs: list, debug: bool):
+    """Update ingress_cidrs in an existing .tfvars file."""
+
+    if not os.path.exists(tfvars_file):
+        raise click.ClickException(f"tfvars file not found: {tfvars_file}")
+
+    new_value = str(cidrs).replace("'", '"')
+    _update_tfvars_value(tfvars_file, "ingress_cidrs", new_value, debug, raw=True)
+
+    click.echo(colorize_info(f"* Updated ingress CIDRs to: {cidrs}"))
+
+
+def _update_tfvars_value(
+    tfvars_file: str, key: str, value: str, debug: bool, raw: bool = False
+):
+    """Update or add a single value in a .tfvars file.
+    If raw=True, value is written as-is (for lists). Otherwise quoted as a string."""
+
+    if not os.path.exists(tfvars_file):
+        raise click.ClickException(f"tfvars file not found: {tfvars_file}")
+
+    lines = Path(tfvars_file).read_text().splitlines()
+    new_lines = []
+    found = False
+    formatted = value if raw else f'"{value}"'
+
+    for line in lines:
+        if line.strip().startswith(key + " ") or line.strip().startswith(key + "="):
+            new_lines.append(f"{key} = {formatted}")
+            found = True
+        else:
+            new_lines.append(line)
+
+    if not found:
+        new_lines.append(f"{key} = {formatted}")
+
+    Path(tfvars_file).write_text("\n".join(new_lines) + "\n")
+
+    if debug:
+        click.echo(colorize_info(f"* Updated {key} = {formatted} in {tfvars_file}"))
 
 
 if __name__ == "__main__":

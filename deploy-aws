@@ -187,6 +187,12 @@ class AWSDeployer(Deployer):
             self.initialize_terraform(cwd=f"{config['terraform_dir']}/aws")
             self.run_terraform(cwd=f"{config['terraform_dir']}/aws")
 
+            # display selected AMI
+            ami_id = self.tf_output("isaac_workstation_ami_id", default="")
+            ami_name = self.tf_output("isaac_workstation_ami_name", default="")
+            if ami_id:
+                click.echo(colorize_info(f"* Base image: {ami_id} ({ami_name})"))
+
         # export ssh key from terraform
         self.export_ssh_key()
 
