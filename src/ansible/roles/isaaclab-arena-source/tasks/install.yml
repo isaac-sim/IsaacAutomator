@@ -14,6 +14,34 @@
 # limitations under the License.
 # endregion
 
+- name: Check if Isaac Lab Arena is already installed
+  stat:
+    path: "{{ isaaclab_arena_dir }}/.git"
+  register: isaaclab_arena_existing
+
+- name: Get current Isaac Lab Arena git ref
+  shell: |
+    cd "{{ isaaclab_arena_dir }}"
+    # check if the desired ref matches the current HEAD
+    # resolve the desired ref to a commit hash via ls-remote
+    DESIRED_HASH=$(git ls-remote "{{ isaaclab_arena_git_repo }}" "{{ isaaclab_arena_git_checkpoint }}" | head -1 | awk '{print $1}')
+    CURRENT_HASH=$(git rev-parse HEAD)
+    if [ "$DESIRED_HASH" = "$CURRENT_HASH" ]; then
+      echo "match"
+    else
+      echo "mismatch"
+    fi
+  become_user: "{{ ansible_user }}"
+  register: isaaclab_arena_ref_check
+  changed_when: false
+  when: isaaclab_arena_existing.stat.exists
+
+- name: Detect whether Isaac Lab Arena installation is needed
+  set_fact:
+    isaaclab_arena_needs_install: >-
+      {{ not isaaclab_arena_existing.stat.exists or
+         (isaaclab_arena_ref_check.stdout | default('mismatch') | trim) != 'match' }}
+
 - name: Create Isaac Lab Arena directory
   file:
     path: "{{ isaaclab_arena_dir }}"
@@ -21,6 +49,7 @@
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
     mode: 0755
+  when: isaaclab_arena_needs_install
 
 - name: Configure git to use HTTPS instead of SSH for github.com
   shell: |
@@ -29,6 +58,7 @@
     git config --global url.https://github.com/.insteadOf git@github.com:
   become_user: "{{ ansible_user }}"
   changed_when: false
+  when: isaaclab_arena_needs_install
 
 - name: Clone Isaac Lab Arena repository
   shell: |
@@ -45,3 +75,4 @@
   become_user: "{{ ansible_user }}"
   register: clone_result
   changed_when: "'Already up to date' not in clone_result.stdout"
+  when: isaaclab_arena_needs_install
