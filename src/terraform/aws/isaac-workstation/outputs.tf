@@ -10,3 +10,7 @@ output "vm_id" {
 output "ami_id" {
   value = aws_instance.instance.ami
 }
+
+output "ami_name" {
+  value = data.aws_ami.ami.name
+}

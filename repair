@@ -115,7 +115,13 @@ def main(
         current_ami = read_tf_output(
             deployment_name, "isaac_workstation_ami_id", verbose=debug
         )
+        ami_name = read_tf_output(
+            deployment_name, "isaac_workstation_ami_name", verbose=debug
+        )
         if current_ami and current_ami != "NA":
+            click.echo(
+                colorize_info(f"* Pinning base image: {current_ami} ({ami_name})")
+            )
             tfvars_file = f"{config['state_dir']}/{deployment_name}/.tfvars"
             _update_tfvars_value(tfvars_file, "ami_id", current_ami, debug)
 
