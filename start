@@ -60,10 +60,33 @@ from src.python.utils import (
     required=True,
     type=click.Choice(deployments()),
 )
+@click.option(
+    "--quick/--no-quick",
+    "-q/-Q",
+    "quick",
+    default=False,
+    show_default=True,
+    help="Quick start: skip full Ansible, only run autorun script.",
+)
+@click.option(
+    "--ansible/--no-ansible",
+    "-a/-A",
+    "ansible",
+    default=True,
+    show_default=True,
+    hidden=True,
+    help="Run Ansible? (--no-ansible is equivalent to --quick.)",
+)
 def main(
     debug: bool,
     deployment_name: str,
+    quick: bool,
+    ansible: bool,
 ):
+    # --no-ansible is a synonym for --quick
+    if not ansible:
+        quick = True
+
     # check what cloud is deployment for
     cloud = read_tf_output(deployment_name, "cloud", verbose=debug)
 
@@ -131,14 +154,24 @@ def main(
             colorize_result(f"* {format_instance_role(instance_role)} VM started.")
         )
 
-        # run "on_stop_start" tags in ansible
-        click.echo(
-            colorize_info(f"* Configuring {format_instance_role(instance_role)} VM...")
-        )
+        # run ansible
+        ansible_tags = "__autorun" if quick else "on_stop_start"
+        if quick:
+            click.echo(
+                colorize_info(
+                    f"* Quick start: running autorun only for {format_instance_role(instance_role)} VM..."
+                )
+            )
+        else:
+            click.echo(
+                colorize_info(
+                    f"* Configuring {format_instance_role(instance_role)} VM..."
+                )
+            )
         shell_command(
             f"ansible-playbook -i {config['state_dir']}/{deployment_name}/.inventory"
             + " isaac-workstation.yaml"
-            + " -t on_stop_start"
+            + f" -t {ansible_tags}"
             + f" {'-vv' if debug else ''}",
             cwd=config["ansible_dir"],
             verbose=debug,
