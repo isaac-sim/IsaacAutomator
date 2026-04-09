@@ -97,33 +97,26 @@ def aws_load_credentials(verbose=False):
     return creds
 
 
-def _aws_sts_check(
-    aws_access_key_id=None,
-    aws_secret_access_key=None,
-    aws_session_token="",
-    region="us-east-1",
-    verbose=False,
-):
+def _aws_clear_credentials(verbose=False):
     """
-    Check AWS credentials by calling sts get-caller-identity.
-    If explicit credentials are provided, they are passed via env vars.
-    Otherwise, relies on the default AWS credential chain (supports SSO login).
+    Remove explicit credentials from ~/.aws/credentials so the default
+    credential chain falls through to SSO.
+    """
+    creds_file = Path(AWS_STATE_DIR) / "credentials"
+    if creds_file.exists():
+        if verbose:
+            click.echo(colorize_info("* Clearing stale credentials file..."))
+        creds_file.unlink()
+
+
+def _aws_sts_check(region="us-east-1", verbose=False):
+    """
+    Check if current AWS credentials are valid by calling sts get-caller-identity
+    using the default credential chain.
     Returns True if credentials are valid, False otherwise.
     """
-    if aws_access_key_id and aws_secret_access_key:
-        env_override = (
-            f"AWS_ACCESS_KEY_ID='{aws_access_key_id}'"
-            f" AWS_SECRET_ACCESS_KEY='{aws_secret_access_key}'"
-            f" AWS_DEFAULT_REGION='{region}'"
-        )
-        if aws_session_token:
-            env_override += f" AWS_SESSION_TOKEN='{aws_session_token}'"
-        cmd = f"{env_override} aws sts get-caller-identity"
-    else:
-        cmd = f"AWS_DEFAULT_REGION='{region}' aws sts get-caller-identity"
-
     res = shell_command(
-        cmd,
+        f"AWS_DEFAULT_REGION='{region}' aws sts get-caller-identity",
         verbose=verbose,
         exit_on_error=False,
         capture_output=True,
@@ -185,14 +178,14 @@ def _aws_export_credentials(verbose=False):
     return True
 
 
-def aws_run_configure(verbose=False):
+def _aws_sso_login(verbose=False):
     """
-    Run `aws configure` interactively to let the user set credentials.
+    Run `aws login --remote` to authenticate via SSO.
     """
     Path(AWS_STATE_DIR).mkdir(parents=True, exist_ok=True)
-    click.echo(colorize_info("* Running `aws configure`..."))
+    click.echo(colorize_info("* Running `aws login --remote`..."))
     shell_command(
-        "aws configure",
+        "aws login --remote",
         verbose=verbose,
         exit_on_error=False,
     )
@@ -200,91 +193,63 @@ def aws_run_configure(verbose=False):
 
 def aws_validate_credentials(deployment_name=None, region=None, verbose=False):
     """
-    Validate stored AWS credentials. If invalid/expired, run `aws configure`
-    to let the user re-enter them, then validate again.
+    Validate AWS credentials using SSO login flow.
+
+    Clears any stale exported credentials, checks the default credential chain,
+    and if invalid, runs `aws login --remote` to authenticate. After successful
+    login, exports resolved credentials so Terraform and Packer can use them.
 
     Since ~/.aws is symlinked to state/.aws/, credentials persist across
-    container restarts and are automatically used by terraform and AWS CLI.
+    container restarts.
 
     If region is provided, it will be used for validation and saved to config.
     """
     click.echo(colorize_info("* Validating AWS credentials..."))
 
-    current_creds = aws_load_credentials(verbose=verbose)
-
-    # use provided region, or fall back to stored region, or default
-    effective_region = region or current_creds.get("region") or "us-east-1"
+    stored_region = _aws_cli_get("region", verbose=verbose)
+    effective_region = region or stored_region or "us-east-1"
 
     if verbose:
         click.echo(colorize_info(f"* Using region: {effective_region}"))
 
-    # first, try the default credential chain (covers SSO login, instance profiles, etc.)
+    # clear stale exported credentials so the default chain uses SSO
+    _aws_clear_credentials(verbose=verbose)
+
+    # check if we have a valid SSO session
     if _aws_sts_check(region=effective_region, verbose=verbose):
         click.echo(colorize_info("* AWS credentials are valid!"))
-        # if no explicit credentials are configured, export resolved
-        # credentials (e.g. from SSO) so Terraform and Packer can use them
-        if not current_creds.get("aws_access_key_id"):
-            _aws_export_credentials(verbose=verbose)
-        # ensure region is set in AWS config
-        if region and region != current_creds.get("region"):
-            if verbose:
-                click.echo(colorize_info(f"* Updating stored region to: {region}"))
-            aws_cli_set("region", region, verbose=verbose)
-        elif not current_creds.get("region") and effective_region:
-            if verbose:
-                click.echo(colorize_info(f"* Setting region to: {effective_region}"))
-            aws_cli_set("region", effective_region, verbose=verbose)
+        _aws_export_credentials(verbose=verbose)
+        _aws_set_region(region, stored_region, effective_region, verbose)
         return
 
-    # fall back to explicit credentials from aws configure
-    if current_creds.get("aws_access_key_id") and _aws_sts_check(
-        current_creds["aws_access_key_id"],
-        current_creds["aws_secret_access_key"],
-        current_creds.get("aws_session_token", ""),
-        effective_region,
-        verbose=verbose,
-    ):
-        click.echo(colorize_info("* AWS credentials are valid!"))
-        if region and region != current_creds.get("region"):
-            if verbose:
-                click.echo(colorize_info(f"* Updating stored region to: {region}"))
-            aws_cli_set("region", region, verbose=verbose)
-        elif not current_creds.get("region") and effective_region:
-            if verbose:
-                click.echo(colorize_info(f"* Setting region to: {effective_region}"))
-            aws_cli_set("region", effective_region, verbose=verbose)
-        return
-
-    click.echo(
-        colorize_info("* AWS credentials are invalid, expired, or not configured.")
-    )
+    # no valid session — run SSO login
+    click.echo(colorize_info("* AWS credentials are invalid, expired, or not configured."))
 
     while True:
-        aws_run_configure(verbose=verbose)
+        _aws_sso_login(verbose=verbose)
 
-        # reload and validate
-        new_creds = aws_load_credentials(verbose=verbose)
-        effective_region = region or new_creds.get("region") or effective_region
-
-        click.echo(colorize_info("* Validating new credentials..."))
-
-        # try default credential chain first, then explicit credentials
+        click.echo(colorize_info("* Validating credentials..."))
         if _aws_sts_check(region=effective_region, verbose=verbose):
             click.echo(colorize_info("* AWS credentials are valid!"))
-            break
-        elif new_creds.get("aws_access_key_id") and _aws_sts_check(
-            new_creds["aws_access_key_id"],
-            new_creds["aws_secret_access_key"],
-            new_creds.get("aws_session_token", ""),
-            effective_region,
-            verbose=verbose,
-        ):
-            click.echo(colorize_info("* AWS credentials are valid!"))
+            _aws_export_credentials(verbose=verbose)
+            _aws_set_region(region, stored_region, effective_region, verbose)
             break
         else:
             click.echo(
                 colorize_error("* AWS credentials are still invalid. Please try again.")
             )
+
+
+def _aws_set_region(region, stored_region, effective_region, verbose=False):
+    """Save region to AWS config if needed."""
+    if region and region != stored_region:
+        if verbose:
+            click.echo(colorize_info(f"* Updating stored region to: {region}"))
+        aws_cli_set("region", region, verbose=verbose)
+    elif not stored_region and effective_region:
+        if verbose:
+            click.echo(colorize_info(f"* Setting region to: {effective_region}"))
+        aws_cli_set("region", effective_region, verbose=verbose)
 
 
 def aws_stop_instance(instance_id, verbose=False):
