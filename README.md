@@ -36,6 +36,7 @@ The result is a fully configured deployed Isaac Workstation — a remote desktop
   - [Downloading Data](#downloading-data)
   - [Repairing](#repairing)
   - [Destroying](#destroying)
+  - [Importing Existing Deployments](#importing-existing-deployments)
   - [Speeding Up Deployment with Pre-Built Images](#speeding-up-deployment-with-pre-built-images)
 - [Tips](#tips)
   - [Persisting Modifications to the deployed Isaac Workstation](#persisting-modifications-to-the-deployed-isaac-workstation)
@@ -48,6 +49,7 @@ The result is a fully configured deployed Isaac Workstation — a remote desktop
 ./deploy-aws                  # deploy an Isaac Workstation (follow the prompts)
 ./novnc <deployment-name>     # open the remote desktop in your browser
 ./destroy <deployment-name>   # tear down the deployment when done
+./import --cloud aws ...      # import existing cloud resources into state
 ```
 
 Replace `deploy-aws` with `deploy-gcp`, `deploy-azure`, or `deploy-alicloud` for other clouds. See sections below for details.
@@ -599,6 +601,32 @@ To destroy a deployment, run the following command:
 ```
 
 _Please note that information about the deployed cloud resources is stored in the `state/` directory. Do not delete this directory._
+
+### Importing Existing Deployments
+
+If you lose the `state/` directory but still have cloud resources running, you can import them back:
+
+```sh
+# enter Isaac Automator container
+./run
+# inside container:
+./import --cloud aws --prefix isaacautomator --region us-east-1
+```
+
+The `./import` command discovers cloud resources by their name prefix, imports them into Terraform state, and reconstructs the deployment metadata. After import, `./stop`, `./start --quick`, and `./destroy` will work.
+
+Deployments that already exist locally in `state/` are automatically skipped.
+
+Key options:
+
+- `--cloud` — Cloud provider: `aws`, `azure`, or `gcp`.
+- `--prefix` — Resource name prefix used during deployment (default: `isaacautomator`).
+- `--region` — Cloud region (or GCP zone) to search in.
+- `--project` — GCP project ID (required for GCP, auto-detected from `gcloud config` if not provided).
+- `--deployment-name` — Import only a specific deployment instead of all discovered ones.
+- `--yes` — Skip confirmation prompts.
+
+**Important:** The original SSH private key (`key.pem`) cannot be recovered from the cloud. After import, replace `state/<deployment-name>/key.pem` with your backed-up copy to restore SSH access.
 
 ### Speeding Up Deployment with Pre-Built Images
 
