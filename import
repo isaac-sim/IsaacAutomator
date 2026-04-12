@@ -1,0 +1,1389 @@
+#!/usr/bin/env python3
+
+# region copyright
+# Copyright 2023-2026 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+"""
+Import existing cloud resources into state folder.
+Useful when state directory is lost but cloud resources still exist.
+Identifies resources by their name prefix.
+"""
+
+import json
+import os
+import shlex
+import sys
+from pathlib import Path
+
+import click
+
+from src.python.aws import aws_validate_credentials
+from src.python.azure import azure_login
+from src.python.config import c as config
+from src.python.utils import (
+    colorize_error,
+    colorize_info,
+    colorize_prompt,
+    colorize_result,
+    gcp_login,
+    shell_command,
+)
+
+
+# region AWS
+
+
+def _aws_discover_deployments(prefix, region, debug=False):
+    """
+    Discover AWS deployments by finding EC2 instances with Name tags
+    matching the prefix pattern.
+    Returns dict: deployment_name -> instance info
+    """
+
+    click.echo(
+        colorize_info(
+            f'* Searching for EC2 instances with Name tag "{prefix}.*" in {region}...'
+        )
+    )
+
+    res = shell_command(
+        f"aws ec2 describe-instances --region {shlex.quote(region)} "
+        + f"--filters "
+        + f'"Name=tag:Name,Values={prefix}.*.isaac-workstation.vm" '
+        + f'"Name=instance-state-name,Values=running,stopped,stopping,pending" '
+        + f'--query "Reservations[].Instances[]" '
+        + f"--output json",
+        capture_output=True,
+        exit_on_error=False,
+        verbose=debug,
+    )
+
+    if res.returncode != 0:
+        click.echo(colorize_error("* Failed to query AWS EC2 instances."))
+        return {}
+
+    instances = json.loads(res.stdout.decode())
+    deployments = {}
+
+    for instance in instances:
+        tags = {t["Key"]: t["Value"] for t in instance.get("Tags", [])}
+        name_tag = tags.get("Name", "")
+        deployment_name = tags.get("Deployment", "")
+
+        # extract deployment name from Name tag if not in Deployment tag
+        if not deployment_name:
+            # Name format: prefix.deployment_name.isaac-workstation.vm
+            parts = name_tag.split(".")
+            if len(parts) >= 4 and parts[0] == prefix:
+                deployment_name = parts[1]
+
+        if deployment_name:
+            deployments[deployment_name] = {
+                "instance_id": instance["InstanceId"],
+                "instance_type": instance["InstanceType"],
+                "state": instance["State"]["Name"],
+                "key_name": instance.get("KeyName", ""),
+            }
+
+    return deployments
+
+
+def _aws_find_resources(prefix, deployment_name, region, debug=False):
+    """
+    Find all AWS resources belonging to a deployment.
+    Returns dict with resource IDs keyed by type.
+    """
+
+    full_prefix = f"{prefix}.{deployment_name}"
+    resources = {}
+
+    # --- VPC ---
+    res = shell_command(
+        f"aws ec2 describe-vpcs --region {shlex.quote(region)} "
+        + f'--filters "Name=tag:Name,Values={full_prefix}.vpc" '
+        + f'--query "Vpcs[0].VpcId" --output text',
+        capture_output=True,
+        exit_on_error=False,
+        verbose=debug,
+    )
+    vpc_id = res.stdout.decode().strip()
+    if vpc_id and vpc_id != "None" and res.returncode == 0:
+        resources["vpc"] = vpc_id
+
+        # --- Internet Gateway ---
+        res = shell_command(
+            f"aws ec2 describe-internet-gateways --region {shlex.quote(region)} "
+            + f'--filters "Name=tag:Name,Values={full_prefix}.vpc_gateway" '
+            + f'--query "InternetGateways[0].InternetGatewayId" --output text',
+            capture_output=True,
+            exit_on_error=False,
+            verbose=debug,
+        )
+        igw_id = res.stdout.decode().strip()
+        if igw_id and igw_id != "None":
+            resources["internet_gateway"] = igw_id
+
+        # --- Default Route Table ---
+        res = shell_command(
+            f"aws ec2 describe-route-tables --region {shlex.quote(region)} "
+            + f'--filters "Name=vpc-id,Values={vpc_id}" "Name=association.main,Values=true" '
+            + f'--query "RouteTables[0].RouteTableId" --output text',
+            capture_output=True,
+            exit_on_error=False,
+            verbose=debug,
+        )
+        rtb_id = res.stdout.decode().strip()
+        if rtb_id and rtb_id != "None":
+            resources["route_table"] = rtb_id
+
+    # --- Key Pair ---
+    keypair_name = f"{full_prefix}.keypair"
+    res = shell_command(
+        f"aws ec2 describe-key-pairs --region {shlex.quote(region)} "
+        + f"--key-names {shlex.quote(keypair_name)} "
+        + f'--query "KeyPairs[0].KeyPairId" --output text 2>/dev/null',
+        capture_output=True,
+        exit_on_error=False,
+        verbose=debug,
+    )
+    kp_id = res.stdout.decode().strip()
+    if kp_id and kp_id != "None" and res.returncode == 0:
+        resources["key_pair"] = keypair_name
+
+    # --- Subnet ---
+    res = shell_command(
+        f"aws ec2 describe-subnets --region {shlex.quote(region)} "
+        + f'--filters "Name=tag:Name,Values={full_prefix}.isaac-workstation.subnet" '
+        + f'--query "Subnets[0].SubnetId" --output text',
+        capture_output=True,
+        exit_on_error=False,
+        verbose=debug,
+    )
+    subnet_id = res.stdout.decode().strip()
+    if subnet_id and subnet_id != "None":
+        resources["subnet"] = subnet_id
+
+    # --- Security Group ---
+    res = shell_command(
+        f"aws ec2 describe-security-groups --region {shlex.quote(region)} "
+        + f'--filters "Name=tag:Name,Values={full_prefix}.isaac-workstation.sg" '
+        + f'--query "SecurityGroups[0].GroupId" --output text',
+        capture_output=True,
+        exit_on_error=False,
+        verbose=debug,
+    )
+    sg_id = res.stdout.decode().strip()
+    if sg_id and sg_id != "None":
+        resources["security_group"] = sg_id
+
+    # --- EC2 Instance ---
+    res = shell_command(
+        f"aws ec2 describe-instances --region {shlex.quote(region)} "
+        + f'--filters "Name=tag:Name,Values={full_prefix}.isaac-workstation.vm" '
+        + f'"Name=instance-state-name,Values=running,stopped,stopping,pending" '
+        + f'--query "Reservations[0].Instances[0]" --output json',
+        capture_output=True,
+        exit_on_error=False,
+        verbose=debug,
+    )
+    instance_data = json.loads(res.stdout.decode().strip() or "null")
+    if instance_data:
+        resources["instance"] = instance_data["InstanceId"]
+        resources["instance_type"] = instance_data["InstanceType"]
+        resources["instance_state"] = instance_data["State"]["Name"]
+        resources["instance_ami"] = instance_data.get("ImageId", "")
+
+    # --- Elastic IP ---
+    res = shell_command(
+        f"aws ec2 describe-addresses --region {shlex.quote(region)} "
+        + f'--filters "Name=tag:Name,Values={full_prefix}.isaac-workstation.eip" '
+        + f'--query "Addresses[0]" --output json',
+        capture_output=True,
+        exit_on_error=False,
+        verbose=debug,
+    )
+    eip_data = json.loads(res.stdout.decode().strip() or "null")
+    if eip_data:
+        resources["eip"] = eip_data["AllocationId"]
+        resources["eip_public_ip"] = eip_data.get("PublicIp", "")
+
+    return resources
+
+
+def _aws_create_tfvars(prefix, deployment_name, region, resources, debug=False):
+    """
+    Create .tfvars file from discovered AWS resources.
+    Returns the tfvars dict.
+    """
+
+    state_dir = f"{config['state_dir']}/{deployment_name}"
+    os.makedirs(state_dir, exist_ok=True)
+
+    tfvars = {
+        "prefix": prefix,
+        "deployment_name": deployment_name,
+        "region": region,
+        "ssh_port": 22,
+        "isaac_workstation_enabled": True,
+        "isaac_workstation_instance_type": resources.get("instance_type", "unknown"),
+        "from_image": False,
+        "ingress_cidrs": ["0.0.0.0/0"],
+    }
+
+    # try to recover ingress CIDRs from security group
+    if "security_group" in resources:
+        res = shell_command(
+            f"aws ec2 describe-security-groups --region {shlex.quote(region)} "
+            + f"--group-ids {shlex.quote(resources['security_group'])} "
+            + f'--query "SecurityGroups[0].IpPermissions[?FromPort==`22`].IpRanges[].CidrIp" '
+            + f"--output json",
+            capture_output=True,
+            exit_on_error=False,
+            verbose=debug,
+        )
+        if res.returncode == 0:
+            cidrs = json.loads(res.stdout.decode().strip() or "[]")
+            if cidrs:
+                tfvars["ingress_cidrs"] = cidrs
+
+    # detect custom SSH port from security group
+    if "security_group" in resources:
+        res = shell_command(
+            f"aws ec2 describe-security-groups --region {shlex.quote(region)} "
+            + f"--group-ids {shlex.quote(resources['security_group'])} "
+            + f'--query "SecurityGroups[0].IpPermissions[].FromPort" '
+            + f"--output json",
+            capture_output=True,
+            exit_on_error=False,
+            verbose=debug,
+        )
+        if res.returncode == 0:
+            ports = json.loads(res.stdout.decode().strip() or "[]")
+            # known ports: 22 (ssh), 4000 (nomachine), 5900 (vnc), 6080 (novnc)
+            known_ports = {22, 4000, 5900, 6080, None}
+            for port in ports:
+                if port not in known_ports:
+                    tfvars["ssh_port"] = port
+                    break
+
+    # pin AMI to prevent instance replacement on next terraform run
+    ami_id = resources.get("instance_ami", "")
+    if ami_id:
+        tfvars["ami_id"] = ami_id
+
+    _write_tfvars(f"{state_dir}/.tfvars", tfvars)
+
+    return tfvars
+
+
+def _aws_import_deployment(prefix, deployment_name, region, resources, debug=False):
+    """
+    Import all AWS resources for a deployment into terraform state.
+    """
+
+    state_dir = f"{config['state_dir']}/{deployment_name}"
+    tf_dir = f"{config['terraform_dir']}/aws"
+    tfstate_file = str(Path(f"{state_dir}/.tfstate").absolute())
+    tfvars_file = str(Path(f"{state_dir}/.tfvars").absolute())
+
+    # initialize terraform
+    click.echo(colorize_info("  Initializing Terraform..."))
+    shell_command(
+        f"terraform init -upgrade -no-color -input=false -reconfigure "
+        + f'-backend-config="path={tfstate_file}" '
+        + f'{" > /dev/null" if not debug else ""}',
+        cwd=tf_dir,
+        verbose=debug,
+    )
+
+    # map terraform resource addresses to cloud resource IDs
+    import_map = []
+
+    if "key_pair" in resources:
+        import_map.append(("module.common.aws_key_pair.keypair", resources["key_pair"]))
+
+    if "vpc" in resources:
+        import_map.append(("module.vpc.aws_vpc.vpc", resources["vpc"]))
+
+    if "internet_gateway" in resources:
+        import_map.append(
+            (
+                "module.vpc.aws_internet_gateway.vpc_gateway",
+                resources["internet_gateway"],
+            )
+        )
+
+    if "route_table" in resources:
+        import_map.append(
+            (
+                "module.vpc.aws_default_route_table.vpc_route_table",
+                resources["route_table"],
+            )
+        )
+
+    if "subnet" in resources:
+        import_map.append(
+            (
+                "module.isaac_workstation[0].aws_subnet.subnet",
+                resources["subnet"],
+            )
+        )
+
+    if "security_group" in resources:
+        import_map.append(
+            (
+                "module.isaac_workstation[0].aws_security_group.sg",
+                resources["security_group"],
+            )
+        )
+
+    if "instance" in resources:
+        import_map.append(
+            (
+                "module.isaac_workstation[0].aws_instance.instance",
+                resources["instance"],
+            )
+        )
+
+    if "eip" in resources:
+        import_map.append(
+            (
+                "module.isaac_workstation[0].aws_eip.eip",
+                resources["eip"],
+            )
+        )
+
+    # run terraform import for each resource
+    failed = []
+    for addr, resource_id in import_map:
+        click.echo(colorize_info(f"  Importing {addr}..."))
+        res = shell_command(
+            f"terraform import -var-file={shlex.quote(tfvars_file)} "
+            + f"'{addr}' '{resource_id}'",
+            cwd=tf_dir,
+            verbose=debug,
+            exit_on_error=False,
+        )
+        if res.returncode != 0:
+            click.echo(colorize_error(f"  Warning: failed to import {addr}"))
+            failed.append(addr)
+
+    # import tls_private_key with a newly generated key
+    # this makes terraform state consistent so destroy/stop/start work
+    click.echo(colorize_info("  Generating placeholder SSH key for state..."))
+    _import_tls_private_key(tf_dir, tfvars_file, tfstate_file, debug)
+
+    # refresh state to compute terraform outputs
+    click.echo(colorize_info("  Refreshing state and computing outputs..."))
+    res = shell_command(
+        f"terraform apply -refresh-only -auto-approve "
+        + f"-var-file={shlex.quote(tfvars_file)} "
+        + f'{" > /dev/null" if not debug else ""}',
+        cwd=tf_dir,
+        verbose=debug,
+        exit_on_error=False,
+    )
+
+    if res.returncode != 0:
+        click.echo(
+            colorize_error(
+                "  Warning: terraform refresh failed. "
+                "Some outputs may not be available."
+            )
+        )
+
+    return failed
+
+
+def _import_tls_private_key(
+    tf_dir,
+    tfvars_file,
+    tfstate_file,
+    debug=False,
+    resource_addr="module.common.tls_private_key.ssh_key",
+):
+    """
+    Generate a new RSA key and import it as tls_private_key into terraform state.
+    The key won't match what's deployed on the instance, but it makes
+    terraform state internally consistent for destroy/stop/start operations.
+    """
+
+    # generate a temporary RSA 4096-bit key
+    tmp_key = "/tmp/_import_temp_key.pem"
+    shell_command(
+        f"openssl genrsa 4096 > {tmp_key} 2>/dev/null",
+        verbose=debug,
+        exit_on_error=False,
+    )
+
+    if not Path(tmp_key).exists():
+        click.echo(
+            colorize_error("  Warning: could not generate temporary key for import")
+        )
+        return
+
+    # import tls_private_key using the PEM content
+    pem_content = Path(tmp_key).read_text().strip()
+    res = shell_command(
+        f"terraform import -var-file={shlex.quote(tfvars_file)} "
+        + f"'{resource_addr}' "
+        + f"'{pem_content}'",
+        cwd=tf_dir,
+        verbose=debug,
+        exit_on_error=False,
+    )
+
+    if res.returncode != 0:
+        click.echo(
+            colorize_error(
+                "  Warning: could not import tls_private_key. "
+                "SSH key export will not work."
+            )
+        )
+
+    # clean up
+    Path(tmp_key).unlink(missing_ok=True)
+
+
+# endregion
+
+
+# region Azure
+
+
+def _azure_discover_deployments(prefix, debug=False):
+    """
+    Discover Azure deployments by finding resource groups matching the prefix pattern.
+    Returns dict: deployment_name -> resource group info
+    """
+
+    click.echo(
+        colorize_info(f'* Searching for Azure resource groups matching "{prefix}.*"...')
+    )
+
+    res = shell_command(
+        f"az group list --query "
+        + f"\"[?starts_with(name, '{prefix}.')].{{name:name, location:location}}\" "
+        + f"--output json",
+        capture_output=True,
+        exit_on_error=False,
+        verbose=debug,
+    )
+
+    if res.returncode != 0:
+        click.echo(colorize_error("* Failed to query Azure resource groups."))
+        return {}
+
+    groups = json.loads(res.stdout.decode())
+    deployments = {}
+
+    for group in groups:
+        rg_name = group["name"]
+        # resource group format: prefix.deployment_name.rg
+        parts = rg_name.split(".")
+        if len(parts) >= 3 and parts[0] == prefix and parts[-1] == "rg":
+            deployment_name = ".".join(parts[1:-1])
+            deployments[deployment_name] = {
+                "resource_group_name": rg_name,
+                "region": group["location"],
+            }
+
+    return deployments
+
+
+def _azure_find_resources(prefix, deployment_name, rg_name, debug=False):
+    """
+    Find Azure resources in a resource group for a deployment.
+    """
+
+    full_prefix = f"{prefix}.{deployment_name}"
+    resources = {"resource_group_name": rg_name}
+
+    # find VM
+    res = shell_command(
+        f"az vm list --resource-group {shlex.quote(rg_name)} "
+        + f'--query "[0].{{id:id, name:name, size:hardwareProfile.vmSize}}" '
+        + f"--output json",
+        capture_output=True,
+        exit_on_error=False,
+        verbose=debug,
+    )
+    vm_data = json.loads(res.stdout.decode().strip() or "null")
+    if vm_data:
+        resources["vm_id"] = vm_data["id"]
+        resources["vm_name"] = vm_data["name"]
+        resources["instance_type"] = vm_data["size"]
+
+    # find public IP
+    res = shell_command(
+        f"az network public-ip list --resource-group {shlex.quote(rg_name)} "
+        + f'--query "[0].{{id:id, ip:ipAddress}}" --output json',
+        capture_output=True,
+        exit_on_error=False,
+        verbose=debug,
+    )
+    ip_data = json.loads(res.stdout.decode().strip() or "null")
+    if ip_data:
+        resources["public_ip_id"] = ip_data["id"]
+        resources["public_ip"] = ip_data.get("ip", "")
+
+    # find NIC
+    res = shell_command(
+        f"az network nic list --resource-group {shlex.quote(rg_name)} "
+        + f'--query "[0].id" --output tsv',
+        capture_output=True,
+        exit_on_error=False,
+        verbose=debug,
+    )
+    nic_id = res.stdout.decode().strip()
+    if nic_id:
+        resources["nic_id"] = nic_id
+
+    # find NSG
+    res = shell_command(
+        f"az network nsg list --resource-group {shlex.quote(rg_name)} "
+        + f'--query "[0].id" --output tsv',
+        capture_output=True,
+        exit_on_error=False,
+        verbose=debug,
+    )
+    nsg_id = res.stdout.decode().strip()
+    if nsg_id:
+        resources["nsg_id"] = nsg_id
+
+    # find VNet
+    res = shell_command(
+        f"az network vnet list --resource-group {shlex.quote(rg_name)} "
+        + f'--query "[0].{{id:id, subnets:subnets[0].id}}" --output json',
+        capture_output=True,
+        exit_on_error=False,
+        verbose=debug,
+    )
+    vnet_data = json.loads(res.stdout.decode().strip() or "null")
+    if vnet_data:
+        resources["vnet_id"] = vnet_data["id"]
+        resources["subnet_id"] = vnet_data.get("subnets", "")
+
+    return resources
+
+
+def _azure_create_tfvars(prefix, deployment_name, region, resources, debug=False):
+    """Create .tfvars from discovered Azure resources."""
+
+    state_dir = f"{config['state_dir']}/{deployment_name}"
+    os.makedirs(state_dir, exist_ok=True)
+
+    tfvars = {
+        "prefix": prefix,
+        "deployment_name": deployment_name,
+        "region": region,
+        "resource_group_name": resources.get("resource_group_name", ""),
+        "ssh_port": 22,
+        "isaac_workstation_enabled": True,
+        "isaac_workstation_instance_type": resources.get("instance_type", "unknown"),
+        "from_image": False,
+    }
+
+    _write_tfvars(f"{state_dir}/.tfvars", tfvars)
+    return tfvars
+
+
+def _azure_import_deployment(prefix, deployment_name, region, resources, debug=False):
+    """Import Azure resources into terraform state."""
+
+    state_dir = f"{config['state_dir']}/{deployment_name}"
+    tf_dir = f"{config['terraform_dir']}/azure"
+    tfstate_file = str(Path(f"{state_dir}/.tfstate").absolute())
+    tfvars_file = str(Path(f"{state_dir}/.tfvars").absolute())
+
+    click.echo(colorize_info("  Initializing Terraform..."))
+    shell_command(
+        f"terraform init -upgrade -no-color -input=false -reconfigure "
+        + f'-backend-config="path={tfstate_file}" '
+        + f'{" > /dev/null" if not debug else ""}',
+        cwd=tf_dir,
+        verbose=debug,
+    )
+
+    rg_name = resources.get("resource_group_name", "")
+    full_prefix = f"{prefix}.{deployment_name}"
+
+    import_map = []
+
+    # resource group
+    if rg_name:
+        # azure resource group import needs the full resource ID
+        res = shell_command(
+            f"az group show --name {shlex.quote(rg_name)} --query id --output tsv",
+            capture_output=True,
+            exit_on_error=False,
+            verbose=debug,
+        )
+        rg_id = res.stdout.decode().strip()
+        if rg_id:
+            import_map.append(("module.common.azurerm_resource_group.isa_rg", rg_id))
+
+    if "vnet_id" in resources:
+        import_map.append(
+            ("module.common.azurerm_virtual_network.isa_network", resources["vnet_id"])
+        )
+
+    if "subnet_id" in resources:
+        import_map.append(
+            ("module.common.azurerm_subnet.isa_subnet", resources["subnet_id"])
+        )
+
+    if "public_ip_id" in resources:
+        import_map.append(
+            (
+                "module.isaac_workstation[0].azurerm_public_ip.public_ip",
+                resources["public_ip_id"],
+            )
+        )
+
+    if "nic_id" in resources:
+        import_map.append(
+            (
+                "module.isaac_workstation[0].azurerm_network_interface.nic",
+                resources["nic_id"],
+            )
+        )
+
+    if "nsg_id" in resources:
+        import_map.append(
+            (
+                "module.isaac_workstation[0].azurerm_network_security_group.sg",
+                resources["nsg_id"],
+            )
+        )
+
+    if "vm_id" in resources:
+        # determine if from_image based on VM name pattern
+        import_map.append(
+            (
+                "module.isaac_workstation[0].azurerm_linux_virtual_machine.vm_from_scratch[0]",
+                resources["vm_id"],
+            )
+        )
+
+    # NIC-NSG association
+    if "nic_id" in resources and "nsg_id" in resources:
+        assoc_id = f"{resources['nic_id']}|{resources['nsg_id']}"
+        import_map.append(
+            (
+                "module.isaac_workstation[0].azurerm_network_interface_security_group_association.nic_sg_association",
+                assoc_id,
+            )
+        )
+
+    failed = []
+    for addr, resource_id in import_map:
+        click.echo(colorize_info(f"  Importing {addr}..."))
+        res = shell_command(
+            f"terraform import -var-file={shlex.quote(tfvars_file)} "
+            + f"'{addr}' '{resource_id}'",
+            cwd=tf_dir,
+            verbose=debug,
+            exit_on_error=False,
+        )
+        if res.returncode != 0:
+            click.echo(colorize_error(f"  Warning: failed to import {addr}"))
+            failed.append(addr)
+
+    # import tls_private_key
+    click.echo(colorize_info("  Generating placeholder SSH key for state..."))
+    _import_tls_private_key(tf_dir, tfvars_file, tfstate_file, debug)
+
+    # refresh state
+    click.echo(colorize_info("  Refreshing state and computing outputs..."))
+    shell_command(
+        f"terraform apply -refresh-only -auto-approve "
+        + f"-var-file={shlex.quote(tfvars_file)} "
+        + f'{" > /dev/null" if not debug else ""}',
+        cwd=tf_dir,
+        verbose=debug,
+        exit_on_error=False,
+    )
+
+    return failed
+
+
+# endregion
+
+
+# region GCP
+
+
+def _gcp_discover_deployments(prefix, project, zone, debug=False):
+    """
+    Discover GCP deployments by finding compute instances with names
+    matching the prefix pattern.
+    """
+
+    click.echo(
+        colorize_info(
+            f'* Searching for GCP instances matching "{prefix}-*" in {project}/{zone}...'
+        )
+    )
+
+    res = shell_command(
+        f"gcloud compute instances list --project={shlex.quote(project)} "
+        + f"--zones={shlex.quote(zone)} "
+        + f"--filter=\"name~'^{prefix}-.*-isaac-workstation-vm$'\" "
+        + f"--format=json",
+        capture_output=True,
+        exit_on_error=False,
+        verbose=debug,
+    )
+
+    if res.returncode != 0:
+        click.echo(colorize_error("* Failed to query GCP instances."))
+        return {}
+
+    instances = json.loads(res.stdout.decode())
+    deployments = {}
+
+    for instance in instances:
+        name = instance["name"]
+        # name format: prefix-deployment_name-isaac-workstation-vm
+        # note: GCP uses hyphens, not dots
+        suffix = "-isaac-workstation-vm"
+        if name.endswith(suffix):
+            remainder = name[: -len(suffix)]
+            # remove prefix-
+            if remainder.startswith(f"{prefix}-"):
+                deployment_name = remainder[len(f"{prefix}-") :]
+                labels = instance.get("labels", {})
+                deployments[deployment_name] = {
+                    "instance_name": name,
+                    "machine_type": instance["machineType"].split("/")[-1],
+                    "status": instance["status"],
+                    "zone": instance["zone"].split("/")[-1],
+                }
+
+    return deployments
+
+
+def _gcp_find_resources(prefix, deployment_name, project, zone, debug=False):
+    """Find GCP resources for a deployment."""
+
+    full_prefix = f"{prefix}-{deployment_name}-isaac-workstation"
+    resources = {}
+
+    # instance
+    instance_name = f"{full_prefix}-vm"
+    res = shell_command(
+        f"gcloud compute instances describe {shlex.quote(instance_name)} "
+        + f"--project={shlex.quote(project)} --zone={shlex.quote(zone)} "
+        + f"--format=json",
+        capture_output=True,
+        exit_on_error=False,
+        verbose=debug,
+    )
+    if res.returncode == 0:
+        instance_data = json.loads(res.stdout.decode())
+        resources["instance_name"] = instance_name
+        resources["instance_type"] = instance_data["machineType"].split("/")[-1]
+        resources["zone"] = zone
+
+        # extract GPU info
+        guest_accelerators = instance_data.get("guestAccelerators", [])
+        if guest_accelerators:
+            resources["gpu_type"] = guest_accelerators[0]["acceleratorType"].split("/")[
+                -1
+            ]
+            resources["gpu_count"] = guest_accelerators[0]["acceleratorCount"]
+
+        # get network
+        net_interfaces = instance_data.get("networkInterfaces", [])
+        if net_interfaces:
+            network = net_interfaces[0].get("network", "")
+            resources["network_name"] = network.split("/")[-1]
+
+    # network
+    network_name = f"{full_prefix}-network"
+    res = shell_command(
+        f"gcloud compute networks describe {shlex.quote(network_name)} "
+        + f"--project={shlex.quote(project)} --format=json",
+        capture_output=True,
+        exit_on_error=False,
+        verbose=debug,
+    )
+    if res.returncode == 0:
+        resources["network_name"] = network_name
+
+    # firewall rules
+    firewall_suffixes = [
+        "fwrules-egress",
+        "fwrules-ssh",
+        "fwrules-nomachine",
+        "fwrules-vnc",
+        "fwrules-novnc",
+        "fwrules-ssh-custom",
+    ]
+    resources["firewalls"] = {}
+    for suffix in firewall_suffixes:
+        fw_name = f"{full_prefix}-{suffix}"
+        res = shell_command(
+            f"gcloud compute firewall-rules describe {shlex.quote(fw_name)} "
+            + f"--project={shlex.quote(project)} --format=json 2>/dev/null",
+            capture_output=True,
+            exit_on_error=False,
+            verbose=debug,
+        )
+        if res.returncode == 0:
+            resources["firewalls"][suffix] = fw_name
+
+    return resources
+
+
+def _gcp_create_tfvars(prefix, deployment_name, project, zone, resources, debug=False):
+    """Create .tfvars from discovered GCP resources."""
+
+    state_dir = f"{config['state_dir']}/{deployment_name}"
+    os.makedirs(state_dir, exist_ok=True)
+
+    tfvars = {
+        "prefix": prefix,
+        "deployment_name": deployment_name,
+        "zone": zone,
+        "project": project,
+        "ssh_port": 22,
+        "isaac_workstation_enabled": True,
+        "isaac_workstation_instance_type": resources.get("instance_type", "unknown"),
+        "isaac_workstation_gpu_count": resources.get("gpu_count", 1),
+        "isaac_workstation_gpu_type": resources.get("gpu_type", "nvidia-l4"),
+        "from_image": False,
+        "ingress_cidrs": ["0.0.0.0/0"],
+    }
+
+    # determine boot disk type
+    instance_type_prefix = tfvars["isaac_workstation_instance_type"][:2]
+    tfvars["boot_disk_type"] = (
+        "hyperdisk-balanced" if instance_type_prefix == "g4" else "pd-ssd"
+    )
+
+    _write_tfvars(f"{state_dir}/.tfvars", tfvars)
+    return tfvars
+
+
+def _gcp_import_deployment(
+    prefix, deployment_name, project, zone, resources, debug=False
+):
+    """Import GCP resources into terraform state."""
+
+    state_dir = f"{config['state_dir']}/{deployment_name}"
+    tf_dir = f"{config['terraform_dir']}/gcp"
+    tfstate_file = str(Path(f"{state_dir}/.tfstate").absolute())
+    tfvars_file = str(Path(f"{state_dir}/.tfvars").absolute())
+
+    click.echo(colorize_info("  Initializing Terraform..."))
+    shell_command(
+        f"terraform init -upgrade -no-color -input=false -reconfigure "
+        + f'-backend-config="path={tfstate_file}" '
+        + f'{" > /dev/null" if not debug else ""}',
+        cwd=tf_dir,
+        verbose=debug,
+    )
+
+    import_map = []
+
+    if "instance_name" in resources:
+        import_map.append(
+            (
+                "module.isaac_workstation[0].google_compute_instance.default",
+                f"projects/{project}/zones/{zone}/instances/{resources['instance_name']}",
+            )
+        )
+
+    if "network_name" in resources:
+        import_map.append(
+            (
+                "module.isaac_workstation[0].google_compute_network.default",
+                f"projects/{project}/global/networks/{resources['network_name']}",
+            )
+        )
+
+    # firewall rules
+    fw_addr_map = {
+        "fwrules-egress": "google_compute_firewall.egress",
+        "fwrules-ssh": "google_compute_firewall.ssh",
+        "fwrules-nomachine": "google_compute_firewall.nomachine",
+        "fwrules-vnc": "google_compute_firewall.vnc",
+        "fwrules-novnc": "google_compute_firewall.novnc",
+        "fwrules-ssh-custom": "google_compute_firewall.ssh_custom",
+    }
+    for suffix, fw_name in resources.get("firewalls", {}).items():
+        if suffix in fw_addr_map:
+            import_map.append(
+                (
+                    f"module.isaac_workstation[0].{fw_addr_map[suffix]}",
+                    f"projects/{project}/global/firewalls/{fw_name}",
+                )
+            )
+
+    failed = []
+    for addr, resource_id in import_map:
+        click.echo(colorize_info(f"  Importing {addr}..."))
+        res = shell_command(
+            f"terraform import -var-file={shlex.quote(tfvars_file)} "
+            + f"'{addr}' '{resource_id}'",
+            cwd=tf_dir,
+            verbose=debug,
+            exit_on_error=False,
+        )
+        if res.returncode != 0:
+            click.echo(colorize_error(f"  Warning: failed to import {addr}"))
+            failed.append(addr)
+
+    # import tls_private_key (at root level for GCP, not in a module)
+    click.echo(colorize_info("  Generating placeholder SSH key for state..."))
+    _import_tls_private_key(
+        tf_dir,
+        tfvars_file,
+        tfstate_file,
+        debug,
+        resource_addr="tls_private_key.ssh_key",
+    )
+
+    # import google_project_service
+    click.echo(colorize_info("  Importing google_project_service..."))
+    shell_command(
+        f"terraform import -var-file={shlex.quote(tfvars_file)} "
+        + f"'google_project_service.compute_engine' '{project}/compute.googleapis.com'",
+        cwd=tf_dir,
+        verbose=debug,
+        exit_on_error=False,
+    )
+
+    # refresh
+    click.echo(colorize_info("  Refreshing state and computing outputs..."))
+    shell_command(
+        f"terraform apply -refresh-only -auto-approve "
+        + f"-var-file={shlex.quote(tfvars_file)} "
+        + f'{" > /dev/null" if not debug else ""}',
+        cwd=tf_dir,
+        verbose=debug,
+        exit_on_error=False,
+    )
+
+    return failed
+
+
+# endregion
+
+
+# region Common
+
+
+def _write_tfvars(path, tfvars):
+    """Write a .tfvars file from a dict."""
+
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+
+    with open(path, "w") as f:
+        for key, value in tfvars.items():
+            key = key.replace("-", "_")
+            if isinstance(value, bool):
+                f.write(f'{key} = {"true" if value else "false"}\n')
+            elif isinstance(value, str):
+                value = value.replace('"', '\\"')
+                f.write(f'{key} = "{value}"\n')
+            elif isinstance(value, list):
+                f.write(f"{key} = {json.dumps(value)}\n")
+            else:
+                f.write(f"{key} = {value}\n")
+
+
+def _create_meta(cloud, prefix, deployment_name, region, tfvars):
+    """Create a minimal meta.json for the imported deployment."""
+
+    state_dir = f"{config['state_dir']}/{deployment_name}"
+
+    deploy_cmd = {
+        "aws": "./deploy-aws",
+        "azure": "./deploy-azure",
+        "gcp": "./deploy-gcp",
+        "alicloud": "./deploy-alicloud",
+    }.get(cloud, f"./deploy-{cloud}")
+
+    command = f"{deploy_cmd} --prefix {prefix} --deployment-name {deployment_name}"
+    if region:
+        if cloud == "gcp":
+            command += f" --zone {region}"
+        else:
+            command += f" --region {region}"
+
+    instance_type = tfvars.get("isaac_workstation_instance_type", "unknown")
+
+    input_params = {
+        "debug": False,
+        "prefix": prefix,
+        "in_china": "auto",
+        "deployment_name": deployment_name,
+        "isaac_workstation_instance_type": instance_type,
+        "ingress_cidrs": ",".join(tfvars.get("ingress_cidrs", ["0.0.0.0/0"])),
+        "existing": "ask",
+        "isaacsim": "no",
+        "isaaclab": "no",
+        "isaaclab_arena": "no",
+        "vnc_password": "",
+        "system_user_password": "",
+        "ssh_port": tfvars.get("ssh_port", 22),
+        "ssh_user": config["default_ssh_user"],
+        "upload": True,
+        "from_image": tfvars.get("from_image", False),
+    }
+
+    if cloud == "aws":
+        input_params["region"] = region
+    elif cloud == "azure":
+        input_params["region"] = region
+        input_params["resource_group"] = tfvars.get("resource_group_name", "")
+    elif cloud == "gcp":
+        input_params["zone"] = region
+        input_params["project"] = tfvars.get("project", "")
+        input_params["isaac_workstation_gpu_count"] = str(
+            tfvars.get("isaac_workstation_gpu_count", 1)
+        )
+
+    params = input_params.copy()
+    params["in_china"] = False
+
+    meta = {
+        "command": command,
+        "input_params": input_params,
+        "params": params,
+        "config": config,
+    }
+
+    meta_file = f"{state_dir}/meta.json"
+    Path(meta_file).parent.mkdir(parents=True, exist_ok=True)
+    Path(meta_file).write_text(json.dumps(meta, indent=4))
+
+
+def _export_ssh_key(deployment_name, debug=False):
+    """Try to export SSH key from terraform state."""
+
+    state_dir = f"{config['state_dir']}/{deployment_name}"
+    tfstate_file = f"{state_dir}/.tfstate"
+
+    res = shell_command(
+        f"terraform output -state={shlex.quote(tfstate_file)} -raw ssh_key",
+        capture_output=True,
+        exit_on_error=False,
+        verbose=debug,
+    )
+
+    if res.returncode == 0 and res.stdout:
+        key_pem = res.stdout.decode()
+        key_file = f"{state_dir}/key.pem"
+        Path(key_file).write_text(key_pem)
+        os.chmod(key_file, 0o600)
+        return True
+
+    return False
+
+
+def _create_info_txt(deployment_name, ip, debug=False):
+    """Create info.txt with connection instructions."""
+
+    state_dir = f"{config['state_dir']}/{deployment_name}"
+    user = config["default_ssh_user"]
+    banner = f"* Isaac Workstation is deployed at {ip} *"
+
+    instructions = f"""{'*' * len(banner)}
+{banner}
+{'*' * len(banner)}
+
+* To connect via SSH:
+
+./ssh {deployment_name}
+
+* To connect via noVNC (opens in browser):
+
+./novnc {deployment_name}
+
+* To connect via NoMachine:
+
+0. Download NoMachine client at https://downloads.nomachine.com/, install and launch it.
+1. Click "Add" button.
+2. Enter Host: "{ip}".
+3. In "Configuration" > "Use key-based authentication with a key you provide",
+   select file "state/{deployment_name}/key.pem".
+4. Click "Connect" button.
+5. Enter "{user}" as a username when prompted.
+"""
+
+    Path(f"{state_dir}/info.txt").write_text(instructions)
+
+
+# endregion
+
+
+# region CLI
+
+
+@click.command()
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    show_default=True,
+    help="Enable debug output.",
+)
+@click.option(
+    "--prefix",
+    default=config["default_prefix"],
+    show_default=True,
+    help="Prefix used for cloud resource names.",
+    prompt=colorize_prompt("* Resource name prefix"),
+)
+@click.option(
+    "--cloud",
+    type=click.Choice(["aws", "azure", "gcp"]),
+    required=True,
+    help="Cloud provider to import from.",
+    prompt=colorize_prompt("* Cloud provider"),
+)
+@click.option(
+    "--region",
+    default="",
+    help="Cloud region (or zone for GCP) to search in.",
+    prompt=colorize_prompt(
+        "* Region (AWS/Azure region, or GCP zone, e.g. us-east-1, westus3, us-central1-a)"
+    ),
+)
+@click.option(
+    "--project",
+    default="",
+    help="GCP project ID (required for GCP only).",
+)
+@click.option(
+    "--deployment-name",
+    default="",
+    help="Import only this specific deployment. If empty, discover and import all.",
+)
+@click.option(
+    "--yes/--ask",
+    default=False,
+    show_default=True,
+    help="Import without confirmation?",
+)
+def main(
+    debug: bool,
+    prefix: str,
+    cloud: str,
+    region: str,
+    project: str,
+    deployment_name: str,
+    yes: bool,
+):
+    """Import existing cloud resources into the state folder."""
+
+    # validate cloud credentials
+    if cloud == "aws":
+        if not region:
+            click.echo(colorize_error("* --region is required for AWS."))
+            sys.exit(1)
+        aws_validate_credentials(region=region, verbose=debug)
+    elif cloud == "azure":
+        azure_login(verbose=debug)
+    elif cloud == "gcp":
+        if not region:
+            click.echo(colorize_error("* --region (zone) is required for GCP."))
+            sys.exit(1)
+        if not project:
+            # try to get from gcloud config
+            res = shell_command(
+                "gcloud config list --format 'value(core.project)'",
+                capture_output=True,
+                exit_on_error=False,
+                verbose=debug,
+            )
+            project = res.stdout.decode().strip()
+            if not project:
+                click.echo(colorize_error("* --project is required for GCP."))
+                sys.exit(1)
+            click.echo(colorize_info(f"* Using GCP project: {project}"))
+        gcp_login(verbose=debug)
+
+    # discover deployments
+    discovered = {}
+
+    if cloud == "aws":
+        discovered = _aws_discover_deployments(prefix, region, debug)
+    elif cloud == "azure":
+        discovered = _azure_discover_deployments(prefix, debug)
+    elif cloud == "gcp":
+        discovered = _gcp_discover_deployments(prefix, project, region, debug)
+
+    if not discovered:
+        click.echo(
+            colorize_info(
+                f'* No deployments found with prefix "{prefix}" in {cloud.upper()}.'
+            )
+        )
+        return
+
+    # filter by deployment name if specified
+    if deployment_name:
+        if deployment_name in discovered:
+            discovered = {deployment_name: discovered[deployment_name]}
+        else:
+            click.echo(
+                colorize_error(
+                    f'* Deployment "{deployment_name}" not found. '
+                    f"Available: {', '.join(discovered.keys())}"
+                )
+            )
+            return
+
+    # show discovered deployments
+    click.echo(colorize_result(f"\n* Found {len(discovered)} deployment(s):\n"))
+    for dn, info in discovered.items():
+        status = info.get("state", info.get("status", "unknown"))
+        click.echo(f"  - {dn} ({status})")
+
+    # confirm
+    if not yes:
+        click.confirm(
+            colorize_prompt("\n* Import these deployments?"),
+            default=True,
+            abort=True,
+        )
+
+    # skip deployments that already have local state
+    for dn in list(discovered.keys()):
+        state_dir = f"{config['state_dir']}/{dn}"
+        if os.path.exists(f"{state_dir}/.tfstate"):
+            click.echo(
+                colorize_info(f'  Skipping "{dn}" (state already exists locally)')
+            )
+            del discovered[dn]
+
+    if not discovered:
+        click.echo(
+            colorize_info(
+                "* Nothing to import (all found deployments already have local state)."
+            )
+        )
+        return
+
+    click.echo()
+
+    # import each deployment
+    for dn, info in discovered.items():
+        click.echo(colorize_info(f'* Importing deployment "{dn}"...'))
+
+        if cloud == "aws":
+            resources = _aws_find_resources(prefix, dn, region, debug)
+            if not resources.get("instance"):
+                click.echo(
+                    colorize_error(f'  No EC2 instance found for "{dn}", skipping.')
+                )
+                continue
+
+            tfvars = _aws_create_tfvars(prefix, dn, region, resources, debug)
+            failed = _aws_import_deployment(prefix, dn, region, resources, debug)
+
+        elif cloud == "azure":
+            rg_name = info["resource_group_name"]
+            az_region = info["region"]
+            resources = _azure_find_resources(prefix, dn, rg_name, debug)
+            tfvars = _azure_create_tfvars(prefix, dn, az_region, resources, debug)
+            failed = _azure_import_deployment(prefix, dn, az_region, resources, debug)
+
+        elif cloud == "gcp":
+            resources = _gcp_find_resources(prefix, dn, project, region, debug)
+            if not resources.get("instance_name"):
+                click.echo(
+                    colorize_error(f'  No GCP instance found for "{dn}", skipping.')
+                )
+                continue
+
+            tfvars = _gcp_create_tfvars(prefix, dn, project, region, resources, debug)
+            failed = _gcp_import_deployment(
+                prefix, dn, project, region, resources, debug
+            )
+
+        # create meta.json
+        effective_region = region
+        if cloud == "azure":
+            effective_region = info.get("region", region)
+        _create_meta(cloud, prefix, dn, effective_region, tfvars)
+
+        # export SSH key from state
+        key_exported = _export_ssh_key(dn, debug)
+
+        # get IP from terraform output or discovered resources
+        ip = resources.get("eip_public_ip", resources.get("public_ip", ""))
+        if not ip:
+            from src.python.utils import read_tf_output
+
+            ip = read_tf_output(dn, "isaac_workstation_ip", verbose=debug)
+
+        # create info.txt
+        if ip:
+            _create_info_txt(dn, ip, debug)
+
+        # summary
+        click.echo()
+        if failed:
+            click.echo(
+                colorize_error(
+                    f'  Import of "{dn}" completed with {len(failed)} warning(s).'
+                )
+            )
+        else:
+            click.echo(colorize_result(f'  Import of "{dn}" completed successfully!'))
+
+        if not key_exported:
+            click.echo(
+                colorize_error(
+                    "  Warning: SSH key could not be exported from state.\n"
+                    "  The original key.pem is not recoverable from the cloud.\n"
+                    "  If you have the original key.pem backed up, place it at:\n"
+                    f"  state/{dn}/key.pem"
+                )
+            )
+        else:
+            click.echo(
+                colorize_error(
+                    "  Note: The SSH key in state/key.pem is a PLACEHOLDER.\n"
+                    "  It does NOT match the key deployed on the instance.\n"
+                    "  If you have the original key.pem backed up, replace:\n"
+                    f"  state/{dn}/key.pem"
+                )
+            )
+
+        click.echo(
+            colorize_info(
+                f"  Available operations: ./stop {dn}, ./start {dn} --quick, ./destroy {dn}"
+            )
+        )
+        click.echo()
+
+    click.echo(colorize_result("* Import complete!"))
+
+
+# endregion
+
+
+if __name__ == "__main__":
+    if os.path.exists("/.dockerenv"):
+        main()
+    else:
+        shell_command(f"./run '{' '.join(sys.argv)}'", verbose=True)
