@@ -13,37 +13,101 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # endregion
-
 ---
 # @see https://downloads.nomachine.com/download/?id=1 for new versions
 
-- name: Download NoMachine server
-  get_url:
-    url: https://web9001.nomachine.com/download/9.2/Linux/nomachine_9.2.18_3_amd64.deb
-    dest: /tmp/nomachine.deb
-    mode: 0644
-    timeout: 600 # 10 minutes
+- name: Initialize NoMachine installation state
+  set_fact:
+    nomachine_package_ready: false
+    nomachine_installed: false
+
+- name: Download and validate NoMachine server package
+  block:
+    - name: Download NoMachine server package
+      get_url:
+        url: "{{ nomachine_deb_url }}"
+        dest: "{{ nomachine_deb_path }}"
+        mode: "0644"
+        timeout: 600 # 10 minutes
+        force: true
+
+    - name: Validate NoMachine package
+      command: dpkg-deb --info {{ nomachine_deb_path }}
+      changed_when: false
+
+    - name: Mark NoMachine package as ready
+      set_fact:
+        nomachine_package_ready: true
+
+  rescue:
+    - name: Remove invalid NoMachine package
+      file:
+        path: "{{ nomachine_deb_path }}"
+        state: absent
+      failed_when: false
+
+    - name: Download and validate NoMachine server package from mirror
+      block:
+        - name: Download NoMachine server package from mirror
+          get_url:
+            url: "{{ nomachine_deb_mirror_url }}"
+            dest: "{{ nomachine_deb_path }}"
+            mode: "0644"
+            timeout: 600 # 10 minutes
+            force: true
+
+        - name: Validate NoMachine package from mirror
+          command: dpkg-deb --info {{ nomachine_deb_path }}
+          changed_when: false
+
+        - name: Mark NoMachine package as ready from mirror
+          set_fact:
+            nomachine_package_ready: true
+
+      rescue:
+        - name: Remove invalid NoMachine mirror package
+          file:
+            path: "{{ nomachine_deb_path }}"
+            state: absent
+          failed_when: false
+
+        - name: Skip NoMachine installation after failed downloads
+          debug:
+            msg: Skipping NoMachine installation because both primary and mirror packages
+              failed to download or validate.
 
 - name: Install NoMachine server
   apt:
-    deb: /tmp/nomachine.deb
+    deb: "{{ nomachine_deb_path }}"
     state: present
+  register: nomachine_install_result
+  when: nomachine_package_ready | bool
+  ignore_errors: true
+
+- name: Mark NoMachine installation state
+  set_fact:
+    nomachine_installed: "{{ nomachine_install_result is succeeded }}"
+  when: nomachine_package_ready | bool
+
+- name: Skip NoMachine post-install configuration
+  debug:
+    msg: Skipping NoMachine post-install configuration because the package is not
+      installed.
+  when: not (nomachine_installed | bool)
 
 - name: Create NX config dir
   file: >
-    path=/home/{{ ansible_user }}/.nx/config
-    state=directory
-    owner={{ ansible_user }}
-    group={{ ansible_user }}
+    path=/home/{{ ansible_user }}/.nx/config state=directory owner={{
+    ansible_user }} group={{ ansible_user }}
+  when: nomachine_installed | bool
 
 - name: Link authorized keys to NX config
   file: >
-    src=/home/{{ ansible_user }}/.ssh/authorized_keys
-    dest=/home/{{ ansible_user }}/.nx/config/authorized.crt
-    state=link
-    owner={{ ansible_user }}
-    group={{ ansible_user }}
+    src=/home/{{ ansible_user }}/.ssh/authorized_keys dest=/home/{{ ansible_user
+    }}/.nx/config/authorized.crt state=link owner={{ ansible_user }} group={{
+    ansible_user }}
   notify: nx_restart
+  when: nomachine_installed | bool
 
 # add env var DISPLAY to  /usr/lib/systemd/system/nxserver.service
 - name: Add DISPLAY env var to nxserver.service
@@ -52,6 +116,7 @@
     line: Environment="DISPLAY=:0"
     insertafter: "\\[Service\\]"
     state: present
+  when: nomachine_installed | bool
 
 # restart nxserver.service on GDM init (fix for "no display detected" error)
 - name: Restart nxserver.service on GDM init
@@ -60,7 +125,9 @@
     line: (/usr/bin/sleep 5 && /usr/bin/systemctl restart nxserver.service) &
     insertafter: EOF
     state: present
+  when: nomachine_installed | bool
 
 - name: Do daemon-reload
   systemd:
     daemon_reload: yes
+  when: nomachine_installed | bool
