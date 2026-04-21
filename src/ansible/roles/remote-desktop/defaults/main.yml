@@ -13,6 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # endregion
-
 ---
 vnc_password: empty
+nomachine_version: "9.4.14_1"
+nomachine_deb_path: /tmp/nomachine.deb
+nomachine_deb_url: "https://download.nomachine.com/download/9.4/Linux/nomachine\
+  _{{ nomachine_version }}_amd64.deb"
+nomachine_deb_mirror_url: "https://web9001.nomachine.com/download/9.4/Linux/nom\
+  achine_{{ nomachine_version }}_amd64.deb"
