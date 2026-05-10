@@ -15,9 +15,9 @@
 # endregion
 ---
 vnc_password: empty
-nomachine_version: "9.4.14_1"
+nomachine_version: "9.5.7_2"
 nomachine_deb_path: /tmp/nomachine.deb
-nomachine_deb_url: "https://download.nomachine.com/download/9.4/Linux/nomachine\
+nomachine_deb_url: "https://web9001.nomachine.com/download/9.5/Linux/nomachine\
   _{{ nomachine_version }}_amd64.deb"
-nomachine_deb_mirror_url: "https://web9001.nomachine.com/download/9.4/Linux/nom\
+nomachine_deb_mirror_url: "https://web9001.nomachine.com/download/9.5/Linux/nom\
   achine_{{ nomachine_version }}_amd64.deb"
