@@ -42,4 +42,6 @@ module "isaac_workstation" {
   boot_disk_type     = var.boot_disk_type
   os_username        = var.os_username
   region             = local.region
+  from_image         = var.from_image
+  image_project      = var.project
 }

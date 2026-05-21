@@ -152,12 +152,6 @@ class GCPDeployer(Deployer):
         super().__init__(params, config)
 
     def main(self):
-        # display warning about unsupported options
-        if self.params["from_image"]:
-            raise click.BadParameter(
-                colorize_error("--from-image option is not supported for GCP yet")
-            )
-
         # ask what to do if deployment already exists
         self.ask_existing_behavior()
 

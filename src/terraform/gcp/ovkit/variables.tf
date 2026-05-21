@@ -46,3 +46,14 @@ variable "os_username" {
 variable "region" {
   type = string
 }
+
+variable "from_image" {
+  type    = bool
+  default = false
+}
+
+# Project that owns the prebuilt Isaac Automator image. Defaults to the
+# deployment project, but can be overridden if the image lives elsewhere.
+variable "image_project" {
+  type = string
+}

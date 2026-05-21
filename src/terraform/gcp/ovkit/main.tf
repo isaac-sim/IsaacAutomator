@@ -7,6 +7,15 @@ locals {
   os_username    = var.os_username
 }
 
+# Latest image in the family created by ./image-gcp. Only resolved when
+# --from-image is true, so deployments that don't use a pre-built image
+# can still run in projects with no Isaac Automator images yet.
+data "google_compute_image" "prebuilt" {
+  count   = var.from_image ? 1 : 0
+  family  = "isaac-automator-isaacworkstation"
+  project = var.image_project
+}
+
 resource "google_compute_instance" "default" {
   name           = "${var.prefix}-vm"
   machine_type   = var.instance_type
@@ -24,7 +33,7 @@ resource "google_compute_instance" "default" {
     auto_delete = true
 
     initialize_params {
-      image = local.boot_image
+      image = var.from_image ? data.google_compute_image.prebuilt[0].self_link : local.boot_image
       size  = local.boot_disk_size
       # @see https://cloud.google.com/compute/docs/disks
       type = var.boot_disk_type
