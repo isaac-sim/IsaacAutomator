@@ -1,0 +1,330 @@
+#!/usr/bin/env python3
+
+# region copyright
+# Copyright 2023-2026 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+import os
+import sys
+from datetime import date
+
+import click
+
+from src.python.config import c as config
+from src.python.debug import debug_break, debug_start  # noqa
+from src.python.deploy_command import DeployCommand
+from src.python.utils import (
+    colorize_error,
+    colorize_info,
+    colorize_prompt,
+    gcp_login,
+    shell_command,
+)
+
+
+def _normalize_gcp_image_name(name):
+    """
+    GCE image names must be lowercase and may contain only letters, numbers,
+    and dashes. Convert dots/underscores to dashes and lowercase the result.
+    """
+    return name.lower().replace(".", "-").replace("_", "-")
+
+
+class ImageGCPCommand(DeployCommand):
+    """
+    Defines options specific for "image-gcp" command.
+    """
+
+    # gcp instance types capable of running isaac (same as deploy-gcp)
+    GCP_OVKIT_INSTANCE_TYPES = (
+        [f"g2-standard-{i}" for i in [4, 8, 12, 16, 24, 32, 48, 96]]
+        + [f"n1-standard-{i}" for i in [4, 8, 16, 32, 64, 96]]
+        + [f"n1-highmem-{i}" for i in [4, 8, 16, 32, 64, 96]]
+        + [f"n1-highcpu-{i}" for i in [16, 32, 64, 96]]
+        + [f"g4-standard-{i}" for i in [48, 96, 192, 384]]
+    )
+
+    @staticmethod
+    def project_callback(ctx, param, value):
+        if value == "":
+            raise click.BadParameter(colorize_error("Project ID cannot be empty"))
+        return value
+
+    @staticmethod
+    def instance_type_callback(ctx, param, value):
+        if value not in ImageGCPCommand.GCP_OVKIT_INSTANCE_TYPES:
+            raise click.BadParameter(
+                colorize_error(
+                    f"Invalid instance type: {value}. Valid values: "
+                    + ", ".join(ImageGCPCommand.GCP_OVKIT_INSTANCE_TYPES)
+                )
+            )
+        return value
+
+    def make_context(self, info_name, args, parent=None, **extra):
+        """Allow image name as an unnamed first argument."""
+        args = list(args)
+        if args and not args[0].startswith("-") and "--image-name" not in args:
+            args = ["--image-name", args[0]] + args[1:]
+        return click.core.Command.make_context(
+            self, info_name, args, parent=parent, **extra
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # remove params not applicable to image building
+        self.params = [
+            p
+            for p in self.params
+            if p.name
+            not in (
+                "in_china",
+                "from_image",
+                "ingress_cidrs",
+                "vnc_password",
+                "upload",
+                "deployment_name",
+            )
+        ]
+
+        # --image-name
+        self.params.insert(
+            0,
+            click.core.Option(
+                ("--image-name",),
+                show_default="<current date>",
+                default=lambda: date.today().strftime("%Y-%m-%d"),
+                help="Image name. Will be prefixed with"
+                " 'isaac-automator-isaacworkstation-' and normalized to lowercase.",
+                prompt=colorize_prompt(
+                    "* Image name (will be prefixed with"
+                    " 'isaac-automator-isaacworkstation-')"
+                ),
+            ),
+        )
+
+        # replace --existing with overwrite/fail
+        self.params = [p for p in self.params if p.name != "existing"]
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--existing",),
+                type=click.Choice(["overwrite", "fail"]),
+                default="fail",
+                show_default=True,
+                help="What to do if an image with the same name already exists:"
+                " 'overwrite' will delete the old image first,"
+                " 'fail' will abort the build.",
+            ),
+        )
+
+        # --project
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--project",),
+                prompt=colorize_prompt(
+                    "* GCP Project ID (see"
+                    " https://console.cloud.google.com/cloud-resource-manager)"
+                ),
+                callback=ImageGCPCommand.project_callback,
+                default=shell_command(
+                    "gcloud config list --format 'value(core.project)'",
+                    verbose=False,
+                    exit_on_error=False,
+                    capture_output=True,
+                )
+                .stdout.decode("utf-8")
+                .strip(),
+                help="GCP Project ID. Defaults to the active gcloud project.",
+            ),
+        )
+
+        # --zone
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--zone",),
+                prompt=colorize_prompt(
+                    "* GCP zone (e.g. us-central1-a, see"
+                    " https://cloud.google.com/compute/docs/gpus/gpu-regions-zones)"
+                ),
+                callback=lambda ctx, param, value: value.lower(),
+                default="us-central1-a",
+                show_default=True,
+                help="GCP zone for the Packer build instance.",
+            ),
+        )
+
+        # --instance-type
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                (
+                    "--instance-type",
+                    "--isaac-workstation-instance-type",
+                    "isaac_workstation_instance_type",
+                ),
+                prompt=colorize_prompt(
+                    "* Instance Type for Packer build"
+                    " (see https://cloud.google.com/compute/docs/general-purpose-machines)"
+                ),
+                show_default=True,
+                default=config["gcp_default_isaac_workstation_instance_type"],
+                callback=ImageGCPCommand.instance_type_callback,
+                help="Instance type for the Packer build VM. Supported: "
+                + ", ".join(self.GCP_OVKIT_INSTANCE_TYPES)
+                + ".",
+            ),
+        )
+
+        # --gpu-type
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--gpu-type",),
+                show_default=True,
+                default="nvidia-l4",
+                help="GPU accelerator type to attach to the Packer build VM"
+                " (e.g. nvidia-l4 for g2, nvidia-tesla-t4 for n1,"
+                " nvidia-rtx-pro-6000 for g4).",
+            ),
+        )
+
+        # --gpu-count
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--gpu-count",),
+                show_default=True,
+                default=1,
+                type=int,
+                help="Number of GPUs to attach to the Packer build VM.",
+            ),
+        )
+
+
+def delete_gcp_image(project, image_name, verbose=False):
+    """
+    Delete a GCP image by name. No-op if the image does not exist.
+    """
+    res = shell_command(
+        f"gcloud compute images describe {image_name} --project={project}",
+        verbose=verbose,
+        exit_on_error=False,
+        capture_output=True,
+    )
+    if res.returncode != 0:
+        return
+
+    click.echo(
+        colorize_info(f"* Deleting existing image '{image_name}' from '{project}'...")
+    )
+    shell_command(
+        f"gcloud compute images delete {image_name} --project={project} --quiet",
+        verbose=verbose,
+        exit_on_error=True,
+        capture_output=not verbose,
+    )
+
+
+def build_gcp_image(params, config):
+    """
+    Build GCP image using Packer.
+    """
+
+    debug = params["debug"]
+    project = params["project"]
+    zone = params["zone"]
+    instance_type = params["isaac_workstation_instance_type"]
+    gpu_type = params["gpu_type"]
+    gpu_count = params["gpu_count"]
+    isaacsim = params["isaacsim"]
+    isaaclab = params["isaaclab"]
+    isaaclab_arena = params["isaaclab_arena"]
+    system_user_password = params["system_user_password"]
+    image_name = params.get("image_name", "")
+    existing = params["existing"]
+
+    version = os.environ.get("VERSION", "")
+    if not version:
+        click.echo(colorize_error("Error: VERSION environment variable is not set."))
+        sys.exit(1)
+
+    # log into GCP (writes application default credentials to /root/.config/gcloud)
+    gcp_login(verbose=debug)
+
+    # packer reads the project from var.gcp_project (also expose as env var)
+    os.environ["GCP_PROJECT"] = project
+
+    # handle pre-existing image
+    full_image_name = (
+        _normalize_gcp_image_name(f"isaac-automator-isaacworkstation-{image_name}")
+        if image_name
+        else ""
+    )
+    if existing == "overwrite" and full_image_name:
+        delete_gcp_image(project, full_image_name, verbose=debug)
+
+    packer_dir = f"{config['app_dir']}/src/packer/gcp"
+
+    click.echo(colorize_info("* Initializing Packer..."))
+    shell_command(
+        f"packer init {packer_dir}/isaac-workstation.pkr.hcl",
+        verbose=debug,
+    )
+
+    packer_vars = [
+        f'-var=gcp_project="{project}"',
+        f'-var=gcp_zone="{zone}"',
+        f'-var=instance_type="{instance_type}"',
+        f'-var=gpu_type="{gpu_type}"',
+        f"-var=gpu_count={gpu_count}",
+        f'-var=version="{version}"',
+        f'-var=system_user_password="{system_user_password}"',
+        f'-var=isaacsim="{isaacsim}"',
+        f'-var=isaaclab="{isaaclab}"',
+        f'-var=isaaclab_arena="{isaaclab_arena}"',
+        f"-var=in_china=false",
+    ]
+
+    if image_name:
+        packer_vars.append(f'-var=image_name="{full_image_name}"')
+
+    packer_cmd = (
+        f"packer build " + " ".join(packer_vars) + f" {packer_dir}/isaac-workstation.pkr.hcl"
+    )
+
+    click.echo(colorize_info("* Building GCP image with Packer..."))
+
+    if debug:
+        click.echo(colorize_info(f"* Command: {packer_cmd}"))
+
+    shell_command(packer_cmd, verbose=debug)
+
+    click.echo(colorize_info("* Image build complete!"))
+
+
+@click.command(cls=ImageGCPCommand)
+def main(**params):
+    build_gcp_image(params, config)
+
+
+if __name__ == "__main__":
+    if os.path.exists("/.dockerenv"):
+        main()
+    else:
+        shell_command(f"./run '{' '.join(sys.argv)}'", verbose=True)
