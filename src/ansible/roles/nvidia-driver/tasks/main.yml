@@ -30,6 +30,26 @@
 - import_tasks: nvidia-driver.gcp.yml
   when: driver_installed.stdout == "0" and cloud == "gcp"
 
+# Detect NVIDIA driver/library version mismatch and reboot to fix it.
+# Triggered when --from-image deploys onto a base image whose loaded kernel
+# module is older than the driver package (e.g. when the NVIDIA Container
+# Toolkit install upgraded the userspace libs on top of a stale AMI).
+# A reboot loads the kernel module that matches the installed package.
+- name: Check NVIDIA driver/library version mismatch
+  shell: |
+    set +e
+    nvidia-smi 2>&1 | grep -q "Driver/library version mismatch"
+  register: nvidia_lib_mismatch
+  changed_when: false
+  failed_when: false
+
+- name: Reboot to reload NVIDIA kernel module after driver package upgrade
+  reboot:
+    post_reboot_delay: 5
+    connect_timeout: 3
+    reboot_timeout: 600
+  when: nvidia_lib_mismatch.rc == 0
+
 # Disable ECC
 # Needs to be done after restoring from image or from scratch
 - name: Detect ECC status
