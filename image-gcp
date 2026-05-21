@@ -17,6 +17,7 @@
 # endregion
 
 import os
+import shlex
 import sys
 from datetime import date
 
@@ -287,22 +288,27 @@ def build_gcp_image(params, config):
         verbose=debug,
     )
 
+    # build packer command (shlex.quote protects against shell metacharacters
+    # in user-supplied values such as passwords, git refs, and image names)
+    def _v(name, value):
+        return f"-var={name}={shlex.quote(str(value))}"
+
     packer_vars = [
-        f'-var=gcp_project="{project}"',
-        f'-var=gcp_zone="{zone}"',
-        f'-var=instance_type="{instance_type}"',
-        f'-var=gpu_type="{gpu_type}"',
-        f"-var=gpu_count={gpu_count}",
-        f'-var=version="{version}"',
-        f'-var=system_user_password="{system_user_password}"',
-        f'-var=isaacsim="{isaacsim}"',
-        f'-var=isaaclab="{isaaclab}"',
-        f'-var=isaaclab_arena="{isaaclab_arena}"',
-        f"-var=in_china=false",
+        _v("gcp_project", project),
+        _v("gcp_zone", zone),
+        _v("instance_type", instance_type),
+        _v("gpu_type", gpu_type),
+        f"-var=gpu_count={int(gpu_count)}",
+        _v("version", version),
+        _v("system_user_password", system_user_password),
+        _v("isaacsim", isaacsim),
+        _v("isaaclab", isaaclab),
+        _v("isaaclab_arena", isaaclab_arena),
+        "-var=in_china=false",
     ]
 
     if image_name:
-        packer_vars.append(f'-var=image_name="{full_image_name}"')
+        packer_vars.append(_v("image_name", full_image_name))
 
     packer_cmd = (
         f"packer build " + " ".join(packer_vars) + f" {packer_dir}/isaac-workstation.pkr.hcl"
