@@ -42,3 +42,7 @@ variable "boot_disk_type" {
 variable "os_username" {
   type = string
 }
+
+variable "region" {
+  type = string
+}

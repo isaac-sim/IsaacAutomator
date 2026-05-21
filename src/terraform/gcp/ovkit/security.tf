@@ -3,6 +3,13 @@ resource "google_compute_network" "default" {
   name = "${var.prefix}-network"
 }
 
+# Static external IP so the instance keeps the same public address
+# across stop/start cycles. An ephemeral IP would be released on stop.
+resource "google_compute_address" "static_ip" {
+  name   = "${var.prefix}-ip"
+  region = var.region
+}
+
 # all egress
 resource "google_compute_firewall" "egress" {
   name    = "${var.prefix}-fwrules-egress"

@@ -46,7 +46,9 @@ resource "google_compute_instance" "default" {
 
   network_interface {
     network = google_compute_network.default.self_link
-    access_config {}
+    access_config {
+      nat_ip = google_compute_address.static_ip.address
+    }
   }
 }
 

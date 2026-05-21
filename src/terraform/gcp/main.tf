@@ -9,8 +9,14 @@ terraform {
   }
 }
 
+locals {
+  # Derive region from zone (e.g. "us-central1-a" -> "us-central1").
+  region = join("-", slice(split("-", var.zone), 0, length(split("-", var.zone)) - 1))
+}
+
 provider "google" {
   project = var.project
+  region  = local.region
   zone    = var.zone
 }
 
@@ -35,4 +41,5 @@ module "isaac_workstation" {
   ingress_cidrs      = var.ingress_cidrs
   boot_disk_type     = var.boot_disk_type
   os_username        = var.os_username
+  region             = local.region
 }
