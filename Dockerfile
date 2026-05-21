@@ -42,12 +42,12 @@ RUN apt-get update
 RUN apt-get install -qy terraform
 
 # install packer & plugins (only copy the files needed for packer init)
-COPY src/packer/azure/isaac/main.pkr.hcl /tmp/app/src/packer/azure/isaac/
+COPY src/packer/azure/isaac-workstation.pkr.hcl /tmp/app/src/packer/azure/
 COPY src/packer/aws/isaac-workstation.pkr.hcl /tmp/app/src/packer/aws/
 RUN if [ "$WITH_PACKER" = "1" ]; then \
     apt-get install -yq packer; \
-    (cd /tmp/app/src/packer/azure/isaac && packer init .) \
-    && (cd /tmp/app/src/packer/aws && packer init isaac-workstation.pkr.hcl) \
+    (cd /tmp/app/src/packer/azure && packer init isaac-workstation.pkr.hcl) \
+    && (cd /tmp/app/src/packer/aws && packer init isaac-workstation.pkr.hcl); \
     else \
     echo "Skipping Packer installation"; \
     fi

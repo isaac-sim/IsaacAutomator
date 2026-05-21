@@ -62,3 +62,48 @@ def azure_start_instance(vm_id, verbose=False):
         exit_on_error=True,
         capture_output=False,
     )
+
+
+def azure_get_subscription_id(verbose=False):
+    """
+    Return the active Azure subscription id from `az account show`.
+    Returns empty string if no subscription is selected.
+    """
+    res = shell_command(
+        "az account show --query id -o tsv",
+        verbose=verbose,
+        exit_on_error=False,
+        capture_output=True,
+    )
+    if res.returncode != 0:
+        return ""
+    return res.stdout.decode().strip()
+
+
+def azure_ensure_resource_group(name, location, verbose=False):
+    """
+    Create the named resource group in the given location if it does not exist.
+    Idempotent - succeeds when the group is already present.
+    """
+    res = shell_command(
+        f"az group show -n {name}",
+        verbose=verbose,
+        exit_on_error=False,
+        capture_output=True,
+    )
+    if res.returncode == 0:
+        if verbose:
+            click.echo(
+                colorize_info(f"* Resource group '{name}' already exists.")
+            )
+        return
+
+    click.echo(
+        colorize_info(f"* Creating resource group '{name}' in '{location}'...")
+    )
+    shell_command(
+        f"az group create -n {name} -l {location}",
+        verbose=verbose,
+        exit_on_error=True,
+        capture_output=not verbose,
+    )

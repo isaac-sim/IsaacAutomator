@@ -1,0 +1,317 @@
+#!/usr/bin/env python3
+
+# region copyright
+# Copyright 2023-2026 NVIDIA Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# endregion
+
+import os
+import sys
+from datetime import date
+
+import click
+
+from src.python.azure import (
+    azure_ensure_resource_group,
+    azure_get_subscription_id,
+    azure_login,
+)
+from src.python.config import c as config
+from src.python.debug import debug_break, debug_start  # noqa
+from src.python.deploy_command import DeployCommand
+from src.python.utils import (
+    colorize_error,
+    colorize_info,
+    colorize_prompt,
+    shell_command,
+)
+
+
+class ImageAzureCommand(DeployCommand):
+    """
+    Defines options specific for "image-azure" command.
+    """
+
+    # supported Azure instance types (same as deploy-azure)
+    AZURE_OVKIT_INSTANCE_TYPES = [
+        # T4 - https://learn.microsoft.com/en-us/azure/virtual-machines/nct4-v3-series
+        "Standard_NC4as_T4_v3",
+        "Standard_NC8as_T4_v3",
+        "Standard_NC16as_T4_v3",
+        "Standard_NC64as_T4_v3",
+        # A10 - https://learn.microsoft.com/en-us/azure/virtual-machines/nv-a10-v5-series
+        "Standard_NV6ads_A10_v5",
+        "Standard_NV12ads_A10_v5",
+        "Standard_NV18ads_A10_v5",
+        "Standard_NV36ads_A10_v5",
+        "Standard_NV36adms_A10_v5",
+        "Standard_NV72ads_A10_v5",
+    ]
+
+    @staticmethod
+    def ovkit_instance_type_callback(ctx, param, value):
+        if value not in ImageAzureCommand.AZURE_OVKIT_INSTANCE_TYPES:
+            raise click.BadParameter(
+                colorize_error(
+                    f"Invalid instance type: {value}. Valid values: "
+                    + ", ".join(ImageAzureCommand.AZURE_OVKIT_INSTANCE_TYPES)
+                )
+            )
+        return value
+
+    def make_context(self, info_name, args, parent=None, **extra):
+        """Allow image name as an unnamed first argument."""
+        args = list(args)
+        if args and not args[0].startswith("-") and "--image-name" not in args:
+            args = ["--image-name", args[0]] + args[1:]
+        return click.core.Command.make_context(
+            self, info_name, args, parent=parent, **extra
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # remove params not applicable to image building
+        self.params = [
+            p
+            for p in self.params
+            if p.name
+            not in (
+                "in_china",
+                "from_image",
+                "ingress_cidrs",
+                "vnc_password",
+                "upload",
+                "deployment_name",
+            )
+        ]
+
+        # --image-name (insert first so it's prompted before other options)
+        self.params.insert(
+            0,
+            click.core.Option(
+                ("--image-name",),
+                show_default="<current date>",
+                default=lambda: date.today().strftime("%Y-%m-%d"),
+                help="Image name. Will be prefixed with"
+                " 'isaac_automator.isaacworkstation.'.",
+                prompt=colorize_prompt(
+                    "* Image name (will be prefixed with"
+                    " 'isaac_automator.isaacworkstation.')"
+                ),
+            ),
+        )
+
+        # replace --existing with overwrite/fail
+        self.params = [p for p in self.params if p.name != "existing"]
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--existing",),
+                type=click.Choice(["overwrite", "fail"]),
+                default="fail",
+                show_default=True,
+                help="What to do if an image with the same name already exists:"
+                " 'overwrite' will delete the old image first,"
+                " 'fail' will abort the build.",
+            ),
+        )
+
+        # --instance-type
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                (
+                    "--instance-type",
+                    "--isaac-workstation-instance-type",
+                    "isaac_workstation_instance_type",
+                ),
+                prompt=colorize_prompt(
+                    "* Instance Type for Packer build"
+                    " (see https://learn.microsoft.com/en-us/azure/virtual-machines/sizes-gpu)"
+                ),
+                show_default=True,
+                default=config["azure_default_isaac_workstation_instance_type"],
+                callback=ImageAzureCommand.ovkit_instance_type_callback,
+                help="Instance type for the Packer build VM. Supported: "
+                + ", ".join(self.AZURE_OVKIT_INSTANCE_TYPES)
+                + ".",
+            ),
+        )
+
+        # --region (Azure location)
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--region",),
+                show_default=True,
+                default="westus3",
+                help="Azure location (e.g. westus3, eastus). See"
+                " https://azure.microsoft.com/en-us/global-infrastructure/geographies/.",
+                prompt=colorize_prompt(
+                    "* Azure location (e.g. westus3, eastus,"
+                    " see https://azure.microsoft.com/en-us/global-infrastructure/geographies/)"
+                ),
+                callback=lambda ctx, param, value: value.lower().replace(" ", ""),
+            ),
+        )
+
+        # --resource-group (where the captured managed image is stored)
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--resource-group",),
+                show_default=True,
+                default="isaac_automator.packer",
+                help="Azure resource group where the captured managed image"
+                " is stored. Will be created if it does not exist.",
+            ),
+        )
+
+        # --login/--no-login
+        self.params.insert(
+            len(self.params),
+            click.core.Option(
+                ("--login/--no-login",),
+                default=True,
+                show_default=True,
+                help="Log into Azure with `az login`. Skip if you are already"
+                " logged in to save time.",
+            ),
+        )
+
+
+def delete_managed_image(resource_group, image_name, verbose=False):
+    """
+    Delete an Azure managed image by name in the given resource group.
+    No-op if the image does not exist.
+    """
+    res = shell_command(
+        f"az image show -g {resource_group} -n {image_name}",
+        verbose=verbose,
+        exit_on_error=False,
+        capture_output=True,
+    )
+    if res.returncode != 0:
+        return
+
+    click.echo(
+        colorize_info(
+            f"* Deleting existing managed image '{image_name}' from '{resource_group}'..."
+        )
+    )
+    shell_command(
+        f"az image delete -g {resource_group} -n {image_name}",
+        verbose=verbose,
+        exit_on_error=True,
+        capture_output=not verbose,
+    )
+
+
+def build_azure_image(params, config):
+    """
+    Build Azure managed image using Packer.
+    """
+
+    debug = params["debug"]
+    region = params["region"]
+    instance_type = params["isaac_workstation_instance_type"]
+    isaacsim = params["isaacsim"]
+    isaaclab = params["isaaclab"]
+    isaaclab_arena = params["isaaclab_arena"]
+    system_user_password = params["system_user_password"]
+    resource_group = params["resource_group"]
+    image_name = params.get("image_name", "")
+    existing = params["existing"]
+
+    version = os.environ.get("VERSION", "")
+    if not version:
+        click.echo(colorize_error("Error: VERSION environment variable is not set."))
+        sys.exit(1)
+
+    # log into Azure (uses persistent state/.azure credentials)
+    if params["login"]:
+        azure_login(verbose=debug)
+
+    # ensure subscription id is available for packer
+    subscription_id = azure_get_subscription_id(verbose=debug)
+    if not subscription_id:
+        click.echo(
+            colorize_error(
+                "Error: Could not determine Azure subscription id. Run `az login`"
+                " or set AZURE_SUBSCRIPTION_ID."
+            )
+        )
+        sys.exit(1)
+    os.environ["AZURE_SUBSCRIPTION_ID"] = subscription_id
+
+    # ensure destination resource group exists
+    azure_ensure_resource_group(resource_group, region, verbose=debug)
+
+    # handle pre-existing image
+    full_image_name = (
+        f"isaac_automator.isaacworkstation.{image_name}" if image_name else ""
+    )
+    if existing == "overwrite" and full_image_name:
+        delete_managed_image(resource_group, full_image_name, verbose=debug)
+
+    packer_dir = f"{config['app_dir']}/src/packer/azure"
+
+    # initialize packer plugins
+    click.echo(colorize_info("* Initializing Packer..."))
+    shell_command(
+        f"packer init {packer_dir}/isaac-workstation.pkr.hcl",
+        verbose=debug,
+    )
+
+    # build packer command
+    packer_vars = [
+        f'-var=azure_location="{region}"',
+        f'-var=vm_size="{instance_type}"',
+        f'-var=managed_image_resource_group_name="{resource_group}"',
+        f'-var=version="{version}"',
+        f'-var=system_user_password="{system_user_password}"',
+        f'-var=isaacsim="{isaacsim}"',
+        f'-var=isaaclab="{isaaclab}"',
+        f'-var=isaaclab_arena="{isaaclab_arena}"',
+        f"-var=in_china=false",
+    ]
+
+    if image_name:
+        packer_vars.append(f'-var=image_name="{full_image_name}"')
+
+    packer_cmd = (
+        f"packer build " + " ".join(packer_vars) + f" {packer_dir}/isaac-workstation.pkr.hcl"
+    )
+
+    click.echo(colorize_info("* Building Azure managed image with Packer..."))
+
+    if debug:
+        click.echo(colorize_info(f"* Command: {packer_cmd}"))
+
+    shell_command(packer_cmd, verbose=debug)
+
+    click.echo(colorize_info("* Image build complete!"))
+
+
+@click.command(cls=ImageAzureCommand)
+def main(**params):
+    build_azure_image(params, config)
+
+
+if __name__ == "__main__":
+    if os.path.exists("/.dockerenv"):
+        main()
+    else:
+        shell_command(f"./run '{' '.join(sys.argv)}'", verbose=True)
