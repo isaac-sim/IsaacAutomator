@@ -251,7 +251,7 @@ Run `./deploy-<cloud> --help` to see the full list of options. Key options inclu
   - `run_ansible` — re-run software configuration (Ansible) only
 - `--instance-type` — Cloud VM instance type (each cloud has its own supported list and default).
 - `--isaacsim` / `--isaaclab` / `--isaaclab-arena` — Git ref for Isaac Sim / Isaac Lab / Isaac Lab Arena version, or `no` to skip installation.
-- `--from-image` — Deploy from a pre-built VM image to speed up provisioning (not supported on GCP).
+- `--from-image` — Deploy from a pre-built VM image to speed up provisioning (supported on AWS, Azure, and GCP; see [Speeding Up Deployment with Pre-Built Images](#speeding-up-deployment-with-pre-built-images)).
 - `--in-china` — Use local mirrors for deployments in China. Choices: `auto` (default), `yes`, `no`.
 - `--prefix` — Prefix for created cloud resource names (default: `isaacautomator`).
 - `--ingress-cidrs` — CIDR blocks for allowed ingress traffic, comma-separated. Use `myip` for your current public IP, or `myip/16`, `myip/24` for subnets.
@@ -348,7 +348,6 @@ Options:
                                 Number of GPUs. N1: NVIDIA T4, G2: NVIDIA L4,
                                 G4: NVIDIA RTX PRO 6000.  [default: 1]
 
-Note: --from-image is not supported on GCP.
 ```
 
 </details>
@@ -539,6 +538,8 @@ By default, `./start` re-runs necessary Ansible steps (such as ECC disabling, et
 ./start <deployment-name> --quick
 ```
 
+The public IP address is preserved across stop/start cycles on all supported clouds. AWS uses an Elastic IP, GCP reserves a static external address, and Azure VMs retain their public IP while the resource exists.
+
 ### Uploading Data
 
 You can upload user data from the `uploads/` folder (in the project root) to the deployment by running the following command:
@@ -630,28 +631,70 @@ Key options:
 
 ### Speeding Up Deployment with Pre-Built Images
 
-_At the moment, only `./image-aws` command is implemented. Versions for other clouds are in the works._
+You can build pre-baked VM images so future deployments skip the lengthy software-install phase. Pass `--from-image` to `./deploy-<cloud>` to use the most recent image. Image builds wrap Packer and handle cloud credential management automatically.
 
-You can build pre-built AWS AMIs to speed up future deployments (using the `--from-image` flag). The `image-aws` command wraps Packer and handles AWS credential management automatically:
+| Command       | Cloud | Image type                           |
+| ------------- | ----- | ------------------------------------ |
+| `./image-aws` | AWS   | AMI in the active region             |
+| `./image-azure` | Azure | Managed image in a resource group  |
+| `./image-gcp` | GCP   | Custom image in the active project   |
+
+All three commands share the same workflow:
 
 ```sh
 # enter Isaac Automator container
 ./run
 # inside container:
-./image-aws
+./image-aws        # or ./image-azure / ./image-gcp
 ```
 
-The AMI name defaults to the current date and is automatically prefixed with `isaacautomator.isaacworkstation.`. When deploying with `--from-image`, Terraform picks the most recent AMI matching this prefix.
+The image name defaults to the current date. The cloud-specific prefix is added automatically. When deploying with `--from-image`, Terraform picks the most recent image matching the prefix.
+
+#### `./image-aws`
+
+Builds an AMI prefixed with `isaacautomator.isaacworkstation.`.
 
 Key options:
 
 - The image name can be passed as a positional argument: `./image-aws my-image-name`
 - `--instance-type` — Instance type for the Packer build (G4dn, G5, G6, G6e supported; default: `g6e.2xlarge`)
 - `--region` — AWS Region, can be entered as `us-east-1` or `US East 1` (default: `us-east-1`)
-- `--existing` — What to do if an AMI with the same name already exists: `overwrite` or `fail` (default: `fail`)
-- `--isaacsim` / `--isaaclab` / `--isaaclab-arena` — Git refs for the versions to bake into the image
+- `--existing` — `overwrite` or `fail` if an AMI with the same name already exists (default: `fail`)
+- `--isaacsim` / `--isaaclab` / `--isaaclab-arena` — Git refs to bake into the image
 
 Tip: Run `./image-aws --help` to see all options.
+
+#### `./image-azure`
+
+Builds an Azure managed image prefixed with `isaac_automator.isaacworkstation.`. The image is stored in the resource group given by `--resource-group` (default: `isaac_automator.packer`, created automatically if missing).
+
+Key options:
+
+- The image name can be passed as a positional argument: `./image-azure my-image-name`
+- `--instance-type` — VM size for the Packer build (T4/A10 series, see `./image-azure --help`; default: `Standard_NV36ads_A10_v5`)
+- `--region` — Azure location (default: `westus3`)
+- `--resource-group` — Resource group where the captured image is stored (default: `isaac_automator.packer`)
+- `--existing` — `overwrite` or `fail` if an image with the same name already exists (default: `fail`)
+- `--login` / `--no-login` — Whether to run `az login` first (default: `--login`)
+- `--isaacsim` / `--isaaclab` / `--isaaclab-arena` — Git refs to bake into the image
+
+Tip: Run `./image-azure --help` to see all options.
+
+#### `./image-gcp`
+
+Builds a GCP custom image prefixed with `isaac-automator-isaacworkstation-` (GCP image names are lowercase and use dashes).
+
+Key options:
+
+- The image name can be passed as a positional argument: `./image-gcp my-image-name`
+- `--project` — GCP project ID (defaults to the active `gcloud` project)
+- `--zone` — Zone for the Packer build instance (default: `us-central1-a`)
+- `--instance-type` — Instance type for the Packer build (G2/N1/G4 supported; default: `g2-standard-8`)
+- `--gpu-type` / `--gpu-count` — GPU accelerator to attach during build (defaults: `nvidia-l4`, `1`). Use `nvidia-tesla-t4` with `n1-*`, `nvidia-l4` with `g2-*`, `nvidia-rtx-pro-6000` with `g4-*`.
+- `--existing` — `overwrite` or `fail` if an image with the same name already exists (default: `fail`)
+- `--isaacsim` / `--isaaclab` / `--isaaclab-arena` — Git refs to bake into the image
+
+Tip: Run `./image-gcp --help` to see all options.
 
 ## Tips
 
