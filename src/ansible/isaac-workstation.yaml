@@ -23,6 +23,9 @@
       # packer checks connectivity beforehand
       - skip_in_image
       - on_stop_start
+      # included so ./start --quick (which uses -t __autorun) still waits
+      # for sshd before kicking off the autorun task
+      - __autorun
 
 - name: Deploy Isaac Workstation
   hosts: isaac_workstation
