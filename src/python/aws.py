@@ -19,6 +19,8 @@ Utils for AWS
 """
 
 import json
+import os
+import sys
 from pathlib import Path
 
 import click
@@ -29,6 +31,14 @@ from src.python.utils import (
     colorize_info,
     shell_command,
 )
+
+
+def _aws_env_credentials_set():
+    """True when AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are both in env."""
+    return bool(
+        os.environ.get("AWS_ACCESS_KEY_ID")
+        and os.environ.get("AWS_SECRET_ACCESS_KEY")
+    )
 
 # AWS credentials are stored in state/.aws/ which is symlinked to /root/.aws/
 # in the Docker container. This makes them compatible with the AWS CLI
@@ -68,9 +78,25 @@ def aws_cli_set(key, value, verbose=False):
 
 def aws_load_credentials(verbose=False):
     """
-    Load AWS credentials from the AWS CLI configuration.
+    Load AWS credentials, preferring env vars over the AWS CLI configuration.
     Returns dict with aws_access_key_id, aws_secret_access_key, aws_session_token, region.
     """
+    if _aws_env_credentials_set():
+        if verbose:
+            click.echo(
+                colorize_info(
+                    "* Loading AWS credentials from"
+                    " AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY env vars."
+                )
+            )
+        return {
+            "aws_access_key_id": os.environ.get("AWS_ACCESS_KEY_ID", ""),
+            "aws_secret_access_key": os.environ.get("AWS_SECRET_ACCESS_KEY", ""),
+            "aws_session_token": os.environ.get("AWS_SESSION_TOKEN", ""),
+            "region": os.environ.get("AWS_DEFAULT_REGION", "")
+            or _aws_cli_get("region", verbose=verbose),
+        }
+
     if verbose:
         click.echo(colorize_info(f"* Loading AWS credentials from {AWS_STATE_DIR}/"))
 
@@ -193,11 +219,15 @@ def _aws_sso_login(verbose=False):
 
 def aws_validate_credentials(deployment_name=None, region=None, verbose=False):
     """
-    Validate AWS credentials using SSO login flow.
+    Validate AWS credentials.
 
-    Clears any stale exported credentials, checks the default credential chain,
-    and if invalid, runs `aws login --remote` to authenticate. After successful
-    login, exports resolved credentials so Terraform and Packer can use them.
+    Precedence:
+      1. AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY env vars (validated via STS;
+         no SSO fallback and no writes to the AWS config file).
+      2. SSO login flow: clears any stale exported credentials, checks the
+         default credential chain, and if invalid runs `aws login --remote`.
+         After a successful login, exports resolved credentials so Terraform
+         and Packer can use them.
 
     Since ~/.aws is symlinked to state/.aws/, credentials persist across
     container restarts.
@@ -207,10 +237,36 @@ def aws_validate_credentials(deployment_name=None, region=None, verbose=False):
     click.echo(colorize_info("* Validating AWS credentials..."))
 
     stored_region = _aws_cli_get("region", verbose=verbose)
-    effective_region = region or stored_region or "us-east-1"
+    effective_region = (
+        region
+        or os.environ.get("AWS_DEFAULT_REGION")
+        or stored_region
+        or "us-east-1"
+    )
 
     if verbose:
         click.echo(colorize_info(f"* Using region: {effective_region}"))
+
+    # Path 1: credentials supplied via env vars - skip SSO and config writes.
+    if _aws_env_credentials_set():
+        click.echo(
+            colorize_info(
+                "* Using AWS credentials from"
+                " AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY env vars."
+            )
+        )
+        if _aws_sts_check(region=effective_region, verbose=verbose):
+            click.echo(colorize_info("* AWS credentials are valid!"))
+            _aws_set_region(region, stored_region, effective_region, verbose)
+            return
+        click.echo(
+            colorize_error(
+                "* AWS credentials from env vars are invalid or expired."
+                " Unset AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY to fall back"
+                " to SSO login."
+            )
+        )
+        sys.exit(1)
 
     # clear stale exported credentials so the default chain uses SSO
     _aws_clear_credentials(verbose=verbose)

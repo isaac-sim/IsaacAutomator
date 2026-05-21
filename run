@@ -8,11 +8,19 @@ if [[ $(docker images -q "$TAG" 2> /dev/null) == '' ]]; then
   "${SELF_DIR}/build"
 fi
 
-# Forward some env vars if they are set.
-# We dont want to forward aws/gcp/azure creds because we store them in state/ dir
-# so our deployment is completely isolated from the host and self-sufficient.
+# Forward selected credential env vars if they are set on the host.
+# AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY (and optional AWS_SESSION_TOKEN /
+# AWS_DEFAULT_REGION) take precedence over the SSO flow that stores creds in
+# state/.aws/. GCP/Azure creds are still persisted in state/ so deployments
+# stay self-contained when env vars are absent.
 ENV_ARGS=()
-for var in ALIYUN_ACCESS_KEY ALIYUN_SECRET_KEY; do
+for var in \
+  ALIYUN_ACCESS_KEY \
+  ALIYUN_SECRET_KEY \
+  AWS_ACCESS_KEY_ID \
+  AWS_SECRET_ACCESS_KEY \
+  AWS_SESSION_TOKEN \
+  AWS_DEFAULT_REGION; do
   if [[ -n "${!var}" ]]; then
     ENV_ARGS+=(-e "${var}=${!var}")
   fi

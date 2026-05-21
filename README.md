@@ -446,12 +446,14 @@ Each cloud provider's credentials are stored inside the `state/` directory so th
 
 | Cloud         | Storage Location      | How Credentials Are Set                                                          |
 | ------------- | --------------------- | -------------------------------------------------------------------------------- |
-| AWS           | `state/.aws/`         | `aws configure` — prompted automatically when credentials are missing or expired |
+| AWS           | `state/.aws/` or env  | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` env vars when set on the host; otherwise SSO login |
 | GCP           | `state/.gcp/`         | `gcloud auth login` — prompted during the first deployment                       |
 | Azure         | `state/.azure/`       | `az login` — prompted during the first deployment                                |
 | Alibaba Cloud | Environment variables | `ALIYUN_ACCESS_KEY` and `ALIYUN_SECRET_KEY` — passed from the host via `./run`   |
 
 All commands that interact with cloud resources (`deploy-*`, `start`, `stop`, `destroy`, `repair`) validate credentials before proceeding and prompt you to re-authenticate if they are invalid or expired.
+
+For AWS, if `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` are set on the host before invoking any command, they are forwarded into the container by `./run` and take precedence over the SSO flow. `AWS_SESSION_TOKEN` (for temporary credentials) and `AWS_DEFAULT_REGION` are forwarded too if set. Unset them to fall back to SSO login.
 
 ### Connecting to Deployed Isaac Workstation
 
