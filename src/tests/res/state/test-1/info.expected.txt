@@ -1,12 +1,12 @@
-************************************************
-* Isaac Workstation is deployed at 11.22.33.44 *
-************************************************
+*************************************
+* Isaac Workstation is deployed at  *
+*************************************
 
 * To connect via SSH:
 
 ./ssh test-1
 
-* To connect via noVNC:
+* To connect via noVNC (opens in browser):
 
 ./novnc test-1
 
@@ -14,7 +14,7 @@
 
 0. Download NoMachine client at https://downloads.nomachine.com/, install and launch it.
 1. Click "Add" button.
-2. Enter Host: "11.22.33.44".
+2. Enter Host: "".
 3. In "Configuration" > "Use key-based authentication with a key you provide",
    select file "state/test-1/key.pem".
 4. Click "Connect" button.
