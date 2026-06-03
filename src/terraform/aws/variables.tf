@@ -13,6 +13,12 @@ variable "region" {
   type = string
 }
 
+# optional availability zone (e.g. "us-west-2b"); empty = auto-select
+variable "availability_zone" {
+  default = ""
+  type    = string
+}
+
 variable "from_image" {
   default = false
   type    = bool

@@ -14,6 +14,13 @@ variable "region" {
   type = string
 }
 
+# optional availability zone (e.g. "us-west-2b"); empty = auto-select the
+# first zone that offers the instance type
+variable "availability_zone" {
+  default = ""
+  type    = string
+}
+
 variable "from_image" {
   default = true
   type    = bool

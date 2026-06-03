@@ -17,6 +17,7 @@
 # endregion
 
 import os
+import re
 import sys
 
 import click
@@ -100,6 +101,35 @@ class DeployAWSCommand(DeployCommand):
 
         return value
 
+    @staticmethod
+    def availability_zone_callback(ctx, param, value):
+        """
+        Called after parsing --availability-zone option.
+        Accepts a full AZ name ("us-west-2b"), a bare zone letter ("b"),
+        or an empty value (auto-select the first zone offering the instance type).
+        """
+
+        value = (value or "").strip().lower()
+
+        if value == "":
+            return ""
+
+        region = ctx.params.get("region", "")
+
+        # accept a bare zone suffix (e.g. "b") and prefix it with the region
+        if region and re.fullmatch(r"[a-z]", value):
+            value = f"{region}{value}"
+
+        # sanity check: the zone must belong to the selected region
+        if region and not value.startswith(region):
+            raise click.BadParameter(
+                colorize_error(
+                    f'Availability zone "{value}" is not in region "{region}".'
+                )
+            )
+
+        return value
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -144,6 +174,27 @@ class DeployAWSCommand(DeployCommand):
             ),
         )
 
+        # --availability-zone
+        self.params.insert(
+            # insert before --ingress-cidrs option (and after --region, so the
+            # region is parsed before the AZ callback runs)
+            self.param_index("ingress_cidrs"),
+            click.core.Option(
+                ("--availability-zone", "--az"),
+                default="",
+                show_default=True,
+                callback=DeployAWSCommand.availability_zone_callback,
+                prompt=colorize_prompt(
+                    "* Availability Zone (e.g. us-west-2b, or just \"b\"; "
+                    "leave empty to auto-select. Use this to route around "
+                    '"InsufficientInstanceCapacity" errors in a given zone)'
+                ),
+                help="AWS availability zone for the instance, e.g. 'us-west-2b'."
+                " Leave empty to auto-select the first zone that offers the"
+                " instance type. Useful to avoid per-zone GPU capacity shortages.",
+            ),
+        )
+
         # defaults
 
         self.params[self.param_index("from_image")].default = config[
@@ -179,6 +230,7 @@ class AWSDeployer(Deployer):
             self.create_tfvars(
                 {
                     "region": self.params["region"],
+                    "availability_zone": self.params.get("availability_zone", ""),
                 }
             )
 
