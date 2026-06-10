@@ -20,6 +20,7 @@ Utils for AWS
 
 import json
 import os
+import shlex
 import sys
 from pathlib import Path
 
@@ -48,14 +49,44 @@ def _aws_env_credentials_set():
 AWS_STATE_DIR = f"{config['state_dir']}/.aws"
 
 
-def _aws_cli_get(key, verbose=False):
+def _aws_profile():
+    """AWS CLI profile used by the default credential-chain SSO flow."""
+    return os.environ.get("AWS_PROFILE") or "default"
+
+
+def _aws_use_device_code():
+    """
+    Whether to use the SSO device-code flow instead of the browser flow.
+
+    Defaults to True: Isaac Automator always runs inside a container, often
+    over SSH on a headless host, where the browser flow's localhost callback
+    cannot reach the user's browser. The device-code flow only needs the user
+    to open a URL and enter a code, so it works everywhere. Set
+    AWS_SSO_USE_DEVICE_CODE to a falsey value (0/false/no) to force the
+    browser-based flow instead.
+    """
+    val = os.environ.get("AWS_SSO_USE_DEVICE_CODE")
+    if val is None:
+        return True
+    return val.strip().lower() not in ("0", "false", "no", "")
+
+
+def _aws_cli_get(key, verbose=False, profile=None):
     """
     Read a value from the AWS CLI configuration.
     Returns the value or empty string if not set.
+
+    The retrieved value is never echoed (even in verbose mode) since some
+    keys (e.g. aws_secret_access_key, aws_session_token) are secrets.
     """
+    profile_arg = f" --profile {shlex.quote(profile)}" if profile else ""
+    if verbose:
+        click.echo(
+            colorize_info(f"* Running `aws configure get {key}{profile_arg}`...")
+        )
     res = shell_command(
-        f"aws configure get {key}",
-        verbose=verbose,
+        f"aws configure get {key}{profile_arg}",
+        verbose=False,
         exit_on_error=False,
         capture_output=True,
     )
@@ -67,10 +98,15 @@ def _aws_cli_get(key, verbose=False):
 def aws_cli_set(key, value, verbose=False):
     """
     Set a value in the AWS CLI configuration.
+
+    The value is never echoed (even in verbose mode) since it may be a
+    secret such as aws_secret_access_key or aws_session_token.
     """
+    if verbose:
+        click.echo(colorize_info(f"* Running `aws configure set {key} <hidden>`..."))
     shell_command(
         f"aws configure set {key} '{value}'",
-        verbose=verbose,
+        verbose=False,
         exit_on_error=True,
         capture_output=True,
     )
@@ -164,9 +200,11 @@ def _aws_export_credentials(verbose=False):
     config so that tools like Terraform can use them via the default
     credential chain.
     """
+    if verbose:
+        click.echo(colorize_info("* Running `aws configure export-credentials`..."))
     res = shell_command(
         "aws configure export-credentials --format process",
-        verbose=verbose,
+        verbose=False,
         exit_on_error=False,
         capture_output=True,
     )
@@ -204,14 +242,56 @@ def _aws_export_credentials(verbose=False):
     return True
 
 
+def _aws_sso_profile_configured(verbose=False):
+    """
+    True when the selected AWS CLI profile has enough SSO configuration to log in.
+    Supports both current sso-session profiles and legacy inline SSO profiles.
+    """
+    profile = _aws_profile()
+    sso_account_id = _aws_cli_get(
+        "sso_account_id", verbose=verbose, profile=profile
+    )
+    sso_role_name = _aws_cli_get("sso_role_name", verbose=verbose, profile=profile)
+    sso_session = _aws_cli_get("sso_session", verbose=verbose, profile=profile)
+    sso_start_url = _aws_cli_get("sso_start_url", verbose=verbose, profile=profile)
+
+    return bool(
+        sso_account_id and sso_role_name and (sso_session or sso_start_url)
+    )
+
+
 def _aws_sso_login(verbose=False):
     """
-    Run `aws login --remote` to authenticate via SSO.
+    Authenticate with AWS IAM Identity Center using the standard AWS CLI SSO flow.
+
+    Uses the device-code flow by default so authentication works on headless
+    or remote (SSH) hosts; see _aws_use_device_code().
     """
     Path(AWS_STATE_DIR).mkdir(parents=True, exist_ok=True)
-    click.echo(colorize_info("* Running `aws login --remote`..."))
+    profile = _aws_profile()
+    device_code_arg = " --use-device-code" if _aws_use_device_code() else ""
+
+    if _aws_sso_profile_configured(verbose=verbose):
+        click.echo(
+            colorize_info(
+                f"* Running `aws sso login --profile {profile}{device_code_arg}`..."
+            )
+        )
+        shell_command(
+            f"aws sso login --profile {shlex.quote(profile)}{device_code_arg}",
+            verbose=verbose,
+            exit_on_error=False,
+        )
+        return
+
+    click.echo(
+        colorize_info(
+            f"* No AWS SSO profile is configured. Running"
+            f" `aws configure sso --profile {profile}{device_code_arg}`..."
+        )
+    )
     shell_command(
-        "aws login --remote",
+        f"aws configure sso --profile {shlex.quote(profile)}{device_code_arg}",
         verbose=verbose,
         exit_on_error=False,
     )
@@ -225,7 +305,9 @@ def aws_validate_credentials(deployment_name=None, region=None, verbose=False):
       1. AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY env vars (validated via STS;
          no SSO fallback and no writes to the AWS config file).
       2. SSO login flow: clears any stale exported credentials, checks the
-         default credential chain, and if invalid runs `aws login --remote`.
+         default credential chain, and if invalid runs the standard AWS CLI
+         SSO flow (`aws sso login` for configured profiles, or
+         `aws configure sso` otherwise).
          After a successful login, exports resolved credentials so Terraform
          and Packer can use them.
 
