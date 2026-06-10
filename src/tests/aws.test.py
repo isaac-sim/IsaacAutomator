@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 
+import io
+import json
 import os
 import unittest
+from contextlib import redirect_stdout
 from unittest import mock
 
 from src.python.aws import (
     _aws_env_credentials_set,
+    _aws_export_credentials,
     _aws_sso_profile_configured,
+    aws_cli_set,
     aws_load_credentials,
 )
 
@@ -109,6 +114,51 @@ class Test_AwsSsoProfileConfigured(unittest.TestCase):
         mock_cli_get.side_effect = lambda key, **kwargs: values[key]
 
         self.assertFalse(_aws_sso_profile_configured())
+
+
+class _FakeResult:
+    def __init__(self, returncode=0, stdout=b"", stderr=b""):
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+
+
+class Test_SecretsNotEchoed(unittest.TestCase):
+    @mock.patch("src.python.aws.shell_command")
+    def test_aws_cli_set_does_not_echo_value(self, mock_shell):
+        mock_shell.return_value = _FakeResult()
+
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            aws_cli_set("aws_secret_access_key", "topsecretvalue", verbose=True)
+
+        output = buf.getvalue()
+        self.assertNotIn("topsecretvalue", output)
+        # The generic runner must be invoked with verbose disabled so it does
+        # not echo the command (which contains the secret value).
+        self.assertFalse(mock_shell.call_args.kwargs.get("verbose", False))
+
+    @mock.patch("src.python.aws.aws_cli_set")
+    @mock.patch("src.python.aws.shell_command")
+    def test_export_credentials_does_not_echo_secrets(self, mock_shell, mock_set):
+        payload = {
+            "AccessKeyId": "ASIAEXAMPLE",
+            "SecretAccessKey": "secretkeyvalue",
+            "SessionToken": "sessiontokenvalue",
+        }
+        mock_shell.return_value = _FakeResult(stdout=json.dumps(payload).encode())
+
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            result = _aws_export_credentials(verbose=True)
+
+        output = buf.getvalue()
+        self.assertTrue(result)
+        self.assertNotIn("secretkeyvalue", output)
+        self.assertNotIn("sessiontokenvalue", output)
+        # export-credentials returns secrets on stdout, so it must run with
+        # verbose disabled to avoid the generic runner echoing them.
+        self.assertFalse(mock_shell.call_args.kwargs.get("verbose", False))
 
 
 if __name__ == "__main__":

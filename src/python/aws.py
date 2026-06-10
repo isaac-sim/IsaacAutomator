@@ -58,11 +58,18 @@ def _aws_cli_get(key, verbose=False, profile=None):
     """
     Read a value from the AWS CLI configuration.
     Returns the value or empty string if not set.
+
+    The retrieved value is never echoed (even in verbose mode) since some
+    keys (e.g. aws_secret_access_key, aws_session_token) are secrets.
     """
     profile_arg = f" --profile {shlex.quote(profile)}" if profile else ""
+    if verbose:
+        click.echo(
+            colorize_info(f"* Running `aws configure get {key}{profile_arg}`...")
+        )
     res = shell_command(
         f"aws configure get {key}{profile_arg}",
-        verbose=verbose,
+        verbose=False,
         exit_on_error=False,
         capture_output=True,
     )
@@ -74,10 +81,15 @@ def _aws_cli_get(key, verbose=False, profile=None):
 def aws_cli_set(key, value, verbose=False):
     """
     Set a value in the AWS CLI configuration.
+
+    The value is never echoed (even in verbose mode) since it may be a
+    secret such as aws_secret_access_key or aws_session_token.
     """
+    if verbose:
+        click.echo(colorize_info(f"* Running `aws configure set {key} <hidden>`..."))
     shell_command(
         f"aws configure set {key} '{value}'",
-        verbose=verbose,
+        verbose=False,
         exit_on_error=True,
         capture_output=True,
     )
@@ -171,9 +183,11 @@ def _aws_export_credentials(verbose=False):
     config so that tools like Terraform can use them via the default
     credential chain.
     """
+    if verbose:
+        click.echo(colorize_info("* Running `aws configure export-credentials`..."))
     res = shell_command(
         "aws configure export-credentials --format process",
-        verbose=verbose,
+        verbose=False,
         exit_on_error=False,
         capture_output=True,
     )
