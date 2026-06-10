@@ -4,7 +4,11 @@ import os
 import unittest
 from unittest import mock
 
-from src.python.aws import _aws_env_credentials_set, aws_load_credentials
+from src.python.aws import (
+    _aws_env_credentials_set,
+    _aws_sso_profile_configured,
+    aws_load_credentials,
+)
 
 
 class Test_AwsEnvCredentialsSet(unittest.TestCase):
@@ -64,6 +68,47 @@ class Test_AwsLoadCredentials(unittest.TestCase):
         self.assertEqual(creds["aws_secret_access_key"], "envsecret")
         self.assertEqual(creds["aws_session_token"], "envtoken")
         self.assertEqual(creds["region"], "eu-west-1")
+
+
+class Test_AwsSsoProfileConfigured(unittest.TestCase):
+    @mock.patch("src.python.aws._aws_profile", return_value="default")
+    @mock.patch("src.python.aws._aws_cli_get")
+    def test_sso_session_profile_configured(self, mock_cli_get, mock_profile):
+        values = {
+            "sso_account_id": "111122223333",
+            "sso_role_name": "DeveloperAccess",
+            "sso_session": "company-sso",
+            "sso_start_url": "",
+        }
+        mock_cli_get.side_effect = lambda key, **kwargs: values[key]
+
+        self.assertTrue(_aws_sso_profile_configured())
+
+    @mock.patch("src.python.aws._aws_profile", return_value="default")
+    @mock.patch("src.python.aws._aws_cli_get")
+    def test_legacy_sso_profile_configured(self, mock_cli_get, mock_profile):
+        values = {
+            "sso_account_id": "111122223333",
+            "sso_role_name": "DeveloperAccess",
+            "sso_session": "",
+            "sso_start_url": "https://identitycenter.amazonaws.com/ssoins-example",
+        }
+        mock_cli_get.side_effect = lambda key, **kwargs: values[key]
+
+        self.assertTrue(_aws_sso_profile_configured())
+
+    @mock.patch("src.python.aws._aws_profile", return_value="default")
+    @mock.patch("src.python.aws._aws_cli_get")
+    def test_missing_account_is_not_configured(self, mock_cli_get, mock_profile):
+        values = {
+            "sso_account_id": "",
+            "sso_role_name": "DeveloperAccess",
+            "sso_session": "company-sso",
+            "sso_start_url": "",
+        }
+        mock_cli_get.side_effect = lambda key, **kwargs: values[key]
+
+        self.assertFalse(_aws_sso_profile_configured())
 
 
 if __name__ == "__main__":

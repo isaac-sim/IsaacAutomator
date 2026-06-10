@@ -158,7 +158,7 @@ If you have completed the above steps or already have your permissions and crede
 ./deploy-aws
 ```
 
-On the first run (or when credentials expire), you will be prompted to enter your AWS credentials (via `aws configure`). The credentials are stored in `state/.aws/` and persist across Isaac Automator restarts.
+On the first run (or when credentials expire), you will be prompted to sign in with AWS IAM Identity Center (via `aws configure sso` / `aws sso login`). The credentials are stored in `state/.aws/` and persist across Isaac Automator restarts.
 
 Tip: Run `./deploy-aws --help` to see more options.
 
@@ -301,7 +301,7 @@ Options:
                                 [default: g6e.2xlarge]
   --region TEXT                 AWS Region.  [default: us-east-1]
 
-Note: AWS credentials are managed via `aws configure` and stored in
+Note: AWS credentials are managed via `aws configure sso` / `aws sso login` and stored in
 `state/.aws/`. You will be prompted to enter them on first run or when
 they expire.
 ```
@@ -446,7 +446,7 @@ Each cloud provider's credentials are stored inside the `state/` directory so th
 
 | Cloud         | Storage Location      | How Credentials Are Set                                                          |
 | ------------- | --------------------- | -------------------------------------------------------------------------------- |
-| AWS           | `state/.aws/` or env  | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` env vars when set on the host; otherwise SSO login |
+| AWS           | `state/.aws/` or env  | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` env vars when set on the host; otherwise AWS IAM Identity Center via `aws configure sso` / `aws sso login` |
 | GCP           | `state/.gcp/`         | `gcloud auth login` — prompted during the first deployment                       |
 | Azure         | `state/.azure/`       | `az login` — prompted during the first deployment                                |
 | Alibaba Cloud | Environment variables | `ALIYUN_ACCESS_KEY` and `ALIYUN_SECRET_KEY` — passed from the host via `./run`   |

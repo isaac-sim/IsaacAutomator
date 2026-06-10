@@ -20,6 +20,7 @@ Utils for AWS
 
 import json
 import os
+import shlex
 import sys
 from pathlib import Path
 
@@ -48,13 +49,19 @@ def _aws_env_credentials_set():
 AWS_STATE_DIR = f"{config['state_dir']}/.aws"
 
 
-def _aws_cli_get(key, verbose=False):
+def _aws_profile():
+    """AWS CLI profile used by the default credential-chain SSO flow."""
+    return os.environ.get("AWS_PROFILE") or "default"
+
+
+def _aws_cli_get(key, verbose=False, profile=None):
     """
     Read a value from the AWS CLI configuration.
     Returns the value or empty string if not set.
     """
+    profile_arg = f" --profile {shlex.quote(profile)}" if profile else ""
     res = shell_command(
-        f"aws configure get {key}",
+        f"aws configure get {key}{profile_arg}",
         verbose=verbose,
         exit_on_error=False,
         capture_output=True,
@@ -204,14 +211,48 @@ def _aws_export_credentials(verbose=False):
     return True
 
 
+def _aws_sso_profile_configured(verbose=False):
+    """
+    True when the selected AWS CLI profile has enough SSO configuration to log in.
+    Supports both current sso-session profiles and legacy inline SSO profiles.
+    """
+    profile = _aws_profile()
+    sso_account_id = _aws_cli_get(
+        "sso_account_id", verbose=verbose, profile=profile
+    )
+    sso_role_name = _aws_cli_get("sso_role_name", verbose=verbose, profile=profile)
+    sso_session = _aws_cli_get("sso_session", verbose=verbose, profile=profile)
+    sso_start_url = _aws_cli_get("sso_start_url", verbose=verbose, profile=profile)
+
+    return bool(
+        sso_account_id and sso_role_name and (sso_session or sso_start_url)
+    )
+
+
 def _aws_sso_login(verbose=False):
     """
-    Run `aws login --remote` to authenticate via SSO.
+    Authenticate with AWS IAM Identity Center using the standard AWS CLI SSO flow.
     """
     Path(AWS_STATE_DIR).mkdir(parents=True, exist_ok=True)
-    click.echo(colorize_info("* Running `aws login --remote`..."))
+    profile = _aws_profile()
+
+    if _aws_sso_profile_configured(verbose=verbose):
+        click.echo(colorize_info(f"* Running `aws sso login --profile {profile}`..."))
+        shell_command(
+            f"aws sso login --profile {shlex.quote(profile)}",
+            verbose=verbose,
+            exit_on_error=False,
+        )
+        return
+
+    click.echo(
+        colorize_info(
+            f"* No AWS SSO profile is configured. Running"
+            f" `aws configure sso --profile {profile}`..."
+        )
+    )
     shell_command(
-        "aws login --remote",
+        f"aws configure sso --profile {shlex.quote(profile)}",
         verbose=verbose,
         exit_on_error=False,
     )
@@ -225,7 +266,9 @@ def aws_validate_credentials(deployment_name=None, region=None, verbose=False):
       1. AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY env vars (validated via STS;
          no SSO fallback and no writes to the AWS config file).
       2. SSO login flow: clears any stale exported credentials, checks the
-         default credential chain, and if invalid runs `aws login --remote`.
+         default credential chain, and if invalid runs the standard AWS CLI
+         SSO flow (`aws sso login` for configured profiles, or
+         `aws configure sso` otherwise).
          After a successful login, exports resolved credentials so Terraform
          and Packer can use them.
 
