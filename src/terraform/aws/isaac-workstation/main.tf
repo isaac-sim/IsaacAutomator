@@ -9,12 +9,23 @@ data "aws_ec2_instance_type_offerings" "zones" {
   location_type = "availability-zone"
 }
 
+locals {
+  # availability zones that offer the requested instance type, sorted
+  offered_zones = sort(data.aws_ec2_instance_type_offerings.zones.locations)
+
+  # use the explicitly requested availability zone when provided, otherwise
+  # fall back to the first zone that offers the instance type. an explicit AZ
+  # lets the user route around per-zone GPU capacity shortages
+  # (InsufficientInstanceCapacity), which vary over time and by zone.
+  availability_zone = var.availability_zone != "" ? var.availability_zone : try(local.offered_zones[0], "not-available")
+}
+
 # create a subnet for the isaac-workstation instance
 
 resource "aws_subnet" "subnet" {
   # get a /24 block from vpc cidr
   cidr_block              = cidrsubnet(var.vpc.cidr_block, 8, 3)
-  availability_zone       = try(sort(data.aws_ec2_instance_type_offerings.zones.locations)[0], "not-available")
+  availability_zone       = local.availability_zone
   vpc_id                  = var.vpc.id
   map_public_ip_on_launch = true
 

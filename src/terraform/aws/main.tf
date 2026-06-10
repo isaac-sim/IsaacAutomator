@@ -42,6 +42,7 @@ module "isaac_workstation" {
   instance_type     = var.isaac_workstation_instance_type
   from_image        = var.from_image
   region            = var.region
+  availability_zone = var.availability_zone
   ssh_port          = var.ssh_port
   deployment_name   = var.deployment_name
   ingress_cidrs     = var.ingress_cidrs
