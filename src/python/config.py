@@ -68,13 +68,13 @@ c["alicloud_default_region"] = "us-east-1"
 c["default_prefix"] = "isaacautomator"
 
 # --isaaclab
-c["default_isaaclab_git_checkpoint"] = "v3.0.0-beta"
+c["default_isaaclab_git_checkpoint"] = "release/3.0.0-beta2"
 
 # --isaaclab-arena
-c["default_isaaclab_arena_git_checkpoint"] = "release/0.1.1"
+c["default_isaaclab_arena_git_checkpoint"] = "release/0.2.1"
 
 # --isaacsim
-c["default_isaacsim_git_checkpoint"] = "v6.0.0-dev2"
+c["default_isaacsim_git_checkpoint"] = "v6.0.0"
 
 # --ingress-cidrs
 # empty value will be replaced with the current public IP
