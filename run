@@ -20,7 +20,9 @@ for var in \
   AWS_ACCESS_KEY_ID \
   AWS_SECRET_ACCESS_KEY \
   AWS_SESSION_TOKEN \
-  AWS_DEFAULT_REGION; do
+  AWS_DEFAULT_REGION \
+  AWS_PROFILE \
+  AWS_SSO_USE_DEVICE_CODE; do
   if [[ -n "${!var}" ]]; then
     ENV_ARGS+=(-e "${var}=${!var}")
   fi

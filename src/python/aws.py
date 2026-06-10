@@ -54,6 +54,23 @@ def _aws_profile():
     return os.environ.get("AWS_PROFILE") or "default"
 
 
+def _aws_use_device_code():
+    """
+    Whether to use the SSO device-code flow instead of the browser flow.
+
+    Defaults to True: Isaac Automator always runs inside a container, often
+    over SSH on a headless host, where the browser flow's localhost callback
+    cannot reach the user's browser. The device-code flow only needs the user
+    to open a URL and enter a code, so it works everywhere. Set
+    AWS_SSO_USE_DEVICE_CODE to a falsey value (0/false/no) to force the
+    browser-based flow instead.
+    """
+    val = os.environ.get("AWS_SSO_USE_DEVICE_CODE")
+    if val is None:
+        return True
+    return val.strip().lower() not in ("0", "false", "no", "")
+
+
 def _aws_cli_get(key, verbose=False, profile=None):
     """
     Read a value from the AWS CLI configuration.
@@ -246,14 +263,22 @@ def _aws_sso_profile_configured(verbose=False):
 def _aws_sso_login(verbose=False):
     """
     Authenticate with AWS IAM Identity Center using the standard AWS CLI SSO flow.
+
+    Uses the device-code flow by default so authentication works on headless
+    or remote (SSH) hosts; see _aws_use_device_code().
     """
     Path(AWS_STATE_DIR).mkdir(parents=True, exist_ok=True)
     profile = _aws_profile()
+    device_code_arg = " --use-device-code" if _aws_use_device_code() else ""
 
     if _aws_sso_profile_configured(verbose=verbose):
-        click.echo(colorize_info(f"* Running `aws sso login --profile {profile}`..."))
+        click.echo(
+            colorize_info(
+                f"* Running `aws sso login --profile {profile}{device_code_arg}`..."
+            )
+        )
         shell_command(
-            f"aws sso login --profile {shlex.quote(profile)}",
+            f"aws sso login --profile {shlex.quote(profile)}{device_code_arg}",
             verbose=verbose,
             exit_on_error=False,
         )
@@ -262,11 +287,11 @@ def _aws_sso_login(verbose=False):
     click.echo(
         colorize_info(
             f"* No AWS SSO profile is configured. Running"
-            f" `aws configure sso --profile {profile}`..."
+            f" `aws configure sso --profile {profile}{device_code_arg}`..."
         )
     )
     shell_command(
-        f"aws configure sso --profile {shlex.quote(profile)}",
+        f"aws configure sso --profile {shlex.quote(profile)}{device_code_arg}",
         verbose=verbose,
         exit_on_error=False,
     )

@@ -160,6 +160,8 @@ If you have completed the above steps or already have your permissions and crede
 
 On the first run (or when credentials expire), you will be prompted to sign in with AWS IAM Identity Center (via `aws configure sso` / `aws sso login`). The credentials are stored in `state/.aws/` and persist across Isaac Automator restarts.
 
+By default the sign-in uses the AWS SSO **device-code flow** (open a URL and enter a code), which works on headless and remote (SSH) hosts where a local browser is not reachable. If you are on a machine with a local browser and prefer the browser-based flow, set `AWS_SSO_USE_DEVICE_CODE=0` on the host before running `./run`.
+
 Tip: Run `./deploy-aws --help` to see more options.
 
 #### GCP

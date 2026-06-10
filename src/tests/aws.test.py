@@ -10,7 +10,9 @@ from unittest import mock
 from src.python.aws import (
     _aws_env_credentials_set,
     _aws_export_credentials,
+    _aws_sso_login,
     _aws_sso_profile_configured,
+    _aws_use_device_code,
     aws_cli_set,
     aws_load_credentials,
 )
@@ -114,6 +116,69 @@ class Test_AwsSsoProfileConfigured(unittest.TestCase):
         mock_cli_get.side_effect = lambda key, **kwargs: values[key]
 
         self.assertFalse(_aws_sso_profile_configured())
+
+
+class Test_AwsUseDeviceCode(unittest.TestCase):
+    def test_default_is_device_code(self):
+        env = dict(os.environ)
+        env.pop("AWS_SSO_USE_DEVICE_CODE", None)
+        with mock.patch.dict(os.environ, env, clear=True):
+            self.assertTrue(_aws_use_device_code())
+
+    def test_disabled_values(self):
+        for val in ("0", "false", "no", "False", "NO", ""):
+            with mock.patch.dict(
+                os.environ, {"AWS_SSO_USE_DEVICE_CODE": val}, clear=False
+            ):
+                self.assertFalse(_aws_use_device_code(), msg=val)
+
+    def test_enabled_values(self):
+        for val in ("1", "true", "yes", "True"):
+            with mock.patch.dict(
+                os.environ, {"AWS_SSO_USE_DEVICE_CODE": val}, clear=False
+            ):
+                self.assertTrue(_aws_use_device_code(), msg=val)
+
+
+class Test_AwsSsoLoginCommand(unittest.TestCase):
+    @mock.patch("src.python.aws.Path")
+    @mock.patch("src.python.aws._aws_sso_profile_configured", return_value=True)
+    @mock.patch("src.python.aws._aws_profile", return_value="default")
+    @mock.patch("src.python.aws.shell_command")
+    def test_login_uses_device_code_by_default(self, mock_shell, *_):
+        env = dict(os.environ)
+        env.pop("AWS_SSO_USE_DEVICE_CODE", None)
+        with mock.patch.dict(os.environ, env, clear=True):
+            _aws_sso_login()
+        cmd = mock_shell.call_args.args[0]
+        self.assertIn("aws sso login", cmd)
+        self.assertIn("--use-device-code", cmd)
+
+    @mock.patch("src.python.aws.Path")
+    @mock.patch("src.python.aws._aws_sso_profile_configured", return_value=True)
+    @mock.patch("src.python.aws._aws_profile", return_value="default")
+    @mock.patch("src.python.aws.shell_command")
+    def test_login_browser_flow_when_disabled(self, mock_shell, *_):
+        with mock.patch.dict(
+            os.environ, {"AWS_SSO_USE_DEVICE_CODE": "0"}, clear=False
+        ):
+            _aws_sso_login()
+        cmd = mock_shell.call_args.args[0]
+        self.assertIn("aws sso login", cmd)
+        self.assertNotIn("--use-device-code", cmd)
+
+    @mock.patch("src.python.aws.Path")
+    @mock.patch("src.python.aws._aws_sso_profile_configured", return_value=False)
+    @mock.patch("src.python.aws._aws_profile", return_value="default")
+    @mock.patch("src.python.aws.shell_command")
+    def test_configure_sso_uses_device_code_by_default(self, mock_shell, *_):
+        env = dict(os.environ)
+        env.pop("AWS_SSO_USE_DEVICE_CODE", None)
+        with mock.patch.dict(os.environ, env, clear=True):
+            _aws_sso_login()
+        cmd = mock_shell.call_args.args[0]
+        self.assertIn("aws configure sso", cmd)
+        self.assertIn("--use-device-code", cmd)
 
 
 class _FakeResult:
