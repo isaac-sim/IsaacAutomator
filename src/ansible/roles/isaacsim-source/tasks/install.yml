@@ -109,6 +109,19 @@
     owner: "{{ ansible_user }}"
   when: isaacsim_build_needed
 
+# Isaac Sim's post_install.sh runs install_icon.py, which only writes
+# ~/.local/share/applications/IsaacSim.desktop when that directory already
+# exists (and exits 0 regardless). On a fresh headless VM it does not exist,
+# so create it first; otherwise the icon is silently never produced and the
+# copy below fails.
+- name: Ensure user applications directory exists for the Isaac Sim icon
+  file:
+    path: "/home/{{ ansible_user }}/.local/share/applications"
+    state: directory
+    mode: "0755"
+  become_user: "{{ ansible_user }}"
+  when: isaacsim_build_needed
+
 - name: Run post_install.sh
   shell: ./post_install.sh 2>&1 | tee /tmp/isaacsim-post-install.log
   args:
@@ -116,6 +129,14 @@
   become_user: "{{ ansible_user }}"
   when: isaacsim_build_needed
 
+- name: Check whether Isaac Sim created its desktop icon
+  stat:
+    path: "/home/{{ ansible_user }}/.local/share/applications/IsaacSim.desktop"
+  register: isaacsim_desktop_icon
+  when: isaacsim_build_needed
+
+# Guarded so a future Isaac Sim change that stops emitting the icon cannot
+# re-break the playbook; the deploy still succeeds, just without the shortcut.
 - name: Copy Isaac Sim desktop icon to Desktop
   copy:
     src: "/home/{{ ansible_user }}/.local/share/applications/IsaacSim.desktop"
@@ -124,9 +145,9 @@
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
     mode: "0755"
-  when: isaacsim_build_needed
+  when: isaacsim_build_needed and isaacsim_desktop_icon.stat.exists | default(false)
 
 - name: Set launch permissions for Isaac Sim desktop icon
   shell: gio set "/home/{{ ansible_user }}/Desktop/IsaacSim.desktop" metadata::trusted true
   become_user: "{{ ansible_user }}"
-  when: isaacsim_build_needed
+  when: isaacsim_build_needed and isaacsim_desktop_icon.stat.exists | default(false)
