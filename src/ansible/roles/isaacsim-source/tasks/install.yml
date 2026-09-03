@@ -35,6 +35,15 @@
     force: true
     depth: 1
   become_user: "{{ ansible_user }}"
+  environment:
+    GIT_TERMINAL_PROMPT: "0"
+    GIT_ASKPASS: ""
+    SSH_ASKPASS: ""
+    GIT_CONFIG_COUNT: "2"
+    GIT_CONFIG_KEY_0: "credential.helper"
+    GIT_CONFIG_VALUE_0: ""
+    GIT_CONFIG_KEY_1: "core.askpass"
+    GIT_CONFIG_VALUE_1: ""
   when: isaacsim_build_tag.stdout | trim == ''
 
 - name: Get current commit hash
@@ -58,6 +67,15 @@
   args:
     chdir: "{{ isaacsim_source_dir }}"
   become_user: "{{ ansible_user }}"
+  environment:
+    GIT_TERMINAL_PROMPT: "0"
+    GIT_ASKPASS: ""
+    SSH_ASKPASS: ""
+    GIT_CONFIG_COUNT: "2"
+    GIT_CONFIG_KEY_0: "credential.helper"
+    GIT_CONFIG_VALUE_0: ""
+    GIT_CONFIG_KEY_1: "core.askpass"
+    GIT_CONFIG_VALUE_1: ""
   when: isaacsim_build_needed
 
 - name: Accept EULA

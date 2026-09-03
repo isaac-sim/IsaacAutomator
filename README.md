@@ -523,10 +523,23 @@ The same applies to `--isaaclab` / `--isaaclab-git-repo` and `--isaaclab-arena` 
 `--isaaclab-arena-git-repo`, and to the `image-*` commands. If the ref is omitted
 (`--isaacsim <repo url>`), the newest release in that repository is used.
 
-A private repository must be reachable **from the deployed instance**, which clones it. Use an SSH
-URL with a deploy key present on the instance, or an access token in the URL. A token in the URL is
-masked in console output and in the deployment's `meta.json`, but it is still passed to the
-instance - a deploy key is the safer option.
+The repository and ref are checked locally before anything is provisioned. That check uses the
+[GitHub CLI](https://cli.github.com/) for credentials when it is installed and logged in
+(`gh auth login`), so a private repository verifies with the account you already use. If the check
+cannot authenticate it fails immediately with an error - it never stops to ask for a password.
+
+A private repository must also be reachable **from the deployed instance**, which is what actually
+clones it. Being able to clone it on your own machine is not enough. Either:
+
+- **Access token in the URL** (simplest), e.g.
+  `--isaacsim-git-repo https://<token>@github.com/my-org/IsaacSim-Internal`. The token is masked in
+  console output and in the deployment's `meta.json`, but it is still sent to the instance.
+- **SSH URL with a deploy key** already present on the instance, e.g.
+  `--isaacsim-git-repo git@github.com:my-org/IsaacSim-Internal.git`. Safer, since no credential
+  travels with the deployment.
+
+A plain `https://github.com/...` URL for a private repository will fail on the instance, because it
+has no credentials of its own.
 
 #### Isaac Lab
 
