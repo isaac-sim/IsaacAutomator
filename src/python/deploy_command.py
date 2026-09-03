@@ -141,8 +141,9 @@ class DeployCommand(click.core.Command):
         the ref to check out (e.g. "v6.0.1" or "release/0.2.1"), or None if none found.
         """
         cmd = ["git", "ls-remote", "--tags", "--heads", repo]
-        dbg("latest: resolving latest release for " + repo)
-        dbg("running: " + " ".join(cmd))
+        safe = DeployCommand.redact_repo(repo)
+        dbg("latest: resolving latest release for " + safe)
+        dbg("running: " + " ".join(cmd).replace(repo, safe))
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
         if result.stderr.strip():
             dbg("stderr: " + result.stderr.strip())
@@ -175,6 +176,158 @@ class DeployCommand(click.core.Command):
         dbg(f"latest: selected {best[2]}")
         return best[2]
 
+    # option name -> the config key holding that component's default git repo
+    _REPO_KEYS = {
+        "isaacsim": "isaacsim_git_repo",
+        "isaaclab": "isaaclab_git_repo",
+        "isaaclab_arena": "isaaclab_arena_git_repo",
+    }
+
+    # where an inline "<repo url>@<ref>" override is stashed during parsing (ctx.meta,
+    # so no option's default can overwrite it - see git_ref_callback)
+    _REPO_META_KEY = "isaac_repo_overrides"
+
+    def invoke(self, ctx):
+        """
+        Fold any inline "<repo url>@<ref>" override into the final parameters, so the
+        deployer (and the Ansible inventory it renders) sees the same repo the ref was
+        validated against, no matter what order the options were given in.
+        """
+        own = {p.name for p in self.params}
+        for name, repo in ctx.meta.get(DeployCommand._REPO_META_KEY, {}).items():
+            key = f"{name}_git_repo"
+            if key in own:
+                ctx.params[key] = repo
+
+        # Validate here rather than in the option callback: the repo options are eager
+        # (the ref check needs them early), and an eager callback would reject a bad url
+        # before --help could print. invoke() runs only when the command really executes.
+        for key in ("isaacsim", "isaaclab", "isaaclab_arena"):
+            repo = ctx.params.get(f"{key}_git_repo")
+            if repo:
+                DeployCommand.validate_repo_url(ctx, None, repo)
+
+        return super().invoke(ctx)
+
+    @staticmethod
+    def _looks_like_repo_url(value):
+        """
+        True if `value` names a git repository rather than a ref: an http(s)/git/ssh URL
+        or the scp-like form git@host:org/repo. Refs never contain "://" and cannot
+        carry a "host:path", so this stays unambiguous.
+        """
+        value = value.strip()
+        return bool(
+            re.match(r"^(https?|git|ssh)://", value)
+            or re.match(r"^[\w.-]+@[\w.-]+:", value)
+        )
+
+    @staticmethod
+    def redact_repo(repo):
+        """
+        Hide any credentials embedded in a repo url before it is shown to the user or
+        written to disk:
+          "https://user:token@host/x.git" -> "https://***@host/x.git"
+          "https://token@host/x.git"      -> "https://***@host/x.git"
+        A repo url is echoed in errors and stored in the deployment's meta.json, and a
+        token must never land in either.
+        """
+        if not repo:
+            return repo
+        # Mask the entire userinfo: a token can be in either field
+        # ("user:token@", "token@", "token:x-oauth-basic@"), so keeping any part of
+        # it risks leaking the secret. The scp form "git@host:path" is not
+        # credentials, so only "scheme://" urls are touched.
+        return re.sub(r"(://)[^/@]+@", r"\1***@", str(repo))
+
+    @staticmethod
+    def _same_repo(a, b):
+        """
+        True if two repo urls point at the same place, ignoring a trailing "/" and a
+        ".git" suffix, so cosmetic differences are not reported as a conflict.
+        """
+        def norm(u):
+            u = str(u).strip().rstrip("/")
+            return u[:-4] if u.endswith(".git") else u
+        return norm(a) == norm(b)
+
+    @staticmethod
+    def split_repo_and_ref(value):
+        """
+        Split an Isaac component option value into (repo, ref).
+
+        Accepts a plain ref ("v6.0.1" -> (None, "v6.0.1")), an inline repo override
+        ("<repo url>@<ref>" -> (repo, ref)), or a bare repo URL with no ref
+        ("<repo url>" -> (repo, None); the caller substitutes its default ref).
+        Returns (None, value) for anything that is not a repo, so plain refs are
+        untouched. NVBugs 6696514: QA pasted an internal repo URL at the ref prompt.
+
+        The split is structural, not a plain "last @": a url can legitimately contain
+        "@" in its userinfo ("ssh://git@host:22/x.git", "https://user:token@host/x.git"),
+        so only an "@" in the final path segment separates the ref. A ref that itself
+        contains "@" needs the explicit --<component>-git-repo option.
+        """
+        if value is None:
+            return None, value
+        text = str(value).strip()
+        if not DeployCommand._looks_like_repo_url(text):
+            return None, value
+
+        # find where the repo path starts, so userinfo "@" is never mistaken for a
+        # ref separator: after "scheme://host" for urls, after "host:" for scp form
+        m = re.match(r"^(https?|git|ssh)://[^/]*", text)
+        path_start = m.end() if m else text.find(":") + 1
+
+        at = text.find("@", path_start)
+        if at != -1:
+            repo, ref = text[:at].strip(), text[at + 1:].strip()
+            return (repo or None), (ref or None)
+        return text, None
+
+    # A repo url must be a single clean token. It is written into the ini-style ansible
+    # inventory and used by roles that shell out, so anything that could break out of
+    # either (whitespace, quotes, backslashes, shell metacharacters, control chars) is
+    # rejected. The roles also shell-quote it, so this is the outer of two layers.
+    _REPO_URL_FORBIDDEN = re.compile(r"[\s\"'\\$`;|&<>(){}\x00-\x1f]")
+    _REPO_URL_RE = re.compile(
+        r"^(?:"
+        r"(?:https?|ssh|git|git\+ssh|file)://[^/]*/\S*"  # scheme://[host]/path
+        r"|[\w.-]+@[\w.-]+:\S+"                          # scp-like host:path
+        r"|/\S+"                                         # absolute local path
+        r")$",
+        re.IGNORECASE,
+    )
+
+    @staticmethod
+    def git_repo_callback(ctx, param, value):
+        """
+        Normalize an explicit repo override (--isaacsim-git-repo and friends): empty
+        means "use the default repo from config". Validation happens in invoke() - these
+        options are eager, and rejecting here would pre-empt --help.
+        """
+        if value is None or not str(value).strip():
+            return ""
+        return str(value).strip()
+
+    @staticmethod
+    def validate_repo_url(ctx, param, repo):
+        """
+        Reject a repo url that is not a single clean token. Raises click.BadParameter.
+        """
+        if (
+            DeployCommand._REPO_URL_FORBIDDEN.search(repo)
+            or not DeployCommand._REPO_URL_RE.match(repo)
+        ):
+            raise click.BadParameter(
+                colorize_error(
+                    f"invalid git repository url: '{DeployCommand.redact_repo(repo)}'."
+                    " Expected something like https://github.com/org/repo.git or"
+                    " git@github.com:org/repo.git"
+                ),
+                ctx=ctx, param=param,
+            )
+        return repo
+
     @staticmethod
     def git_ref_callback(ctx, param, value):
         """
@@ -185,6 +338,10 @@ class DeployCommand(click.core.Command):
         value fails fast here with a clear message instead of dying deep in the Ansible git
         checkout (NVBugs 6380502: a 4-part product version like v6.0.1.0 was passed, but the
         release tag is the 3-part v6.0.1).
+
+        The repo checked is the component default, unless overridden by the matching
+        --<component>-git-repo option or by an inline "<repo url>@<ref>" value; that is
+        how a fork or an internal repo is deployed (NVBugs 6696514).
         """
         # --debug (parsed before these options) turns on a trace of the check
         debug = (
@@ -202,14 +359,56 @@ class DeployCommand(click.core.Command):
             dbg(f"value {value!r} means 'do not install' - skipping ref check")
             return value
 
-        repo = {
-            "isaacsim": config["isaacsim_git_repo"],
-            "isaaclab": config["isaaclab_git_repo"],
-            "isaaclab_arena": config["isaaclab_arena_git_repo"],
-        }.get(param.name)
-        if repo is None:
+        repo_key = DeployCommand._REPO_KEYS.get(param.name)
+        if repo_key is None:
             dbg("no repo mapped for this option - skipping ref check")
             return value
+
+        # an inline "<repo url>@<ref>" (or a bare repo url) overrides the repo for this
+        # component. It is stashed in ctx.meta, NOT ctx.params: params is owned by the
+        # --<component>-git-repo option, whose own default would overwrite it depending
+        # on click's parameter processing order (and hence silently clone the public
+        # repo). ctx.meta belongs to no option, so the override always survives.
+        inline_repo, inline_ref = DeployCommand.split_repo_and_ref(value)
+        if inline_repo:
+            DeployCommand.validate_repo_url(ctx, param, inline_repo)
+            # two different repos for one component is a mistake, not a precedence
+            # question - say so instead of silently picking one
+            explicit = (
+                ctx.params.get(f"{param.name}_git_repo") if ctx is not None else None
+            )
+            if explicit and not DeployCommand._same_repo(explicit, inline_repo):
+                opt = "--" + param.name.replace("_", "-") + "-git-repo"
+                raise click.BadParameter(
+                    colorize_error(
+                        f"conflicting repositories for {param.name}:"
+                        f" {opt} says '{DeployCommand.redact_repo(explicit)}' but the"
+                        f" ref says '{DeployCommand.redact_repo(inline_repo)}'."
+                        " Pass the repository only once."
+                    ),
+                    ctx=ctx, param=param,
+                )
+            value = inline_ref if inline_ref else "latest"
+            if ctx is not None:
+                ctx.meta.setdefault(DeployCommand._REPO_META_KEY, {})[
+                    param.name
+                ] = inline_repo
+            dbg(
+                f"repo override from value: {DeployCommand.redact_repo(inline_repo)}"
+                f" (ref {value!r})"
+            )
+
+        # Resolution order: inline "<repo>@<ref>" -> explicit --<component>-git-repo ->
+        # config default. The explicit option may not be parsed yet (click processes
+        # options in invocation order), so read it from ctx.params only as a fallback.
+        repo = inline_repo
+        if not repo and ctx is not None:
+            repo = ctx.meta.get(DeployCommand._REPO_META_KEY, {}).get(param.name)
+        if not repo and ctx is not None:
+            repo = ctx.params.get(f"{param.name}_git_repo")
+        if not repo:
+            repo = config[repo_key]
+        dbg(f"using repo {DeployCommand.redact_repo(repo)}")
 
         # "latest" -> resolve the latest release ref and use that
         if value.strip().lower() == "latest":
@@ -219,7 +418,9 @@ class DeployCommand(click.core.Command):
                 raise click.BadParameter(
                     colorize_error(
                         f"could not auto-detect the latest {param.name} release"
-                        f" from {repo} ({e}). Pass an explicit git ref or 'no'."
+                        f" from {DeployCommand.redact_repo(repo)}"
+                        f" ({str(e).replace(repo, DeployCommand.redact_repo(repo))})."
+                        " Pass an explicit git ref or 'no'."
                     ),
                     ctx=ctx, param=param,
                 )
@@ -227,7 +428,8 @@ class DeployCommand(click.core.Command):
                 raise click.BadParameter(
                     colorize_error(
                         f"could not auto-detect the latest {param.name} release"
-                        f" from {repo}. Pass an explicit git ref or 'no'."
+                        f" from {DeployCommand.redact_repo(repo)}."
+                        " Pass an explicit git ref or 'no'."
                     ),
                     ctx=ctx, param=param,
                 )
@@ -244,14 +446,18 @@ class DeployCommand(click.core.Command):
 
         cmd = ["git", "ls-remote", "--quiet", repo,
                value, f"refs/tags/{value}", f"refs/heads/{value}"]
-        dbg(f"checking ref '{value}' in {repo}")
-        dbg("running: " + " ".join(cmd))
+        safe_repo = DeployCommand.redact_repo(repo)
+        dbg(f"checking ref '{value}' in {safe_repo}")
+        dbg("running: " + " ".join(cmd).replace(repo, safe_repo))
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
         except (OSError, subprocess.SubprocessError) as e:
             # network/git problem: warn but do not block the deploy on it
+            # str(e) embeds the whole argv, including the repo url and any token
+            reason = str(e).replace(repo, safe_repo)
             click.echo(colorize_error(
-                f"Warning: could not verify {param.name} ref '{value}' ({e}). Continuing."
+                f"Warning: could not verify {param.name} ref '{value}'"
+                f" ({reason}). Continuing."
             ), err=True)
             return value
 
@@ -262,10 +468,15 @@ class DeployCommand(click.core.Command):
             dbg("matched refs:\n" + found if found else "no matching refs returned")
 
         if not found:
+            opt = "--" + param.name.replace("_", "-") + "-git-repo"
             raise click.BadParameter(
                 colorize_error(
-                    f"git ref '{value}' was not found in {repo}."
+                    f"git ref '{value}' was not found in"
+                    f" {DeployCommand.redact_repo(repo)}."
                     " Pass a valid tag, branch, or commit, or 'no' to skip."
+                    f" To install from a different repository (a fork or an internal"
+                    f" one), pass {opt} <repo url>, or give the ref as"
+                    " <repo url>@<ref>."
                 ),
                 ctx=ctx, param=param,
             )
@@ -385,8 +596,36 @@ class DeployCommand(click.core.Command):
             ),
         )
 
+        # --isaacsim-git-repo / --isaaclab-git-repo / --isaaclab-arena-git-repo
+        # Install a component from a fork or an internal repo instead of the public
+        # default (NVBugs 6696514). Declared before the ref options below so the repo is
+        # known when the ref is validated (click parses options in declaration order).
+        # Not prompted: the default (public repo) is right for almost every deploy.
+        for opt_name, cfg_key, app in (
+            ("--isaacsim-git-repo", "isaacsim_git_repo", "Isaac Sim"),
+            ("--isaaclab-git-repo", "isaaclab_git_repo", "Isaac Lab"),
+            ("--isaaclab-arena-git-repo", "isaaclab_arena_git_repo", "Isaac Lab Arena"),
+        ):
+            self.params.insert(
+                len(self.params),
+                click.core.Option(
+                    (opt_name,),
+                    default="",
+                    show_default=f"{config[cfg_key]}",
+                    # eager so the repo is known before the ref option is validated,
+                    # whatever order the two were given in on the command line
+                    is_eager=True,
+                    callback=DeployCommand.git_repo_callback,
+                    help=f"Git repository to install {app} from. Defaults to"
+                    f" {config[cfg_key]}. Use this (or the <repo url>@<ref> form) to"
+                    " deploy from a fork or an internal repository. A private"
+                    " repository must be reachable from the deployed instance.",
+                ),
+            )
+
         # --isaacsim
-        help = 'Install Isaac Sim? Valid values: "latest" (newest release), "no", or a git ref at https://github.com/isaac-sim/IsaacSim'
+        help = ('Install Isaac Sim? Valid values: "latest" (newest release), "no", a git ref at https://github.com/isaac-sim/IsaacSim, or "<repo url>@<ref>"'
+                + ' to use a fork or an internal repository')
         self.params.insert(
             len(self.params),
             click.core.Option(
@@ -400,7 +639,8 @@ class DeployCommand(click.core.Command):
         )
 
         # --isaaclab
-        help = 'Install Isaac Lab? Valid values: "latest" (newest release), "no", or a git ref at https://github.com/isaac-sim/IsaacLab'
+        help = ('Install Isaac Lab? Valid values: "latest" (newest release), "no", a git ref at https://github.com/isaac-sim/IsaacLab, or "<repo url>@<ref>"'
+                + ' to use a fork or an internal repository')
         self.params.insert(
             len(self.params),
             click.core.Option(
@@ -414,7 +654,8 @@ class DeployCommand(click.core.Command):
         )
 
         # --isaaclab-arena
-        help = 'Install Isaac Lab Arena? Valid values: "latest" (newest release), "no", or a git ref at https://github.com/isaac-sim/IsaacLab-Arena'
+        help = ('Install Isaac Lab Arena? Valid values: "latest" (newest release), "no", a git ref at https://github.com/isaac-sim/IsaacLab-Arena, or "<repo url>@<ref>"'
+                + ' to use a fork or an internal repository')
         self.params.insert(
             len(self.params),
             click.core.Option(

@@ -77,7 +77,10 @@ c["default_isaaclab_arena_git_checkpoint"] = "latest"
 c["default_isaacsim_git_checkpoint"] = "latest"
 
 # git repos used to validate / auto-detect the --isaacsim/--isaaclab/--isaaclab-arena
-# refs before deploy (mirror of the ansible role defaults; keep both in sync if a repo moves)
+# refs before deploy (mirror of the ansible role defaults; keep both in sync if a repo moves).
+# Each can be overridden per deployment with --isaacsim-git-repo/--isaaclab-git-repo/
+# --isaaclab-arena-git-repo, or inline as "<repo url>@<ref>" in the ref option itself,
+# to install from a fork or an internal repo (NVBugs 6696514).
 c["isaacsim_git_repo"] = "https://github.com/isaac-sim/IsaacSim.git"
 c["isaaclab_git_repo"] = "https://github.com/isaac-sim/IsaacLab.git"
 c["isaaclab_arena_git_repo"] = "https://github.com/isaac-sim/IsaacLab-Arena.git"

@@ -200,6 +200,10 @@ def build_ami(params, config):
     isaacsim = params["isaacsim"]
     isaaclab = params["isaaclab"]
     isaaclab_arena = params["isaaclab_arena"]
+    # per-component repo overrides (NVBugs 6696514); empty means the role default
+    isaacsim_git_repo = params.get("isaacsim_git_repo", "")
+    isaaclab_git_repo = params.get("isaaclab_git_repo", "")
+    isaaclab_arena_git_repo = params.get("isaaclab_arena_git_repo", "")
     system_user_password = params["system_user_password"]
     image_name = params.get("image_name", "")
     existing = params["existing"]
@@ -241,6 +245,9 @@ def build_ami(params, config):
         f'-var=isaacsim="{isaacsim}"',
         f'-var=isaaclab="{isaaclab}"',
         f'-var=isaaclab_arena="{isaaclab_arena}"',
+        f'-var=isaacsim_git_repo="{isaacsim_git_repo}"',
+        f'-var=isaaclab_git_repo="{isaaclab_git_repo}"',
+        f'-var=isaaclab_arena_git_repo="{isaaclab_arena_git_repo}"',
         f"-var=in_china=false",
     ]
 

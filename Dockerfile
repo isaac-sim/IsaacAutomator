@@ -63,7 +63,7 @@ RUN ln -s /app/state/.azure /root/.azure
 RUN echo "mkdir -p /app/state/.azure" >> /root/.bashrc
 
 # pip
-RUN pip install --break-system-packages click randomname pwgen debugpy
+RUN pip install --break-system-packages "click>=8.1" randomname pwgen debugpy
 
 # ansible
 ENV ANSIBLE_FORCE_COLOR=true

@@ -4,6 +4,7 @@ import contextlib
 import io
 import subprocess
 import unittest
+from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
@@ -140,7 +141,7 @@ class Test_GitRefCallback(unittest.TestCase):
             run.assert_not_called()
 
     def test_debug_traces_the_check_to_stderr(self):
-        ctx = SimpleNamespace(params={"debug": True})
+        ctx = SimpleNamespace(params={"debug": True}, meta={}, command=None)
         buf = io.StringIO()
         with mock.patch.object(
             subprocess, "run",
@@ -153,7 +154,7 @@ class Test_GitRefCallback(unittest.TestCase):
         self.assertIn("git ls-remote", out)
 
     def test_no_debug_is_quiet(self):
-        ctx = SimpleNamespace(params={"debug": False})
+        ctx = SimpleNamespace(params={"debug": False}, meta={}, command=None)
         buf = io.StringIO()
         with mock.patch.object(
             subprocess, "run",
@@ -186,6 +187,502 @@ class Test_GitRefCallback(unittest.TestCase):
             with contextlib.redirect_stdout(buf):
                 with self.assertRaises(click.BadParameter):
                     self._call("latest", name="isaacsim")
+
+
+class Test_SplitRepoAndRef(unittest.TestCase):
+    """Tests for the repo/ref splitter (NVBugs 6696514)."""
+
+    def test_plain_refs_are_not_repos(self):
+        for ref in ["v6.0.1", "release/3.0.0-beta2", "main", "045ca8b", "no", ""]:
+            self.assertEqual(DeployCommand.split_repo_and_ref(ref), (None, ref))
+
+    def test_none_passes_through(self):
+        self.assertEqual(DeployCommand.split_repo_and_ref(None), (None, None))
+
+    def test_bare_repo_url_has_no_ref(self):
+        # exactly what QA pasted at the prompt in the bug report
+        url = "https://github.com/isaac-sim/IsaacSim-Internal"
+        self.assertEqual(DeployCommand.split_repo_and_ref(url), (url, None))
+
+    def test_repo_at_ref(self):
+        self.assertEqual(
+            DeployCommand.split_repo_and_ref(
+                "https://github.com/isaac-sim/IsaacSim-Internal@v6.1.0-rc20"
+            ),
+            ("https://github.com/isaac-sim/IsaacSim-Internal", "v6.1.0-rc20"),
+        )
+
+    def test_scp_like_ssh_url_is_not_split_on_its_own_at(self):
+        url = "git@github.com:isaac-sim/IsaacSim-Internal.git"
+        self.assertEqual(DeployCommand.split_repo_and_ref(url), (url, None))
+
+    def test_ssh_url_with_port_is_not_split_on_userinfo(self):
+        # "ssh://git@host:22/..." - the "@" belongs to the userinfo, not a ref
+        url = "ssh://git@gitlab.nvidia.com:22/isaac/sim.git"
+        self.assertEqual(DeployCommand.split_repo_and_ref(url), (url, None))
+        self.assertEqual(
+            DeployCommand.split_repo_and_ref(url + "@main"), (url, "main")
+        )
+
+    def test_credentials_in_url_are_not_split_on_userinfo(self):
+        url = "https://svc:token123@github.com/isaac-sim/IsaacSim-Internal.git"
+        self.assertEqual(DeployCommand.split_repo_and_ref(url), (url, None))
+        self.assertEqual(DeployCommand.split_repo_and_ref(url + "@v6.1.0"),
+                         (url, "v6.1.0"))
+
+    def test_ref_containing_at_is_preserved(self):
+        # the split happens at the FIRST "@" of the path, so the ref stays intact
+        self.assertEqual(
+            DeployCommand.split_repo_and_ref("https://github.com/o/r.git@user@branch"),
+            ("https://github.com/o/r.git", "user@branch"),
+        )
+
+    def test_scp_like_ssh_url_with_ref(self):
+        self.assertEqual(
+            DeployCommand.split_repo_and_ref(
+                "git@github.com:isaac-sim/IsaacSim-Internal.git@v6.1.0"
+            ),
+            ("git@github.com:isaac-sim/IsaacSim-Internal.git", "v6.1.0"),
+        )
+
+    def test_ssh_scheme_url(self):
+        self.assertEqual(
+            DeployCommand.split_repo_and_ref("ssh://git@gitlab.nvidia.com/x/y.git@main"),
+            ("ssh://git@gitlab.nvidia.com/x/y.git", "main"),
+        )
+
+
+class Test_GitRepoOverride(unittest.TestCase):
+    """--<component>-git-repo and inline <repo>@<ref> overrides (NVBugs 6696514)."""
+
+    @staticmethod
+    def _param(name="isaacsim"):
+        return SimpleNamespace(name=name)
+
+    def test_repo_callback_normalizes_empty(self):
+        for value in [None, "", "   "]:
+            self.assertEqual(DeployCommand.git_repo_callback(None, None, value), "")
+
+    def test_repo_callback_strips(self):
+        self.assertEqual(
+            DeployCommand.git_repo_callback(None, None, "  https://x/y.git "),
+            "https://x/y.git",
+        )
+
+    def test_explicit_override_is_used_for_validation(self):
+        internal = "https://github.com/isaac-sim/IsaacSim-Internal"
+        ctx = SimpleNamespace(params={"debug": False, "isaacsim_git_repo": internal}, meta={}, command=None)
+        with mock.patch.object(
+            subprocess, "run",
+            return_value=SimpleNamespace(stdout="abc\trefs/tags/v6.1.0\n", stderr=""),
+        ) as run:
+            DeployCommand.git_ref_callback(ctx, self._param("isaacsim"), "v6.1.0")
+        self.assertIn(internal, run.call_args.args[0])
+        self.assertNotIn(config["isaacsim_git_repo"], run.call_args.args[0])
+
+    def test_inline_repo_at_ref_sets_repo_and_returns_ref(self):
+        internal = "https://github.com/isaac-sim/IsaacSim-Internal"
+        ctx = SimpleNamespace(params={"debug": False}, meta={}, command=None)
+        with mock.patch.object(
+            subprocess, "run",
+            return_value=SimpleNamespace(stdout="abc\trefs/tags/v6.1.0\n", stderr=""),
+        ) as run:
+            out = DeployCommand.git_ref_callback(
+                ctx, self._param("isaacsim"), f"{internal}@v6.1.0"
+            )
+        self.assertEqual(out, "v6.1.0")
+        self.assertEqual(ctx.meta["isaac_repo_overrides"]["isaacsim"], internal)
+        self.assertIn(internal, run.call_args.args[0])
+
+    def test_bare_repo_url_resolves_latest_from_that_repo(self):
+        # the exact bug repro: a bare internal URL at the ref prompt
+        internal = "https://github.com/isaac-sim/IsaacSim-Internal"
+        ctx = SimpleNamespace(params={"debug": False}, meta={}, command=None)
+        out_refs = "".join(
+            f"x\t{r}\n" for r in ["refs/tags/v6.0.9", "refs/tags/v6.1.0"]
+        )
+        buf = io.StringIO()
+        with mock.patch.object(
+            subprocess, "run",
+            return_value=SimpleNamespace(stdout=out_refs, stderr=""),
+        ) as run:
+            with contextlib.redirect_stdout(buf):
+                out = DeployCommand.git_ref_callback(
+                    ctx, self._param("isaacsim"), internal
+                )
+        self.assertEqual(out, "v6.1.0")
+        self.assertEqual(ctx.meta["isaac_repo_overrides"]["isaacsim"], internal)
+        self.assertIn(internal, run.call_args.args[0])
+
+    def test_error_message_points_at_the_override_option(self):
+        # click.BadParameter reads ctx.command when building the message
+        ctx = SimpleNamespace(params={"debug": False}, meta={}, command=None)
+        with mock.patch.object(
+            subprocess, "run", return_value=SimpleNamespace(stdout="", stderr="")
+        ):
+            with self.assertRaises(click.BadParameter) as cm:
+                DeployCommand.git_ref_callback(ctx, self._param("isaacsim"), "v9.9.9")
+        msg = str(cm.exception)
+        self.assertIn("--isaacsim-git-repo", msg)
+        self.assertIn("<repo url>@<ref>", msg)
+
+    def test_arena_option_name_is_dashed_in_message(self):
+        ctx = SimpleNamespace(params={"debug": False}, meta={}, command=None)
+        with mock.patch.object(
+            subprocess, "run", return_value=SimpleNamespace(stdout="", stderr="")
+        ):
+            with self.assertRaises(click.BadParameter) as cm:
+                DeployCommand.git_ref_callback(
+                    ctx, self._param("isaaclab_arena"), "v9.9.9"
+                )
+        self.assertIn("--isaaclab-arena-git-repo", str(cm.exception))
+
+    def test_default_repo_used_when_no_override(self):
+        ctx = SimpleNamespace(params={"debug": False}, meta={}, command=None)
+        with mock.patch.object(
+            subprocess, "run",
+            return_value=SimpleNamespace(stdout="abc\trefs/tags/v6.0.1\n", stderr=""),
+        ) as run:
+            DeployCommand.git_ref_callback(ctx, self._param("isaacsim"), "v6.0.1")
+        self.assertIn(config["isaacsim_git_repo"], run.call_args.args[0])
+
+    def test_no_still_skips_even_with_override(self):
+        ctx = SimpleNamespace(params={"debug": False, "isaacsim_git_repo": "https://x/y"}, meta={}, command=None)
+        with mock.patch.object(subprocess, "run") as run:
+            self.assertEqual(
+                DeployCommand.git_ref_callback(ctx, self._param("isaacsim"), "no"), "no"
+            )
+            run.assert_not_called()
+
+
+class Test_RepoUrlValidation(unittest.TestCase):
+    """The repo lands in an ini-style ansible inventory, so it must be a clean token."""
+
+    @staticmethod
+    def _param():
+        return SimpleNamespace(name="isaacsim_git_repo")
+
+    def test_valid_urls_accepted(self):
+        for url in [
+            "https://github.com/isaac-sim/IsaacSim-Internal",
+            "https://github.com/o/r.git",
+            "git@github.com:o/r.git",
+            "ssh://git@gitlab.nvidia.com:22/isaac/sim.git",
+            "http://internal.example/x.git",
+        ]:
+            self.assertEqual(
+                DeployCommand.git_repo_callback(None, self._param(), url), url
+            )
+
+    def test_inventory_breaking_values_rejected(self):
+        ctx = SimpleNamespace(params={}, meta={}, command=None)
+        for bad in [
+            'https://h/r.git"\ninjected_var="pwned',   # ini injection
+            "https://h/r.git ; rm -rf /",              # whitespace / shell-ish
+            'https://h/r.git"',                        # stray quote
+            "not-a-url",
+            "../../etc/passwd",
+        ]:
+            with self.assertRaises(click.BadParameter):
+                DeployCommand.validate_repo_url(ctx, self._param(), bad)
+
+    def test_empty_means_default(self):
+        for value in [None, "", "   "]:
+            self.assertEqual(
+                DeployCommand.git_repo_callback(None, self._param(), value), ""
+            )
+
+    def test_redaction_hides_credentials(self):
+        self.assertEqual(
+            DeployCommand.redact_repo("https://svc:ghp_SECRET@github.com/o/r.git"),
+            "https://***@github.com/o/r.git",
+        )
+        # a bare token (no user:) is the common PAT form and must be masked too
+        self.assertEqual(
+            DeployCommand.redact_repo("https://ghp_SECRET@github.com/o/r.git"),
+            "https://***@github.com/o/r.git",
+        )
+        # nothing to redact - left alone
+        self.assertEqual(
+            DeployCommand.redact_repo("https://github.com/o/r.git"),
+            "https://github.com/o/r.git",
+        )
+        # "git@host:path" is an ssh url, not credentials
+        self.assertEqual(
+            DeployCommand.redact_repo("git@github.com:o/r.git"),
+            "git@github.com:o/r.git",
+        )
+
+    def test_shell_metacharacters_rejected(self):
+        # the arena role interpolates the repo into a shell command
+        ctx = SimpleNamespace(params={}, meta={}, command=None)
+        for bad in [
+            "https://h/x.git$(touch /tmp/pwned)",
+            "https://h/x.git`id`",
+            "https://h/x.git;id",
+            "https://h/x.git|id",
+            "https://h/x.git&&id",
+            "https://h/x.git${IFS}",
+            "https://h/x\x00.git",
+        ]:
+            with self.assertRaises(click.BadParameter):
+                DeployCommand.validate_repo_url(ctx, self._param(), bad)
+
+    def test_legitimate_url_forms_accepted(self):
+        for url in [
+            "file:///srv/git/repo.git",     # local mirror / air-gapped
+            "/srv/git/repo.git",            # local path
+            "git+ssh://git@h/o/r.git",
+            "HTTPS://h/o/r.git",            # scheme is case-insensitive
+            "https://h/o/r.git/",           # trailing slash
+        ]:
+            self.assertEqual(
+                DeployCommand.git_repo_callback(None, self._param(), url), url
+            )
+
+    def test_token_in_either_userinfo_field_is_masked(self):
+        # a PAT can sit in the first field ("<token>:x-oauth-basic@") or the second
+        for url in [
+            "https://ghp_TOPSECRET:x-oauth-basic@github.com/o/r.git",
+            "https://ghp_TOPSECRET@github.com/o/r.git",
+            "https://svc:ghp_TOPSECRET@github.com/o/r.git",
+            "https://ghp_TOPSECRET:@github.com/o/r.git",
+        ]:
+            self.assertNotIn("TOPSECRET", DeployCommand.redact_repo(url))
+
+    def test_subprocess_error_text_does_not_leak_a_token(self):
+        # str(TimeoutExpired) embeds the whole argv, repo url included
+        secret = "https://ghp_TOPSECRET@github.com/o/r.git"
+        ctx = SimpleNamespace(
+            params={}, meta={}, command=None, resilient_parsing=False
+        )
+        buf = io.StringIO()
+        err = subprocess.TimeoutExpired(["git", "ls-remote", secret], 30)
+        with mock.patch.object(subprocess, "run", side_effect=err):
+            with contextlib.redirect_stderr(buf):
+                DeployCommand.git_ref_callback(
+                    ctx, SimpleNamespace(name="isaacsim"), f"{secret}@v1.2.3"
+                )
+        self.assertNotIn("TOPSECRET", buf.getvalue())
+
+    def test_ref_not_found_error_does_not_leak_a_token(self):
+        ctx = SimpleNamespace(params={}, meta={}, command=None)
+        secret = "https://ghp_TOPSECRET@github.com/o/r.git"
+        with mock.patch.object(
+            subprocess, "run", return_value=SimpleNamespace(stdout="", stderr="")
+        ):
+            with self.assertRaises(click.BadParameter) as cm:
+                DeployCommand.git_ref_callback(
+                    ctx, SimpleNamespace(name="isaacsim"), f"{secret}@v9.9.9"
+                )
+        self.assertNotIn("ghp_TOPSECRET", str(cm.exception))
+        self.assertIn("***", str(cm.exception))
+
+    def test_error_message_does_not_leak_a_token(self):
+        ctx = SimpleNamespace(params={}, meta={}, command=None)
+        with self.assertRaises(click.BadParameter) as cm:
+            DeployCommand.validate_repo_url(
+                ctx, self._param(), "https://svc:ghp_SECRET@h/r.git bad"
+            )
+        self.assertNotIn("ghp_SECRET", str(cm.exception))
+
+
+class Test_RepoOverrideThroughRealCli(unittest.TestCase):
+    """
+    End-to-end through actual click parsing (NVBugs 6696514).
+
+    These drive a real command rather than a hand-built ctx, because the earlier
+    ctx.params approach only worked on some click versions and only when the repo
+    option preceded the ref option on the command line.
+    """
+
+    INTERNAL = "https://github.com/isaac-sim/IsaacSim-Internal"
+    BASE = [
+        "--deployment-name", "t", "--isaaclab", "no", "--isaaclab-arena", "no",
+        "--ingress-cidrs", "myip", "--existing", "replace", "--no-upload",
+    ]
+
+    def _run(self, args):
+        """Invoke a DeployCommand, returning (final params, repos git was asked about)."""
+        seen = []
+        captured = {}
+
+        @click.command(cls=DeployCommand)
+        def cmd(**kwargs):
+            captured.update(kwargs)
+
+        def fake_run(argv, **kwargs):
+            seen.append(argv)
+            return SimpleNamespace(stdout="abc\trefs/tags/v6.1.0\n", stderr="")
+
+        with mock.patch.object(subprocess, "run", fake_run):
+            with contextlib.redirect_stdout(io.StringIO()):
+                cmd.main(args + self.BASE, standalone_mode=False)
+        # the repo is the first non-flag argument after "git ls-remote"
+        queried = [
+            next(x for x in a[2:] if not x.startswith("-"))
+            for a in seen
+            if a[:2] == ["git", "ls-remote"]
+        ]
+        return captured, queried
+
+    def test_bare_internal_url_at_the_ref_prompt(self):
+        # the exact input from the bug report
+        params, queried = self._run(["--isaacsim", self.INTERNAL])
+        self.assertEqual(params["isaacsim_git_repo"], self.INTERNAL)
+        self.assertEqual(params["isaacsim"], "v6.1.0")  # resolved via "latest"
+
+    def test_inline_repo_at_ref(self):
+        params, queried = self._run(["--isaacsim", f"{self.INTERNAL}@v6.1.0"])
+        self.assertEqual(params["isaacsim_git_repo"], self.INTERNAL)
+        self.assertEqual(params["isaacsim"], "v6.1.0")
+        self.assertIn(self.INTERNAL, queried)
+
+    def test_explicit_option_before_ref(self):
+        params, queried = self._run(
+            ["--isaacsim-git-repo", self.INTERNAL, "--isaacsim", "v6.1.0"]
+        )
+        self.assertEqual(params["isaacsim_git_repo"], self.INTERNAL)
+        self.assertIn(self.INTERNAL, queried)
+
+    def test_explicit_option_after_ref_still_wins(self):
+        # click processes options in invocation order; the repo option is eager so
+        # command-line order must not change the outcome
+        params, queried = self._run(
+            ["--isaacsim", "v6.1.0", "--isaacsim-git-repo", self.INTERNAL]
+        )
+        self.assertEqual(params["isaacsim_git_repo"], self.INTERNAL)
+        self.assertIn(self.INTERNAL, queried)
+        self.assertNotIn(config["isaacsim_git_repo"], queried)
+
+    def test_default_repo_unchanged_when_no_override(self):
+        params, queried = self._run(["--isaacsim", "v6.0.1"])
+        self.assertEqual(params["isaacsim_git_repo"], "")
+        self.assertIn(config["isaacsim_git_repo"], queried)
+
+    def test_conflicting_repos_rejected(self):
+        with self.assertRaises(click.BadParameter):
+            self._run([
+                "--isaacsim-git-repo", "https://github.com/o/other.git",
+                "--isaacsim", f"{self.INTERNAL}@v6.1.0",
+            ])
+
+    def test_cosmetic_repo_variants_are_not_a_conflict(self):
+        # same repo, differing only by ".git" / trailing slash
+        params, _ = self._run([
+            "--isaacsim-git-repo", self.INTERNAL + ".git",
+            "--isaacsim", f"{self.INTERNAL}@v6.1.0",
+        ])
+        self.assertTrue(params["isaacsim_git_repo"])
+
+    def test_same_repo_twice_is_fine(self):
+        params, _ = self._run([
+            "--isaacsim-git-repo", self.INTERNAL,
+            "--isaacsim", f"{self.INTERNAL}@v6.1.0",
+        ])
+        self.assertEqual(params["isaacsim_git_repo"], self.INTERNAL)
+
+    def test_invalid_repo_url_rejected_at_cli(self):
+        with self.assertRaises(click.BadParameter):
+            self._run(["--isaacsim-git-repo", "not a url", "--isaacsim", "v6.1.0"])
+
+    def test_validation_not_bypassed_by_a_help_shaped_value(self):
+        # validation must not be skippable by putting "--help" anywhere in argv
+        with self.assertRaises(click.BadParameter):
+            self._run([
+                "--isaacsim-git-repo", "https://h/x.git; rm -rf /",
+                "--isaacsim", "no",
+                "--deployment-name", "--help",
+            ])
+
+    def test_help_still_works_with_an_invalid_repo_url(self):
+        # the repo options are eager, so validation must not pre-empt --help
+        @click.command(cls=DeployCommand)
+        def cmd(**kwargs):
+            pass
+
+        for args in (
+            ["--help", "--isaacsim-git-repo", "bad url"],
+            ["--isaacsim-git-repo", "bad url", "--help"],
+        ):
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                try:
+                    cmd.main(args, standalone_mode=False)
+                except SystemExit:
+                    pass  # click exits after printing help in some versions
+            self.assertIn("--help", buf.getvalue())
+
+    def test_lab_and_arena_have_the_same_override(self):
+        # BASE pins --isaaclab/--isaaclab-arena to "no", so drive this one directly
+        seen = []
+        captured = {}
+
+        @click.command(cls=DeployCommand)
+        def cmd(**kwargs):
+            captured.update(kwargs)
+
+        def fake_run(argv, **kwargs):
+            seen.append(argv)
+            return SimpleNamespace(stdout="abc\trefs/tags/v1.0.0\n", stderr="")
+
+        with mock.patch.object(subprocess, "run", fake_run):
+            with contextlib.redirect_stdout(io.StringIO()):
+                cmd.main([
+                    "--isaacsim", "no",
+                    "--isaaclab-git-repo", "https://github.com/o/lab.git",
+                    "--isaaclab", "v1.0.0",
+                    "--isaaclab-arena", "no",
+                    "--deployment-name", "t", "--ingress-cidrs", "myip",
+                    "--existing", "replace", "--no-upload",
+                ], standalone_mode=False)
+
+        queried = [
+            next(x for x in a[2:] if not x.startswith("-"))
+            for a in seen
+            if a[:2] == ["git", "ls-remote"]
+        ]
+        self.assertEqual(captured["isaaclab_git_repo"], "https://github.com/o/lab.git")
+        self.assertEqual(queried, ["https://github.com/o/lab.git"])
+
+
+class Test_InventoryRendering(unittest.TestCase):
+    """The repo must survive into the ansible inventory (NVBugs 6696514)."""
+
+    TEMPLATE = Path(__file__).resolve().parents[1] / "ansible" / "inventory.template"
+
+    def _render(self, overrides):
+        params = dict(
+            cloud="aws", in_china="false", ssh_port=22, vnc_password="x",
+            deployment_name="d", isaaclab="no", isaacsim="v6.1.0",
+            isaaclab_private_git="", system_user_password="p", isaaclab_arena="no",
+            demos="no", isaac_workstation_ip="1.2.3.4", config=config,
+        )
+        params.update(overrides)
+        # mirrors Deployer.create_ansible_inventory's default backfill
+        for key in ("isaacsim_git_repo", "isaaclab_git_repo",
+                    "isaaclab_arena_git_repo"):
+            if not str(params.get(key) or "").strip():
+                params[key] = config[key]
+        return self.TEMPLATE.read_text().format(**params)
+
+    def test_defaults_used_when_no_override(self):
+        out = self._render({})
+        self.assertIn(f'isaacsim_git_repo="{config["isaacsim_git_repo"]}"', out)
+        self.assertIn(f'isaaclab_git_repo="{config["isaaclab_git_repo"]}"', out)
+
+    def test_override_reaches_the_inventory(self):
+        internal = "https://github.com/isaac-sim/IsaacSim-Internal"
+        out = self._render({"isaacsim_git_repo": internal})
+        self.assertIn(f'isaacsim_git_repo="{internal}"', out)
+        # the other components keep their defaults
+        self.assertIn(f'isaaclab_git_repo="{config["isaaclab_git_repo"]}"', out)
+
+    def test_legacy_state_without_the_new_keys_still_renders(self):
+        # a deployment saved by an older release has no *_git_repo params at all;
+        # --existing repair/run_ansible re-renders from it and must not KeyError
+        out = self._render({})
+        self.assertIn("isaacsim_git_repo=", out)
 
 
 class Test_VersionKeyAndResolve(unittest.TestCase):

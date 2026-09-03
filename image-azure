@@ -231,6 +231,10 @@ def build_azure_image(params, config):
     isaacsim = params["isaacsim"]
     isaaclab = params["isaaclab"]
     isaaclab_arena = params["isaaclab_arena"]
+    # per-component repo overrides (NVBugs 6696514); empty means the role default
+    isaacsim_git_repo = params.get("isaacsim_git_repo", "")
+    isaaclab_git_repo = params.get("isaaclab_git_repo", "")
+    isaaclab_arena_git_repo = params.get("isaaclab_arena_git_repo", "")
     system_user_password = params["system_user_password"]
     resource_group = params["resource_group"]
     image_name = params.get("image_name", "")
@@ -290,6 +294,9 @@ def build_azure_image(params, config):
         _v("isaacsim", isaacsim),
         _v("isaaclab", isaaclab),
         _v("isaaclab_arena", isaaclab_arena),
+        _v("isaacsim_git_repo", isaacsim_git_repo),
+        _v("isaaclab_git_repo", isaaclab_git_repo),
+        _v("isaaclab_arena_git_repo", isaaclab_arena_git_repo),
         "-var=in_china=false",
     ]
 

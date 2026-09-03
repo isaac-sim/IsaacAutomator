@@ -76,6 +76,20 @@ variable "isaaclab_arena" {
   default = "release/0.1.1"
 }
 
+# Per-component git repo overrides (NVBugs 6696514). Empty keeps the ansible role
+# default (the public repo); set to install from a fork or an internal repository.
+variable "isaacsim_git_repo" {
+  default = ""
+}
+
+variable "isaaclab_git_repo" {
+  default = ""
+}
+
+variable "isaaclab_arena_git_repo" {
+  default = ""
+}
+
 variable "vnc_password" {
   default = ""
 }
@@ -133,7 +147,7 @@ build {
     ]
     extra_arguments = [
       "--skip-tags", "${var.skip_tags}",
-      "--extra-vars", "cloud='azure' deployment_name='azure_image' isaacsim_git_checkpoint='${var.isaacsim}' isaaclab_git_checkpoint='${var.isaaclab}' isaaclab_arena_git_checkpoint='${var.isaaclab_arena}' vnc_password='${var.vnc_password}' system_user_password='${var.system_user_password}' in_china=${var.in_china} uploads_dir='/home/ubuntu/uploads' results_dir='/home/ubuntu/results' workspace_dir='/home/ubuntu/workspace'"
+      "--extra-vars", "cloud='azure' deployment_name='azure_image' isaacsim_git_checkpoint='${var.isaacsim}' isaaclab_git_checkpoint='${var.isaaclab}' isaaclab_arena_git_checkpoint='${var.isaaclab_arena}' ${var.isaacsim_git_repo != "" ? "isaacsim_git_repo='${var.isaacsim_git_repo}'" : ""} ${var.isaaclab_git_repo != "" ? "isaaclab_git_repo='${var.isaaclab_git_repo}'" : ""} ${var.isaaclab_arena_git_repo != "" ? "isaaclab_arena_git_repo='${var.isaaclab_arena_git_repo}'" : ""} vnc_password='${var.vnc_password}' system_user_password='${var.system_user_password}' in_china=${var.in_china} uploads_dir='/home/ubuntu/uploads' results_dir='/home/ubuntu/results' workspace_dir='/home/ubuntu/workspace'"
     ]
   }
 

@@ -24,6 +24,7 @@ from pathlib import Path
 import click
 
 from src.python.debug import debug_break  # noqa
+from src.python.deploy_command import DeployCommand
 from src.python.utils import (
     colorize_error,
     colorize_info,
@@ -73,7 +74,11 @@ class Deployer:
 
         # print complete command line
         if self.params["debug"]:
-            click.echo(colorize_info("* Command:\n" + self.recreate_command_line()))
+            click.echo(
+                colorize_info(
+                    "* Command:\n" + self.recreate_command_line(redact=True)
+                )
+            )
 
     def resolve_demos(self):
         """
@@ -141,10 +146,23 @@ class Deployer:
             f"{self.config['state_dir']}/{self.params['deployment_name']}/meta.json"
         )
 
+        # a repo url can carry a token ("https://<token>@github.com/org/repo.git");
+        # redact it so a credential never lands in this file (NVBugs 6696514)
+        def redact_repos(params):
+            out = dict(params)
+            for key in (
+                "isaacsim_git_repo",
+                "isaaclab_git_repo",
+                "isaaclab_arena_git_repo",
+            ):
+                if out.get(key):
+                    out[key] = DeployCommand.redact_repo(out[key])
+            return out
+
         data = {
-            "command": self.recreate_command_line(separator=" "),
-            "input_params": self.input_params,
-            "params": self.params,
+            "command": self.recreate_command_line(separator=" ", redact=True),
+            "input_params": redact_repos(self.input_params),
+            "params": redact_repos(self.params),
             "config": self.config,
         }
 
@@ -160,14 +178,25 @@ class Deployer:
             self.params["debug"],
         )
 
-    def recreate_command_line(self, separator=" \\\n"):
+    def recreate_command_line(self, separator=" \\\n", redact=False):
         """
-        Recreate command line
+        Recreate command line.
+
+        redact=True masks credentials embedded in a git repo url, for output that is
+        echoed or written to disk (NVBugs 6696514).
         """
 
         command_line = sys.argv[0]
 
+        repo_keys = (
+            "isaacsim_git_repo",
+            "isaaclab_git_repo",
+            "isaaclab_arena_git_repo",
+        )
+
         for k, v in self.input_params.items():
+            if redact and k in repo_keys and v:
+                v = DeployCommand.redact_repo(v)
             k = k.replace("_", "-")
 
             if isinstance(v, bool):
@@ -405,6 +434,17 @@ class Deployer:
 
         # add config
         ansible_vars["config"] = self.config
+
+        # per-component git repos: an empty/absent override means "use the default"
+        # (NVBugs 6696514). Resolved here so the inventory never carries an empty repo,
+        # which would blank the ansible role default and break the clone.
+        for key in (
+            "isaacsim_git_repo",
+            "isaaclab_git_repo",
+            "isaaclab_arena_git_repo",
+        ):
+            if not str(ansible_vars.get(key) or "").strip():
+                ansible_vars[key] = self.config[key]
 
         # get missing values from terraform
         for k in [

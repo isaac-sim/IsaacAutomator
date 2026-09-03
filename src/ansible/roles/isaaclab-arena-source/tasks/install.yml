@@ -24,7 +24,7 @@
     cd "{{ isaaclab_arena_dir }}"
     # check if the desired ref matches the current HEAD
     # resolve the desired ref to a commit hash via ls-remote
-    DESIRED_HASH=$(git ls-remote "{{ isaaclab_arena_git_repo }}" "{{ isaaclab_arena_git_checkpoint }}" | head -1 | awk '{print $1}')
+    DESIRED_HASH=$(git ls-remote {{ isaaclab_arena_git_repo | quote }} {{ isaaclab_arena_git_checkpoint | quote }} | head -1 | awk '{print $1}')
     CURRENT_HASH=$(git rev-parse HEAD)
     if [ "$DESIRED_HASH" = "$CURRENT_HASH" ]; then
       echo "match"
@@ -64,13 +64,13 @@
   shell: |
     if [ -d "{{ isaaclab_arena_dir }}/.git" ]; then
       cd "{{ isaaclab_arena_dir }}"
-      git fetch --depth 1 origin "{{ isaaclab_arena_git_checkpoint }}"
+      git fetch --depth 1 origin {{ isaaclab_arena_git_checkpoint | quote }}
       git checkout FETCH_HEAD
       git submodule update --init --recursive --depth 1
     else
       git clone --depth 1 --recurse-submodules --shallow-submodules \
-        -b "{{ isaaclab_arena_git_checkpoint }}" \
-        "{{ isaaclab_arena_git_repo }}" "{{ isaaclab_arena_dir }}"
+        -b {{ isaaclab_arena_git_checkpoint | quote }} \
+        {{ isaaclab_arena_git_repo | quote }} {{ isaaclab_arena_dir | quote }}
     fi
   become_user: "{{ ansible_user }}"
   register: clone_result

@@ -267,7 +267,8 @@ Run `./deploy-<cloud> --help` to see the full list of options. Key options inclu
   - `replace` — delete old cloud resources first, then redeploy
   - `run_ansible` — re-run software configuration (Ansible) only
 - `--instance-type` — Cloud VM instance type (each cloud has its own supported list and default).
-- `--isaacsim` / `--isaaclab` / `--isaaclab-arena` — Git ref for Isaac Sim / Isaac Lab / Isaac Lab Arena version, or `no` to skip installation.
+- `--isaacsim` / `--isaaclab` / `--isaaclab-arena` — Git ref for Isaac Sim / Isaac Lab / Isaac Lab Arena version, or `no` to skip installation. To install from a fork or an internal repository, pass `<repo url>@<ref>` (e.g. `--isaacsim https://github.com/my-org/IsaacSim-Internal@v6.1.0`).
+- `--isaacsim-git-repo` / `--isaaclab-git-repo` / `--isaaclab-arena-git-repo` — Repository to install each component from. Defaults to the public repo. A private repository must be reachable from the deployed instance (see [Installing from a fork or an internal repository](#installing-from-a-fork-or-an-internal-repository)).
 - `--demos` — Comma-separated list of out-of-the-box demos to install as desktop shortcuts, or `no` (default). A demo automatically enables the apps it depends on (see [Demos](#demos)).
 - `--from-image` — Deploy from a pre-built VM image to speed up provisioning (supported on AWS, Azure, and GCP; see [Speeding Up Deployment with Pre-Built Images](#speeding-up-deployment-with-pre-built-images)).
 - `--in-china` — Use local mirrors for deployments in China. Choices: `auto` (default), `yes`, `no`.
@@ -502,6 +503,30 @@ Isaac Sim is installed from source on the deployed Isaac Workstation. By default
 ```
 
 To install a specific version of Isaac Sim, provide a valid Git reference from <https://github.com/isaac-sim/IsaacSim> as the value of the `--isaacsim` parameter to the deployment command. Use `--isaacsim no` to skip Isaac Sim installation.
+
+##### Installing from a fork or an internal repository
+
+By default each component is installed from its public repository. To use a fork or an internal
+repository instead, either pass the repository explicitly:
+
+```sh
+./deploy-aws --isaacsim-git-repo https://github.com/my-org/IsaacSim-Internal --isaacsim v6.1.0
+```
+
+or give the repository and the ref together:
+
+```sh
+./deploy-aws --isaacsim https://github.com/my-org/IsaacSim-Internal@v6.1.0
+```
+
+The same applies to `--isaaclab` / `--isaaclab-git-repo` and `--isaaclab-arena` /
+`--isaaclab-arena-git-repo`, and to the `image-*` commands. If the ref is omitted
+(`--isaacsim <repo url>`), the newest release in that repository is used.
+
+A private repository must be reachable **from the deployed instance**, which clones it. Use an SSH
+URL with a deploy key present on the instance, or an access token in the URL. A token in the URL is
+masked in console output and in the deployment's `meta.json`, but it is still passed to the
+instance - a deploy key is the safer option.
 
 #### Isaac Lab
 
