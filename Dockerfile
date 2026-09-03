@@ -118,7 +118,7 @@ WORKDIR /app
 
 ENTRYPOINT [ "/bin/sh", "-c" ]
 
-ENV VERSION="v4.2.1"
+ENV VERSION="v4.6.0"
 
 # Keep Terraform's working data (.terraform: provider plugins + modules) OFF the
 # bind-mounted /app. On macOS, Docker Desktop's VirtioFS bind mount cannot reliably
