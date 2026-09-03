@@ -2,7 +2,11 @@
 
 import contextlib
 import io
+import os
+import pathlib
+import shutil
 import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -737,6 +741,240 @@ class Test_VersionKeyAndResolve(unittest.TestCase):
 
     def test_resolve_none_when_no_releases(self):
         self.assertIsNone(self._resolve(["refs/heads/main", "refs/heads/develop"]))
+
+
+class Test_RefOnRepoOption(unittest.TestCase):
+    """
+    "<repo url>@<ref>" passed to --<component>-git-repo (NVBugs 6696514 reopen).
+
+    QA ran `./deploy-aws --isaacsim-git-repo <url>@develop`: the repo option takes a
+    repository, so the "@develop" was cloned as part of the url and the ref option still
+    prompted.
+    """
+
+    INTERNAL = "https://github.com/isaac-sim/IsaacSim-Internal"
+    BASE = [
+        "--isaaclab", "no", "--isaaclab-arena", "no", "--deployment-name", "t",
+        "--ingress-cidrs", "myip", "--existing", "replace", "--no-upload",
+    ]
+
+    def _run(self, args):
+        seen = []
+        captured = {}
+
+        @click.command(cls=DeployCommand)
+        def cmd(**kwargs):
+            captured.update(kwargs)
+
+        def fake_run(argv, **kwargs):
+            seen.append(argv)
+            return SimpleNamespace(stdout="x\trefs/heads/develop\n", stderr="")
+
+        with mock.patch.object(subprocess, "run", fake_run):
+            with contextlib.redirect_stdout(io.StringIO()):
+                cmd.main(args + self.BASE, standalone_mode=False)
+        queried = [
+            next(x for x in a[2:] if not x.startswith("-"))
+            for a in seen if a[:2] == ["git", "ls-remote"]
+        ]
+        return captured, queried
+
+    def test_ref_is_split_off_and_used(self):
+        params, queried = self._run(["--isaacsim-git-repo", f"{self.INTERNAL}@develop"])
+        # the ref must not remain glued to the repo url
+        self.assertEqual(params["isaacsim_git_repo"], self.INTERNAL)
+        self.assertEqual(params["isaacsim"], "develop")
+        self.assertEqual(queried, [self.INTERNAL])
+
+    def test_no_prompt_when_ref_comes_from_the_repo_option(self):
+        # stdin closed: a prompt here would raise Abort instead of completing
+        with mock.patch("click.termui.visible_prompt_func",
+                        side_effect=EOFError("would prompt")):
+            params, _ = self._run(["--isaacsim-git-repo", f"{self.INTERNAL}@develop"])
+        self.assertEqual(params["isaacsim"], "develop")
+
+    def test_explicit_ref_option_wins(self):
+        params, _ = self._run([
+            "--isaacsim-git-repo", f"{self.INTERNAL}@develop",
+            "--isaacsim", "v6.1.0",
+        ])
+        self.assertEqual(params["isaacsim_git_repo"], self.INTERNAL)
+        self.assertEqual(params["isaacsim"], "v6.1.0")
+
+    def test_plain_repo_option_still_prompts_nothing_extra(self):
+        params, _ = self._run(["--isaacsim-git-repo", self.INTERNAL, "--isaacsim", "v6.1.0"])
+        self.assertEqual(params["isaacsim_git_repo"], self.INTERNAL)
+        self.assertEqual(params["isaacsim"], "v6.1.0")
+
+    def test_lab_and_arena_behave_the_same(self):
+        for opt, name in (("--isaaclab-git-repo", "isaaclab"),
+                          ("--isaaclab-arena-git-repo", "isaaclab_arena")):
+            seen = []
+            captured = {}
+
+            @click.command(cls=DeployCommand)
+            def cmd(**kwargs):
+                captured.update(kwargs)
+
+            def fake_run(argv, **kwargs):
+                seen.append(argv)
+                return SimpleNamespace(stdout="x\trefs/heads/develop\n", stderr="")
+
+            with mock.patch.object(subprocess, "run", fake_run):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    cmd.main([
+                        opt, "https://github.com/o/r.git@develop",
+                        "--isaacsim", "no",
+                        "--deployment-name", "t", "--ingress-cidrs", "myip",
+                        "--existing", "replace", "--no-upload",
+                    ] + (["--isaaclab-arena", "no"] if name == "isaaclab" else
+                         ["--isaaclab", "no"]), standalone_mode=False)
+            self.assertEqual(captured[f"{name}_git_repo"], "https://github.com/o/r.git")
+            self.assertEqual(captured[name], "develop")
+
+
+class Test_GitEnvironment(unittest.TestCase):
+    """Local git calls must never block on a credential prompt (NVBugs 6696514)."""
+
+    def test_terminal_prompt_disabled(self):
+        self.assertEqual(DeployCommand._git_env()["GIT_TERMINAL_PROMPT"], "0")
+
+    def test_askpass_vars_blanked_not_removed(self):
+        # git uses the FIRST of GIT_ASKPASS / core.askpass / SSH_ASKPASS that is SET.
+        # An empty value stops that search; removing the variable lets a desktop
+        # core.askpass (a GUI dialog) take over and block forever.
+        with mock.patch.dict(os.environ, {"GIT_ASKPASS": "/usr/bin/x",
+                                          "SSH_ASKPASS": "/usr/bin/y"}):
+            env = DeployCommand._git_env()
+        self.assertEqual(env["GIT_ASKPASS"], "")
+        self.assertEqual(env["SSH_ASKPASS"], "")
+
+    def test_credential_helper_and_askpass_are_pinned(self):
+        env = DeployCommand._git_env()
+        pinned = {env[f"GIT_CONFIG_KEY_{i}"]: env[f"GIT_CONFIG_VALUE_{i}"]
+                  for i in range(int(env["GIT_CONFIG_COUNT"]))}
+        self.assertIn("credential.helper", pinned)
+        self.assertEqual(pinned["core.askpass"], "")
+
+    def test_existing_git_config_env_is_preserved(self):
+        # the caller may inject its own config this way (a proxy, an internal CA);
+        # clobbering it breaks exactly the repos that need it
+        with mock.patch.dict(os.environ, {
+            "GIT_CONFIG_COUNT": "1",
+            "GIT_CONFIG_KEY_0": "http.proxy",
+            "GIT_CONFIG_VALUE_0": "http://proxy.example:8080",
+        }):
+            env = DeployCommand._git_env()
+        pinned = {env[f"GIT_CONFIG_KEY_{i}"]: env[f"GIT_CONFIG_VALUE_{i}"]
+                  for i in range(int(env["GIT_CONFIG_COUNT"]))}
+        self.assertEqual(pinned["http.proxy"], "http://proxy.example:8080")
+        self.assertIn("credential.helper", pinned)
+
+    def _assert_no_hang(self, gitconfig_body, label):
+        """
+        Behavioural: run real git against a gitconfig whose credential path blocks,
+        and require it to come back. These are the regressions the env-var assertions
+        above cannot catch.
+        """
+        if not shutil.which("git"):
+            self.skipTest("git not available")
+        with tempfile.TemporaryDirectory() as tmp:
+            home = pathlib.Path(tmp)
+            blocker = home / "blocker.sh"
+            marker = home / "ran.log"
+            blocker.write_text(f"#!/bin/sh\necho ran >> {marker}\nsleep 30\n")
+            blocker.chmod(0o755)
+            cfg = home / "gitconfig"
+            cfg.write_text(gitconfig_body.format(blocker=blocker))
+
+            env = DeployCommand._git_env()
+            env["HOME"] = str(home)
+            env["GIT_CONFIG_GLOBAL"] = str(cfg)
+            try:
+                subprocess.run(
+                    ["git", "ls-remote", "--quiet",
+                     "https://github.com/isaac-sim/definitely-not-real-xyz", "HEAD"],
+                    capture_output=True, text=True, timeout=20, env=env,
+                )
+            except subprocess.TimeoutExpired:
+                self.fail(f"git hung on a blocking {label}")
+            self.assertFalse(
+                marker.exists(), f"blocking {label} was executed"
+            )
+
+    def test_real_git_does_not_hang_on_a_gui_askpass(self):
+        self._assert_no_hang("[core]\n\taskpass = {blocker}\n", "core.askpass")
+
+    def test_real_git_does_not_hang_on_a_blocking_credential_helper(self):
+        # credential.helper is multi-valued: appending a helper leaves the user's own
+        # helper ahead of it in the list, so it still runs first and still hangs
+        self._assert_no_hang(
+            "[credential]\n\thelper = {blocker}\n", "credential.helper"
+        )
+
+    def test_real_git_does_not_hang_with_both_configured(self):
+        self._assert_no_hang(
+            "[credential]\n\thelper = {blocker}\n[core]\n\taskpass = {blocker}\n",
+            "credential.helper + core.askpass",
+        )
+
+    def test_real_git_does_not_hang_on_a_per_url_credential_helper(self):
+        self._assert_no_hang(
+            '[credential "https://github.com"]\n\thelper = {blocker}\n',
+            "per-URL credential.helper",
+        )
+
+    def test_negative_git_config_count_does_not_clobber_caller_config(self):
+        with mock.patch.dict(os.environ, {
+            "GIT_CONFIG_COUNT": "-1",
+            "GIT_CONFIG_KEY_0": "http.proxy",
+            "GIT_CONFIG_VALUE_0": "http://proxy.example:8080",
+        }):
+            env = DeployCommand._git_env()
+        self.assertGreaterEqual(int(env["GIT_CONFIG_COUNT"]), 2)
+        pinned = {env[f"GIT_CONFIG_KEY_{i}"]: env[f"GIT_CONFIG_VALUE_{i}"]
+                  for i in range(int(env["GIT_CONFIG_COUNT"]))}
+        self.assertIn("credential.helper", pinned)
+
+    def test_credential_helper_list_is_reset_before_the_real_helper(self):
+        env = DeployCommand._git_env()
+        keys = [(env[f"GIT_CONFIG_KEY_{i}"], env[f"GIT_CONFIG_VALUE_{i}"])
+                for i in range(int(env["GIT_CONFIG_COUNT"]))]
+        helpers = [i for i, (k, _) in enumerate(keys) if k == "credential.helper"]
+        # the first credential.helper entry must be the empty reset
+        self.assertEqual(keys[helpers[0]][1], "")
+
+    @staticmethod
+    def _helpers(env):
+        """credential.helper values, in the order git will see them."""
+        return [env[f"GIT_CONFIG_VALUE_{i}"]
+                for i in range(int(env["GIT_CONFIG_COUNT"]))
+                if env[f"GIT_CONFIG_KEY_{i}"] == "credential.helper"]
+
+    def test_uses_gh_when_available(self):
+        with mock.patch.object(shutil, "which", return_value="/usr/local/bin/gh"):
+            helpers = self._helpers(DeployCommand._git_env())
+        # reset first, then gh - order matters, the list is multi-valued.
+        # gh is referenced by absolute path: the helper runs through sh, which may
+        # not inherit a PATH containing gh.
+        self.assertEqual(helpers, ["", "!/usr/local/bin/gh auth git-credential"])
+
+    def test_no_helper_when_gh_missing(self):
+        with mock.patch.object(shutil, "which", return_value=None):
+            helpers = self._helpers(DeployCommand._git_env())
+        self.assertEqual(helpers, [""])
+
+    def test_ls_remote_calls_use_the_env(self):
+        captured = {}
+
+        def fake_run(argv, **kwargs):
+            captured["env"] = kwargs.get("env")
+            return SimpleNamespace(stdout="x\trefs/tags/v1\n", stderr="")
+
+        ctx = SimpleNamespace(params={}, meta={}, command=None, resilient_parsing=False)
+        with mock.patch.object(subprocess, "run", fake_run):
+            DeployCommand.git_ref_callback(ctx, SimpleNamespace(name="isaacsim"), "v1")
+        self.assertEqual(captured["env"]["GIT_TERMINAL_PROMPT"], "0")
 
 
 if __name__ == "__main__":

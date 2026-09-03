@@ -20,12 +20,15 @@ Base deploy- command
 
 import os
 import re
+import shutil
 import subprocess
 import sys
 
 import click
 import randomname
 from pwgen import pwgen
+
+from click.core import ParameterSource
 
 from src.python.config import c as config
 from src.python.debug import debug_break  # noqa
@@ -36,6 +39,24 @@ from src.python.utils import (
     get_my_public_ip,
     subnet_from_ip,
 )
+
+
+class _IsaacRefOption(click.core.Option):
+    """
+    The ref option for an Isaac component.
+
+    When the matching --<component>-git-repo carried a "<repo url>@<ref>", that ref is
+    used instead of prompting: the prompt happens before any callback runs, so the value
+    has to be supplied at consume time (NVBugs 6696514).
+    """
+
+    def consume_value(self, ctx, opts):
+        # check the stash BEFORE delegating: the base implementation prompts, and a
+        # prompt the user never has to answer is just noise
+        stashed = ctx.meta.get(DeployCommand._REF_META_KEY, {}).get(self.name)
+        if stashed and self.name not in opts:
+            return stashed, ParameterSource.COMMANDLINE
+        return super().consume_value(ctx, opts)
 
 
 class DeployCommand(click.core.Command):
@@ -144,7 +165,10 @@ class DeployCommand(click.core.Command):
         safe = DeployCommand.redact_repo(repo)
         dbg("latest: resolving latest release for " + safe)
         dbg("running: " + " ".join(cmd).replace(repo, safe))
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=30,
+            env=DeployCommand._git_env(),
+        )
         if result.stderr.strip():
             dbg("stderr: " + result.stderr.strip())
 
@@ -187,6 +211,9 @@ class DeployCommand(click.core.Command):
     # so no option's default can overwrite it - see git_ref_callback)
     _REPO_META_KEY = "isaac_repo_overrides"
 
+    # a ref recovered from a "<repo url>@<ref>" passed to --<component>-git-repo
+    _REF_META_KEY = "isaac_ref_from_repo_option"
+
     def invoke(self, ctx):
         """
         Fold any inline "<repo url>@<ref>" override into the final parameters, so the
@@ -202,12 +229,68 @@ class DeployCommand(click.core.Command):
         # Validate here rather than in the option callback: the repo options are eager
         # (the ref check needs them early), and an eager callback would reject a bad url
         # before --help could print. invoke() runs only when the command really executes.
-        for key in ("isaacsim", "isaaclab", "isaaclab_arena"):
-            repo = ctx.params.get(f"{key}_git_repo")
+        for name in DeployCommand._REPO_KEYS:
+            key = f"{name}_git_repo"
+            repo = ctx.params.get(key)
             if repo:
                 DeployCommand.validate_repo_url(ctx, None, repo)
 
         return super().invoke(ctx)
+
+    @staticmethod
+    def _git_env():
+        """
+        Environment for local `git` calls: never stop to ask for credentials.
+
+        Without this, a private repository whose credentials are missing or wrong makes
+        git ask for a username and password - on a terminal, or through a GUI dialog
+        from an askpass program or credential helper - and wait there. QA sat on that
+        for over two hours (NVBugs 6696514). With this, git fails immediately and the
+        deploy reports a real message instead.
+
+        A credential helper that works non-interactively (the GitHub CLI, below) is
+        still used, so a private repository verifies for real rather than being
+        reported as missing.
+        """
+        env = os.environ.copy()
+        env["GIT_TERMINAL_PROMPT"] = "0"
+
+        # Blank, do NOT remove: git reads GIT_ASKPASS, then core.askpass from the user's
+        # gitconfig, then SSH_ASKPASS, and uses the first one that is SET. An empty value
+        # is set-but-disabled and stops that search; removing the variable instead lets a
+        # desktop core.askpass (a GUI password dialog) take over and block forever.
+        env["GIT_ASKPASS"] = ""
+        env["SSH_ASKPASS"] = ""
+
+        # The credential helper is a separate path that askpass does not cover, and a
+        # blocking helper hangs the same way. credential.helper is MULTI-VALUED, so
+        # adding an entry only appends to whatever the user already configured - their
+        # helper would still run first. An empty value RESETS the list, so emit that
+        # first and the real helper after it.
+        #
+        # Prefer the GitHub CLI: it is how an operator is already authenticated locally,
+        # so a private/internal repo verifies for real instead of failing as "not
+        # found". Reset only when gh is missing (e.g. inside the container), which fails
+        # fast rather than prompting.
+        # Append to any config the caller injected this way (a proxy, an internal CA):
+        # clobbering it breaks exactly the repos that need it.
+        try:
+            count = int(env.get("GIT_CONFIG_COUNT", "0") or 0)
+        except ValueError:
+            count = 0
+        count = max(count, 0)
+
+        entries = [("credential.helper", ""), ("core.askpass", "")]
+        gh = shutil.which("gh")
+        if gh:
+            # absolute path: the helper runs through `sh`, which may not inherit a PATH
+            # that contains gh
+            entries.append(("credential.helper", f"!{gh} auth git-credential"))
+        for offset, (key, value) in enumerate(entries):
+            env[f"GIT_CONFIG_KEY_{count + offset}"] = key
+            env[f"GIT_CONFIG_VALUE_{count + offset}"] = value
+        env["GIT_CONFIG_COUNT"] = str(count + len(entries))
+        return env
 
     @staticmethod
     def _looks_like_repo_url(value):
@@ -304,10 +387,23 @@ class DeployCommand(click.core.Command):
         Normalize an explicit repo override (--isaacsim-git-repo and friends): empty
         means "use the default repo from config". Validation happens in invoke() - these
         options are eager, and rejecting here would pre-empt --help.
+
+        This option takes a repository, but users reasonably pass the same
+        "<repo url>@<ref>" form the ref option accepts. Split it here rather than
+        cloning the ref as part of the url, and stash the ref for the matching ref
+        option - this callback is eager, so it runs before that option prompts
+        (NVBugs 6696514).
         """
         if value is None or not str(value).strip():
             return ""
-        return str(value).strip()
+        value = str(value).strip()
+
+        repo, ref = DeployCommand.split_repo_and_ref(value)
+        if repo and ref and ctx is not None:
+            name = param.name[: -len("_git_repo")]
+            ctx.meta.setdefault(DeployCommand._REF_META_KEY, {})[name] = ref
+            return repo
+        return value
 
     @staticmethod
     def validate_repo_url(ctx, param, repo):
@@ -450,7 +546,10 @@ class DeployCommand(click.core.Command):
         dbg(f"checking ref '{value}' in {safe_repo}")
         dbg("running: " + " ".join(cmd).replace(repo, safe_repo))
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=30,
+                env=DeployCommand._git_env(),
+            )
         except (OSError, subprocess.SubprocessError) as e:
             # network/git problem: warn but do not block the deploy on it
             # str(e) embeds the whole argv, including the repo url and any token
@@ -628,7 +727,7 @@ class DeployCommand(click.core.Command):
                 + ' to use a fork or an internal repository')
         self.params.insert(
             len(self.params),
-            click.core.Option(
+            _IsaacRefOption(
                 ("--isaacsim",),
                 help=help,
                 default=config["default_isaacsim_git_checkpoint"],
@@ -643,7 +742,7 @@ class DeployCommand(click.core.Command):
                 + ' to use a fork or an internal repository')
         self.params.insert(
             len(self.params),
-            click.core.Option(
+            _IsaacRefOption(
                 ("--isaaclab",),
                 help=help,
                 default=config["default_isaaclab_git_checkpoint"],
@@ -658,7 +757,7 @@ class DeployCommand(click.core.Command):
                 + ' to use a fork or an internal repository')
         self.params.insert(
             len(self.params),
-            click.core.Option(
+            _IsaacRefOption(
                 ("--isaaclab-arena",),
                 help=help,
                 default=config["default_isaaclab_arena_git_checkpoint"],
