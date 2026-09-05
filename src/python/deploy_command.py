@@ -23,6 +23,7 @@ import re
 import shutil
 import subprocess
 import sys
+import urllib.parse
 
 import click
 import randomname
@@ -39,6 +40,18 @@ from src.python.utils import (
     get_my_public_ip,
     subnet_from_ip,
 )
+
+
+class _RepoUnreachable(Exception):
+    """
+    `git ls-remote` exited non-zero: the repository could not be reached or
+    authenticated to. Carries git's stderr so the caller can quote the real reason
+    (NVBugs 6696514). Distinct from "the repository has no releases".
+    """
+
+    def __init__(self, stderr=""):
+        super().__init__(stderr)
+        self.stderr = stderr
 
 
 class _IsaacRefOption(click.core.Option):
@@ -170,7 +183,12 @@ class DeployCommand(click.core.Command):
             env=DeployCommand._git_env(),
         )
         if result.stderr.strip():
-            dbg("stderr: " + result.stderr.strip())
+            dbg("stderr: " + DeployCommand._scrub(result.stderr, repo).strip())
+
+        # git could not talk to the repository at all - that is not "this repo has no
+        # releases", so let the caller say so instead (NVBugs 6696514)
+        if getattr(result, "returncode", 0) != 0:
+            raise _RepoUnreachable(getattr(result, "stderr", ""))
 
         best = None  # (version_key, is_branch, ref)
         for line in result.stdout.splitlines():
@@ -424,6 +442,91 @@ class DeployCommand(click.core.Command):
             )
         return repo
 
+    # a userinfo shorter than this is not a secret (the ssh form "git@host" uses the
+    # literal user "git"), and blanket-replacing a 1-2 char string would garble the
+    # surrounding message instead of protecting anything
+    _MIN_SECRET_LEN = 4
+
+    @staticmethod
+    def _scrub(text, repo):
+        """
+        Remove credentials from text that is about to be shown to the user.
+
+        git's own stderr quotes the url it tried, credentials included ("could not read
+        Password for 'https://<token>@github.com'"), so redacting the repo url alone is
+        not enough - the bare token has to go too. git also rewrites what it echoes
+        (percent-decoding the userinfo, adding a trailing slash), so a literal match on
+        our own spelling of the url misses it: mask any url-shaped userinfo as well.
+        """
+        text = str(text or "")
+        if not repo:
+            return text
+        repo = str(repo)
+        text = text.replace(repo, DeployCommand.redact_repo(repo))
+        # any "scheme://<userinfo>@" in the text, whatever spelling git used
+        text = re.sub(r"(?<=://)[^/@\s]+(?=@)", "***", text)
+        # and the literal secret, including the form git prints after decoding it
+        m = re.search(r"://([^/@]+)@", repo)
+        if m:
+            parts = set()
+            for part in m.group(1).split(":"):
+                if part:
+                    parts.add(part)
+                    parts.add(urllib.parse.unquote(part))
+            for part in sorted(parts, key=len, reverse=True):
+                if len(part) >= DeployCommand._MIN_SECRET_LEN:
+                    text = text.replace(part, "***")
+        return text
+
+    @staticmethod
+    def _git_failure_reason(stderr, repo):
+        """
+        Pick the line of git's stderr that says what went wrong.
+
+        ssh puts host-key bookkeeping first ("Warning: Permanently added ..."), so the
+        first line is often not the reason; prefer an explicit diagnosis when there is
+        one. Credentials are scrubbed before anything is returned.
+        """
+        lines = [
+            line.strip()
+            for line in DeployCommand._scrub(stderr, repo).splitlines()
+            if line.strip() and not line.strip().lower().startswith("warning:")
+        ]
+        if not lines:
+            return "no output from git"
+        for line in lines:
+            if line.startswith(("fatal:", "error:", "ERROR:", "remote:")):
+                return line
+        return lines[0]
+
+    @staticmethod
+    def _unreachable_repo_error(ctx, param, repo, stderr, ref=None):
+        """
+        Build the error for a `git ls-remote` that failed outright (exit != 0).
+
+        This is NOT "the ref does not exist": git could not reach or authenticate to the
+        repository at all. Reporting it as a missing ref sends the user off to try other
+        refs and repo spellings, which is exactly what happened on NVBugs 6696514. GitHub
+        answers a private repo and a nonexistent one identically, so name both.
+        """
+        opt = "--" + param.name.replace("_", "-") + "-git-repo"
+        reason = DeployCommand._git_failure_reason(stderr, repo)
+        what = f"ref '{ref}' in " if ref else ""
+        where = DeployCommand.redact_repo(repo) or "the repository"
+        return click.BadParameter(
+            colorize_error(
+                f"could not read {what}{where}: {reason}."
+                " The repository is private, does not exist, or is unreachable from"
+                " here. A private repository needs its credentials in the url: neither"
+                " the GitHub CLI nor your ssh keys are available inside this container."
+                f" For example {opt}"
+                " https://<token>@github.com/<org>/<repo>, with the ref passed"
+                " separately. (An ssh deploy key works for the clone on the instance,"
+                " but not for this check.)"
+            ),
+            ctx=ctx, param=param,
+        )
+
     @staticmethod
     def git_ref_callback(ctx, param, value):
         """
@@ -510,12 +613,16 @@ class DeployCommand(click.core.Command):
         if value.strip().lower() == "latest":
             try:
                 resolved = DeployCommand._resolve_latest_ref(repo, dbg)
+            except _RepoUnreachable as e:
+                raise DeployCommand._unreachable_repo_error(
+                    ctx, param, repo, e.stderr
+                )
             except (OSError, subprocess.SubprocessError) as e:
                 raise click.BadParameter(
                     colorize_error(
                         f"could not auto-detect the latest {param.name} release"
                         f" from {DeployCommand.redact_repo(repo)}"
-                        f" ({str(e).replace(repo, DeployCommand.redact_repo(repo))})."
+                        f" ({DeployCommand._scrub(e, repo)})."
                         " Pass an explicit git ref or 'no'."
                     ),
                     ctx=ctx, param=param,
@@ -553,7 +660,7 @@ class DeployCommand(click.core.Command):
         except (OSError, subprocess.SubprocessError) as e:
             # network/git problem: warn but do not block the deploy on it
             # str(e) embeds the whole argv, including the repo url and any token
-            reason = str(e).replace(repo, safe_repo)
+            reason = DeployCommand._scrub(e, repo)
             click.echo(colorize_error(
                 f"Warning: could not verify {param.name} ref '{value}'"
                 f" ({reason}). Continuing."
@@ -563,8 +670,16 @@ class DeployCommand(click.core.Command):
         found = result.stdout.strip()
         if debug:
             if result.stderr.strip():
-                dbg("stderr: " + result.stderr.strip())
+                dbg("stderr: " + DeployCommand._scrub(result.stderr, repo).strip())
             dbg("matched refs:\n" + found if found else "no matching refs returned")
+
+        # Separate "could not talk to the repository" from "the ref is not there":
+        # git exits non-zero for the former and zero-with-no-output for the latter.
+        # Conflating them reported an auth failure as a missing ref (NVBugs 6696514).
+        if getattr(result, "returncode", 0) != 0:
+            raise DeployCommand._unreachable_repo_error(
+                ctx, param, repo, getattr(result, "stderr", ""), ref=value
+            )
 
         if not found:
             opt = "--" + param.name.replace("_", "-") + "-git-repo"

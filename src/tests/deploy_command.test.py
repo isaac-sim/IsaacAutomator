@@ -4,6 +4,7 @@ import contextlib
 import io
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import tempfile
@@ -975,6 +976,208 @@ class Test_GitEnvironment(unittest.TestCase):
         with mock.patch.object(subprocess, "run", fake_run):
             DeployCommand.git_ref_callback(ctx, SimpleNamespace(name="isaacsim"), "v1")
         self.assertEqual(captured["env"]["GIT_TERMINAL_PROMPT"], "0")
+
+
+class Test_UnreachableVsMissingRef(unittest.TestCase):
+    """
+    An auth failure must not be reported as a missing ref (NVBugs 6696514).
+
+    `git ls-remote` exits non-zero when it cannot reach or authenticate to the
+    repository, and exits ZERO with no output when the ref simply is not there. v4.6.1
+    checked only for empty output, so QA was told "git ref 'develop' was not found" for
+    a branch that exists in a repo they had no credentials for.
+    """
+
+    AUTH_STDERR = ("fatal: could not read Username for 'https://github.com':"
+                   " terminal prompts disabled\n")
+
+    @staticmethod
+    def _ctx():
+        return SimpleNamespace(params={}, meta={}, command=None,
+                               resilient_parsing=False)
+
+    @staticmethod
+    def _plain(exc):
+        return re.sub(r"\x1b\[[0-9;]*m", "", str(exc.message))
+
+    def _call(self, returncode, stdout, stderr, value="develop", repo=None):
+        result = SimpleNamespace(returncode=returncode, stdout=stdout, stderr=stderr)
+        ctx = self._ctx()
+        if repo:
+            ctx.params["isaacsim_git_repo"] = repo
+        with mock.patch.object(subprocess, "run", return_value=result):
+            return DeployCommand.git_ref_callback(
+                ctx, SimpleNamespace(name="isaacsim"), value
+            )
+
+    def test_auth_failure_is_not_reported_as_missing_ref(self):
+        with self.assertRaises(click.BadParameter) as cm:
+            self._call(128, "", self.AUTH_STDERR)
+        msg = self._plain(cm.exception)
+        self.assertNotIn("was not found", msg)
+        self.assertIn("could not read", msg)
+        # quotes git's own reason so the user sees what actually happened
+        self.assertIn("could not read Username", msg)
+
+    def test_auth_failure_message_explains_how_to_authenticate(self):
+        with self.assertRaises(click.BadParameter) as cm:
+            self._call(128, "", self.AUTH_STDERR)
+        msg = self._plain(cm.exception)
+        self.assertIn("private", msg)
+        self.assertIn("<token>@github.com", msg)
+        # neither gh nor ssh keys exist in the container, so the message must not
+        # send the user down either route for this check
+        self.assertIn("inside this container", msg)
+        self.assertIn("not for this check", msg)
+
+    def test_missing_ref_still_reported_as_missing(self):
+        # rc=0 with no matching refs is a genuinely absent ref
+        with self.assertRaises(click.BadParameter) as cm:
+            self._call(0, "", "")
+        self.assertIn("was not found", self._plain(cm.exception))
+
+    def test_existing_ref_still_passes(self):
+        self.assertEqual(
+            self._call(0, "abc\trefs/heads/develop\n", ""), "develop"
+        )
+
+    def test_auth_failure_does_not_leak_a_token(self):
+        secret = "ghp_TOPSECRET12345"
+        repo = f"https://{secret}@github.com/isaac-sim/IsaacSim-Internal"
+        # git echoes the url it tried, credentials included
+        stderr = (f"fatal: could not read Password for 'https://{secret}@github.com':"
+                  " terminal prompts disabled\n")
+        with self.assertRaises(click.BadParameter) as cm:
+            self._call(128, "", stderr, repo=repo)
+        msg = self._plain(cm.exception)
+        self.assertNotIn(secret, msg)
+        self.assertIn("***", msg)
+
+    def test_latest_reports_auth_failure_not_missing_releases(self):
+        # the bare-url case: v4.6.1 said "could not auto-detect the latest release"
+        result = SimpleNamespace(returncode=128, stdout="", stderr=self.AUTH_STDERR)
+        with mock.patch.object(subprocess, "run", return_value=result):
+            with self.assertRaises(click.BadParameter) as cm:
+                DeployCommand.git_ref_callback(
+                    self._ctx(), SimpleNamespace(name="isaacsim"), "latest"
+                )
+        msg = self._plain(cm.exception)
+        self.assertNotIn("auto-detect", msg)
+        self.assertIn("could not read", msg)
+
+    def test_latest_still_reports_no_releases_when_reachable(self):
+        # rc=0 but nothing version-shaped: that IS "no releases here"
+        result = SimpleNamespace(returncode=0, stdout="x\trefs/heads/main\n", stderr="")
+        with mock.patch.object(subprocess, "run", return_value=result):
+            with self.assertRaises(click.BadParameter) as cm:
+                DeployCommand.git_ref_callback(
+                    self._ctx(), SimpleNamespace(name="isaacsim"), "latest"
+                )
+        self.assertIn("auto-detect", self._plain(cm.exception))
+
+    def test_scrub_removes_bare_token_from_arbitrary_text(self):
+        secret = "ghp_SECRET999"
+        repo = f"https://{secret}@github.com/o/r.git"
+        text = f"fatal: could not read Password for 'https://{secret}@github.com'"
+        out = DeployCommand._scrub(text, repo)
+        self.assertNotIn(secret, out)
+
+    def test_scrub_is_safe_without_credentials(self):
+        repo = "https://github.com/o/r.git"
+        self.assertEqual(DeployCommand._scrub("plain message", repo), "plain message")
+
+    def test_scrub_redacts_percent_decoded_userinfo(self):
+        # git percent-DECODES the userinfo when it echoes the url back, so a literal
+        # match on our own spelling misses the secret
+        repo = "https://tok%5Fabc%2Bdef@github.com/o/r"
+        text = ("fatal: could not read Password for"
+                " 'https://tok_abc%2Bdef@github.com': terminal prompts disabled")
+        out = DeployCommand._scrub(text, repo)
+        self.assertNotIn("tok_abc", out)
+        self.assertIn("***", out)
+
+    def test_scrub_does_not_mangle_ssh_git_user(self):
+        # "git" in "ssh://git@host" is a protocol user, not a secret: redacting it
+        # would also eat the hostname ("gitlab.com" -> "***lab.com")
+        repo = "ssh://git@gitlab.com/o/r.git"
+        text = "git@gitlab.com: Permission denied (publickey)."
+        self.assertEqual(DeployCommand._scrub(text, repo), text)
+
+    def test_scrub_does_not_mangle_short_userinfo(self):
+        repo = "https://x@github.com/o/r"
+        text = "terminal prompts disabled while executing the next step"
+        self.assertEqual(DeployCommand._scrub(text, repo), text)
+
+    def test_reason_skips_ssh_host_key_noise(self):
+        # ssh prints host-key bookkeeping first; the reason is further down
+        stderr = ("Warning: Permanently added 'github.com' (ED25519) to the list of"
+                  " known hosts.\nERROR: Repository not found.\n"
+                  "fatal: Could not read from remote repository.")
+        self.assertEqual(
+            DeployCommand._git_failure_reason(stderr, "ssh://git@github.com/o/r.git"),
+            "ERROR: Repository not found.",
+        )
+
+    def test_reason_skips_warning_even_without_a_prefixed_line(self):
+        # no fatal:/ERROR: line to prefer, so only the warning filter keeps the
+        # bookkeeping line from being reported as the reason
+        stderr = "Warning: something odd happened\nthe actual problem"
+        self.assertEqual(
+            DeployCommand._git_failure_reason(stderr, "https://github.com/o/r"),
+            "the actual problem",
+        )
+
+    def test_reason_falls_back_when_only_noise(self):
+        self.assertEqual(
+            DeployCommand._git_failure_reason("", "https://github.com/o/r"),
+            "no output from git",
+        )
+
+    def test_scp_form_repo_reports_unreachable(self):
+        result = SimpleNamespace(
+            returncode=128, stdout="",
+            stderr="ERROR: Repository not found.\nfatal: Could not read from remote"
+                   " repository.\n",
+        )
+        ctx = self._ctx()
+        ctx.params["isaacsim_git_repo"] = "git@github.com:isaac-sim/IsaacSim-Internal.git"
+        with mock.patch.object(subprocess, "run", return_value=result):
+            with self.assertRaises(click.BadParameter) as cm:
+                DeployCommand.git_ref_callback(
+                    ctx, SimpleNamespace(name="isaacsim"), "develop"
+                )
+        msg = self._plain(cm.exception)
+        self.assertIn("could not read", msg)
+        self.assertIn("Repository not found", msg)
+
+    def test_repo_unreachable_never_escapes_to_the_user(self):
+        # _RepoUnreachable is internal: it must always be converted to BadParameter
+        import src.python.deploy_command as module
+        with mock.patch.object(
+            DeployCommand, "_resolve_latest_ref",
+            side_effect=module._RepoUnreachable("fatal: boom"),
+        ):
+            with self.assertRaises(click.BadParameter):
+                DeployCommand.git_ref_callback(
+                    self._ctx(), SimpleNamespace(name="isaacsim"), "latest"
+                )
+
+    def test_debug_stderr_trace_does_not_leak_a_token(self):
+        secret = "ghp_DEBUGSECRET777"
+        repo = f"https://{secret}@github.com/o/r"
+        result = SimpleNamespace(
+            returncode=0, stdout="abc\trefs/heads/develop\n",
+            stderr=f"warning: redirecting to https://{secret}@github.com/o/r/\n",
+        )
+        ctx = SimpleNamespace(params={"debug": True, "isaacsim_git_repo": repo},
+                              meta={}, command=None, resilient_parsing=False)
+        buf = io.StringIO()
+        with mock.patch.object(subprocess, "run", return_value=result):
+            with contextlib.redirect_stderr(buf):
+                DeployCommand.git_ref_callback(
+                    ctx, SimpleNamespace(name="isaacsim"), "develop"
+                )
+        self.assertNotIn(secret, buf.getvalue())
 
 
 if __name__ == "__main__":

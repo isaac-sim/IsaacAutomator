@@ -523,17 +523,25 @@ The same applies to `--isaaclab` / `--isaaclab-git-repo` and `--isaaclab-arena` 
 `--isaaclab-arena-git-repo`, and to the `image-*` commands. If the ref is omitted
 (`--isaacsim <repo url>`), the newest release in that repository is used.
 
-The repository and ref are checked locally before anything is provisioned. That check uses the
-[GitHub CLI](https://cli.github.com/) for credentials when it is installed and logged in
-(`gh auth login`), so a private repository verifies with the account you already use. If the check
-cannot authenticate it fails immediately with an error - it never stops to ask for a password.
+The repository and ref are checked before anything is provisioned. If that check cannot reach or
+authenticate to the repository it fails immediately, saying so - it never stops to ask for a password.
+
+**Inside the container** (the usual case - `./deploy-aws` and friends run there) neither the GitHub CLI
+nor your SSH keys are available, so this check can only authenticate with credentials in the URL. An SSH
+deploy key still works for the clone **on the instance**, but the check cannot use it - pass the ref
+explicitly so nothing has to be auto-detected. When you run the CLI on the host instead and have the
+[GitHub CLI](https://cli.github.com/) installed and logged in (`gh auth login`), the check uses it, so a
+private repository verifies with the account you already use.
 
 A private repository must also be reachable **from the deployed instance**, which is what actually
 clones it. Being able to clone it on your own machine is not enough. Either:
 
 - **Access token in the URL** (simplest), e.g.
-  `--isaacsim-git-repo https://<token>@github.com/my-org/IsaacSim-Internal`. The token is masked in
-  console output and in the deployment's `meta.json`, but it is still sent to the instance.
+  `--isaacsim-git-repo https://<token>@github.com/my-org/IsaacSim-Internal --isaacsim <ref>`. This is
+  also what makes the pre-provisioning check pass inside the container. The token is masked in console
+  output and in the deployment's `meta.json`, but it is still sent to the instance. A ref may be appended
+  to the repository instead (`...IsaacSim-Internal@<ref>`) - the separator is the first `@` after the
+  host, so a token containing `@` has to be percent-encoded as `%40`.
 - **SSH URL with a deploy key** already present on the instance, e.g.
   `--isaacsim-git-repo git@github.com:my-org/IsaacSim-Internal.git`. Safer, since no credential
   travels with the deployment.
