@@ -54,7 +54,10 @@ class Test_Deployer(unittest.TestCase):
 
     def setUp(self):
         self.tmp = tempfile.mkdtemp()
-        fixture_src = Path(c["tests_dir"]) / "res" / "state" / "test-1"
+        # the fixture is checked in next to this file, so locate it relative to the
+        # file itself: a container path from the config ("/app/src/tests") only
+        # resolves inside the container, and broke the suite everywhere else
+        fixture_src = Path(__file__).resolve().parent / "res" / "state" / "test-1"
         fixture_dst = Path(self.tmp) / "test-1"
         shutil.copytree(fixture_src, fixture_dst)
         self.deployer = _make_deployer(state_dir=self.tmp)
