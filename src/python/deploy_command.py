@@ -38,6 +38,7 @@ from src.python.utils import (
     colorize_info,
     colorize_prompt,
     get_my_public_ip,
+    redact_url_credentials,
     subnet_from_ip,
 )
 
@@ -339,7 +340,7 @@ class DeployCommand(click.core.Command):
         # ("user:token@", "token@", "token:x-oauth-basic@"), so keeping any part of
         # it risks leaking the secret. The scp form "git@host:path" is not
         # credentials, so only "scheme://" urls are touched.
-        return re.sub(r"(://)[^/@]+@", r"\1***@", str(repo))
+        return redact_url_credentials(repo)
 
     @staticmethod
     def _same_repo(a, b):

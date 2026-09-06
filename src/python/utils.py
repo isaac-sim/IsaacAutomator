@@ -21,6 +21,7 @@ CLI Utils
 
 import json
 import os
+import re
 import subprocess
 from glob import glob
 from pathlib import Path
@@ -28,6 +29,23 @@ from pathlib import Path
 import click
 
 from src.python.config import c as config
+
+# Credentials embedded in a url ("https://<token>@host/..."). The whole userinfo is
+# masked: a token can sit in either field ("user:token@", "token@"), so keeping any
+# part of it risks leaking the secret. The scp form "git@host:path" carries no
+# credentials, so only "scheme://" urls match. Kept here (not in deploy_command) so
+# shell_command can use it without importing a command module.
+_URL_CREDENTIALS_RE = re.compile(r"(://)[^/@\s]+@")
+
+
+def redact_url_credentials(text):
+    """
+    Mask credentials embedded in any url inside `text`:
+      "https://user:token@host/x.git" -> "https://***@host/x.git"
+    """
+    if not text:
+        return text
+    return _URL_CREDENTIALS_RE.sub(r"\1***@", str(text))
 
 
 def colorize_prompt(text):
@@ -54,10 +72,13 @@ def shell_command(
     """
 
     if verbose:
+        # redact only the echoed copy: the command itself must keep the real
+        # credentials, or the re-exec into the container would lose them
+        shown = redact_url_credentials(command)
         if cwd is not None:
-            click.echo(colorize_info(f"* Running `(cd {cwd} && {command})`..."))
+            click.echo(colorize_info(f"* Running `(cd {cwd} && {shown})`..."))
         else:
-            click.echo(colorize_info(f"* Running `{command}`..."))
+            click.echo(colorize_info(f"* Running `{shown}`..."))
 
     res = subprocess.run(
         command,
@@ -68,12 +89,15 @@ def shell_command(
 
     if res.returncode == 0:
         if verbose and res.stdout is not None:
-            click.echo(res.stdout.decode())
+            # a child that failed to clone echoes the url it tried, credentials included
+            click.echo(redact_url_credentials(res.stdout.decode()))
 
     elif exit_on_error:
         if res.stderr is not None:
             click.echo(
-                colorize_error(f"Error: {res.stderr.decode()}"),
+                colorize_error(
+                    f"Error: {redact_url_credentials(res.stderr.decode())}"
+                ),
                 err=True,
             )
         exit(1)
