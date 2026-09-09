@@ -14,6 +14,21 @@
 # limitations under the License.
 # endregion
 
+- name: Install uv (Isaac Lab 3.0+ env manager)
+  shell: |
+    curl -fsSL https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin UV_NO_MODIFY_PATH=1 sh
+  args:
+    creates: /usr/local/bin/uv
+
+- name: Report uv version
+  command: uv --version
+  register: uv_version
+  changed_when: false
+
+- name: Show uv version
+  debug:
+    msg: "uv: {{ uv_version.stdout }} at /usr/local/bin/uv"
+
 - name: Create Isaac Lab directory
   file:
     path: "{{ isaaclab_dir }}"
