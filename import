@@ -327,10 +327,11 @@ def _aws_import_deployment(prefix, deployment_name, region, resources, debug=Fal
         )
 
     if "route_table" in resources:
+        # aws_default_route_table is imported by its vpc id, not the rtb id
         import_map.append(
             (
                 "module.vpc.aws_default_route_table.vpc_route_table",
-                resources["route_table"],
+                resources["vpc"],
             )
         )
 
@@ -381,11 +382,6 @@ def _aws_import_deployment(prefix, deployment_name, region, resources, debug=Fal
             click.echo(colorize_error(f"  Warning: failed to import {addr}"))
             failed.append(addr)
 
-    # import tls_private_key with a newly generated key
-    # this makes terraform state consistent so destroy/stop/start work
-    click.echo(colorize_info("  Generating placeholder SSH key for state..."))
-    _import_tls_private_key(tf_dir, tfvars_file, tfstate_file, debug)
-
     # refresh state to compute terraform outputs
     click.echo(colorize_info("  Refreshing state and computing outputs..."))
     res = shell_command(
@@ -406,56 +402,6 @@ def _aws_import_deployment(prefix, deployment_name, region, resources, debug=Fal
         )
 
     return failed
-
-
-def _import_tls_private_key(
-    tf_dir,
-    tfvars_file,
-    tfstate_file,
-    debug=False,
-    resource_addr="module.common.tls_private_key.ssh_key",
-):
-    """
-    Generate a new RSA key and import it as tls_private_key into terraform state.
-    The key won't match what's deployed on the instance, but it makes
-    terraform state internally consistent for destroy/stop/start operations.
-    """
-
-    # generate a temporary RSA 4096-bit key
-    tmp_key = "/tmp/_import_temp_key.pem"
-    shell_command(
-        f"openssl genrsa 4096 > {tmp_key} 2>/dev/null",
-        verbose=debug,
-        exit_on_error=False,
-    )
-
-    if not Path(tmp_key).exists():
-        click.echo(
-            colorize_error("  Warning: could not generate temporary key for import")
-        )
-        return
-
-    # import tls_private_key using the PEM content
-    pem_content = Path(tmp_key).read_text().strip()
-    res = shell_command(
-        f"terraform import -var-file={shlex.quote(tfvars_file)} "
-        + f"'{resource_addr}' "
-        + f"'{pem_content}'",
-        cwd=tf_dir,
-        verbose=debug,
-        exit_on_error=False,
-    )
-
-    if res.returncode != 0:
-        click.echo(
-            colorize_error(
-                "  Warning: could not import tls_private_key. "
-                "SSH key export will not work."
-            )
-        )
-
-    # clean up
-    Path(tmp_key).unlink(missing_ok=True)
 
 
 # endregion
@@ -703,10 +649,6 @@ def _azure_import_deployment(prefix, deployment_name, region, resources, debug=F
             click.echo(colorize_error(f"  Warning: failed to import {addr}"))
             failed.append(addr)
 
-    # import tls_private_key
-    click.echo(colorize_info("  Generating placeholder SSH key for state..."))
-    _import_tls_private_key(tf_dir, tfvars_file, tfstate_file, debug)
-
     # refresh state
     click.echo(colorize_info("  Refreshing state and computing outputs..."))
     shell_command(
@@ -949,16 +891,6 @@ def _gcp_import_deployment(
             click.echo(colorize_error(f"  Warning: failed to import {addr}"))
             failed.append(addr)
 
-    # import tls_private_key (at root level for GCP, not in a module)
-    click.echo(colorize_info("  Generating placeholder SSH key for state..."))
-    _import_tls_private_key(
-        tf_dir,
-        tfvars_file,
-        tfstate_file,
-        debug,
-        resource_addr="tls_private_key.ssh_key",
-    )
-
     # import google_project_service
     click.echo(colorize_info("  Importing google_project_service..."))
     shell_command(
@@ -1073,29 +1005,6 @@ def _create_meta(cloud, prefix, deployment_name, region, tfvars):
     meta_file = f"{state_dir}/meta.json"
     Path(meta_file).parent.mkdir(parents=True, exist_ok=True)
     Path(meta_file).write_text(json.dumps(meta, indent=4))
-
-
-def _export_ssh_key(deployment_name, debug=False):
-    """Try to export SSH key from terraform state."""
-
-    state_dir = f"{config['state_dir']}/{deployment_name}"
-    tfstate_file = f"{state_dir}/.tfstate"
-
-    res = shell_command(
-        f"terraform output -state={shlex.quote(tfstate_file)} -raw ssh_key",
-        capture_output=True,
-        exit_on_error=False,
-        verbose=debug,
-    )
-
-    if res.returncode == 0 and res.stdout:
-        key_pem = res.stdout.decode()
-        key_file = f"{state_dir}/key.pem"
-        Path(key_file).write_text(key_pem)
-        os.chmod(key_file, 0o600)
-        return True
-
-    return False
 
 
 def _create_info_txt(deployment_name, ip, debug=False):
@@ -1325,9 +1234,6 @@ def main(
             effective_region = info.get("region", region)
         _create_meta(cloud, prefix, dn, effective_region, tfvars)
 
-        # export SSH key from state
-        key_exported = _export_ssh_key(dn, debug)
-
         # get IP from terraform output or discovered resources
         ip = resources.get("eip_public_ip", resources.get("public_ip", ""))
         if not ip:
@@ -1350,24 +1256,15 @@ def main(
         else:
             click.echo(colorize_result(f'  Import of "{dn}" completed successfully!'))
 
-        if not key_exported:
-            click.echo(
-                colorize_error(
-                    "  Warning: SSH key could not be exported from state.\n"
-                    "  The original key.pem is not recoverable from the cloud.\n"
-                    "  If you have the original key.pem backed up, place it at:\n"
-                    f"  state/{dn}/key.pem"
-                )
+        # the ssh private key never leaves terraform state, so it cannot be
+        # recovered from the cloud (and tls_private_key does not support import)
+        click.echo(
+            colorize_error(
+                "  Note: the SSH key is not recoverable from the cloud.\n"
+                "  If you have the original key.pem backed up, place it at:\n"
+                f"  state/{dn}/key.pem"
             )
-        else:
-            click.echo(
-                colorize_error(
-                    "  Note: The SSH key in state/key.pem is a PLACEHOLDER.\n"
-                    "  It does NOT match the key deployed on the instance.\n"
-                    "  If you have the original key.pem backed up, replace:\n"
-                    f"  state/{dn}/key.pem"
-                )
-            )
+        )
 
         click.echo(
             colorize_info(
